@@ -5,11 +5,12 @@ import (
 	"log"
 	"os"
 
+	"cloud.google.com/go/storage"
 	firebase "firebase.google.com/go/v4"
 	"google.golang.org/api/option"
 )
 
-func InitFirebase() *firebase.App {
+func InitStorage() *storage.BucketHandle {
 	storage_address := os.Getenv("FIREBASE_BUCKET_ADDRESS")
 	config := &firebase.Config{
         StorageBucket: storage_address,
@@ -21,20 +22,18 @@ func InitFirebase() *firebase.App {
         log.Fatalln(err)
 	}
 	
-	return app
-}
-
-func AddFile(app *firebase.App) {
 	client, err := app.Storage(context.Background())
 	if err != nil {
         log.Fatalln(err)
 	}
 
 	bucket, err := client.DefaultBucket()
+
 	if err != nil {
         log.Fatalln(err)
 	}
 
-	println(bucket)
+	return bucket
 }
+
 

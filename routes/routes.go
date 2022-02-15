@@ -10,7 +10,5 @@ func Setup(app *fiber.App) {
 	
 	api := app.Group("/api")      // /api
 
-	
-
 	api.Post("/photo", controllers.UploadPhoto)
 }

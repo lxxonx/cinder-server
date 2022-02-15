@@ -5,7 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
-	"github.com/lxxonx/cinder-server/firebase"
+	"github.com/lxxonx/cinder-server/routes"
 )
 
 func main() {
@@ -14,10 +14,9 @@ func main() {
         log.Fatal("Error loading .env file")
     }
 
-    firebase.InitFirebase()
     app := fiber.New()
-    app.Get("/", func(c *fiber.Ctx) error {
-        return c.SendString("Hello, World 👋!")
-    })
+
+    routes.Setup(app)
+
     app.Listen(":3000")
 }
