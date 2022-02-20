@@ -26,22 +26,5 @@ func SetupFirebase(c *fiber.Ctx) error {
 	}
 	c.Locals("firebase", app)
 
-	// client, err := app.Storage(context.Background())
-	// if err != nil {
-	// 	panic("Firebase load error")
-	// }
-
-	// bucket, err := client.DefaultBucket()
-	// if err != nil {
-	// 	panic("Firebase load error")
-	// }
-
-	// c.Locals("bucket", bucket)
-	// auth, err := app.Auth(context.Background())
-	// if err != nil {
-	// 	panic("Firebase load error")
-	// }
-	// c.Locals("auth", auth)
-
 	return c.Next()
 }

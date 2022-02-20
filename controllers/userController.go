@@ -4,12 +4,17 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"image"
+	"image/jpeg"
+	"image/png"
+	"strings"
 
 	"io"
 	"log"
-	"os"
 
 	firebase "firebase.google.com/go/v4"
+	"firebase.google.com/go/v4/auth"
+	"github.com/anthonynsimon/bild/blur"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/lxxonx/cinder-server/dto"
@@ -23,7 +28,62 @@ func SignUpUser(c *fiber.Ctx) error {
 			"message": "Unable to parse request body",
 		})
 	}
-	return c.Next()
+
+	firebaseApp := c.Locals("firebase").(*firebase.App)
+	authClient, err := firebaseApp.Auth(context.Background())
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"ok":      false,
+			"message": "Unable to connect to auth",
+		})
+	}
+
+	params := (&auth.UserToCreate{}).
+		Email(input.Email).
+		EmailVerified(false).
+		Password(input.Password).
+		DisplayName(input.Username).
+		Disabled(false)
+	user, err := authClient.CreateUser(context.Background(), params)
+	if err != nil {
+		fmt.Print(err)
+
+		return c.Status(500).JSON(fiber.Map{
+			"ok":      false,
+			"message": "Fail to create user",
+		})
+	}
+
+	db, err := firebaseApp.Firestore(context.Background())
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"ok":      false,
+			"message": "Unable to connect to database",
+		})
+	}
+
+	_, err = db.Collection("users").Doc(user.UID).Set(context.Background(), map[string]interface{}{
+		"uid":      user.UID,
+		"username": input.Username,
+		"email":    input.Email,
+		"password": input.Password,
+		"avatar":   "",
+		"dep":      input.Dep,
+		"uni":      input.Uni,
+		"bio":      "",
+	})
+	if err != nil {
+		fmt.Print(err)
+		return c.Status(500).JSON(fiber.Map{
+			"ok":      false,
+			"message": "Fail to create user",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"ok":      true,
+		"message": "Create user successfully",
+	})
 }
 
 func LoginUser(c *fiber.Ctx) error {
@@ -51,7 +111,7 @@ func GetCurrentUser(c *fiber.Ctx) error {
 	if uid == nil {
 		return c.Status(401).JSON(fiber.Map{
 			"ok":      false,
-			"message": "Invalid token",
+			"message": "Not logged in",
 		})
 	}
 	return c.Status(200).JSON(fiber.Map{
@@ -72,30 +132,48 @@ func UploadProfile(c *fiber.Ctx) error {
 		return err
 	}
 	defer file.Close()
-	// original, err := jpeg.Decode(file)
-
+	var original image.Image
+	switch strings.Split(handler.Filename, ".")[1] {
+	case "png":
+		original, err = png.Decode(file)
+	case "jpeg", "jpg":
+		original, err = jpeg.Decode(file)
+	}
 	if err != nil {
-		return err
-	} else {
+		return c.JSON(fiber.Map{
+			"ok":      false,
+			"message": "File is not an image",
+		})
+	}
+	var pics []image.Image
+	pics = append(pics, original)
 
-		client, err := firebaseApp.Storage(context.Background())
-		if err != nil {
-			panic(err)
-		}
+	client, err := firebaseApp.Storage(context.Background())
+	if err != nil {
+		panic(err)
+	}
 
-		bucket, err := client.DefaultBucket()
-		if err != nil {
-			panic(err)
-		}
-		id := uuid.New()
-		fileName := id.String() + "/profile.jpg"
+	bucket, err := client.DefaultBucket()
+	if err != nil {
+		panic(err)
+	}
 
-		object := bucket.Object(fileName)
-		writer := object.NewWriter(context.Background())
+	for i := 0.0; i < 3; i++ {
+		nb := blur.Gaussian(original, (i+1.0)*20.0)
+
+		pics = append(pics, nb)
+	}
+
+	id := uuid.New()
+	for i, pic := range pics {
+
+		fileName := id.String() + "/p" + fmt.Sprintf("%d", i)
+
+		writer := bucket.Object(fileName).NewWriter(context.Background())
 		// writer.ObjectAttrs.Metadata = map[string]string{"firebaseStorageDownloadTokens": id.String()}
 		defer writer.Close()
-		buf := bytes.NewBuffer(nil)
-		if _, err := io.Copy(buf, file); err != nil {
+		buf := new(bytes.Buffer)
+		if err = png.Encode(buf, pic); err != nil {
 			return c.JSON(fiber.Map{
 				"ok":      false,
 				"message": "Can't get file",
@@ -110,38 +188,11 @@ func UploadProfile(c *fiber.Ctx) error {
 			})
 		}
 
-		storage_address := os.Getenv("FIREBASE_BUCKET_ADDRESS")
-
-		file_url := fmt.Sprintf("https://storage.cloud.google.com/%s/%s", storage_address, fileName)
-
-		// blur3 := blur.Gaussian(original, 40.0)
-		// image3, err := os.Create("blur.png")
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
-		// defer image3.Close()
-
-		// err = png.Encode(image3, blur3)
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
-
-		// writer = bucket.Object("/p/blur3.png").NewWriter(context.Background())
-		// _, err = io.Copy(writer, image3)
-
-		// if err != nil {
-		// 	return c.JSON(fiber.Map{
-		// 		"ok":      false,
-		// 		"message": "Can't upload file",
-		// 	})
-		// }
-
-		return c.JSON(fiber.Map{
-			"ok":      true,
-			"message": "File uploaded successfully",
-			"data": fiber.Map{
-				"file_url": file_url,
-			},
-		})
 	}
+
+	return c.JSON(fiber.Map{
+		"ok":      true,
+		"message": "File uploaded successfully",
+	})
+
 }
