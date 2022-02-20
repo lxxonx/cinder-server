@@ -5,10 +5,15 @@ import (
 	"github.com/lxxonx/cinder-server/controllers"
 )
 
+func SetupRoutes(app *fiber.App) {
 
-func Setup(app *fiber.App) {
-	
-	api := app.Group("/api")      // /api
+	api := app.Group("/api") // /api
 
-	api.Post("/photo", controllers.UploadPhoto)
+	groups := api.Group("/groups")
+	groups.Get("/", controllers.GetGroups)
+
+	users := api.Group("/users")
+	users.Get("/current", controllers.GetCurrentUser)
+	users.Post("/signup", controllers.SignUpUser)
+	users.Post("/profile/upload", controllers.UploadProfile)
 }
