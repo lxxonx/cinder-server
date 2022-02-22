@@ -10,9 +10,6 @@ func SetupRoutes(app *fiber.App) {
 
 	api := app.Group("/api", config.AuthMiddleware) // /api
 
-	groups := api.Group("/groups")
-	groups.Get("/", controllers.GetGroups)
-
 	users := api.Group("/users")
 	users.Get("/current", controllers.GetCurrentUser)
 	users.Post("/signup", controllers.SignUpUser)
@@ -21,4 +18,8 @@ func SetupRoutes(app *fiber.App) {
 	friends := users.Group("/friends")
 	friends.Post("/req", controllers.RequestFriend)
 	friends.Post("/act", controllers.AcceptFriendRequest)
+
+	groups := api.Group("/groups")
+	groups.Get("/", controllers.GetGroups)
+	groups.Post("/create", controllers.CreateGroup)
 }
