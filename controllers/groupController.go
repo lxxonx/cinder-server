@@ -3,7 +3,9 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go/v4"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -12,17 +14,54 @@ import (
 )
 
 func GetGroups(c *fiber.Ctx) error {
+
 	input := new(dto.GetGroupsInput)
-	if err := c.BodyParser(input); err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"ok":      false,
-			"message": "Unable to parse request body",
-		})
+	fmt.Print(c.Body())
+
+	if len(c.Body()) > 0 {
+		if err := c.BodyParser(input); err != nil {
+			return c.Status(500).JSON(fiber.Map{
+				"ok":      false,
+				"message": "Unable to parse request body",
+			})
+		}
+	} else {
+		input.Limit = 10
+		input.Cursor = ""
 	}
 
+	firebaseApp := c.Locals("firebase").(*firebase.App)
+	db, err := firebaseApp.Firestore(context.Background())
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"ok":      false,
+			"message": "Unable to connect to database",
+		})
+	}
+	groups, err := db.Collection("groups").OrderBy("uid", firestore.Desc).Limit(input.Limit).Documents(context.Background()).GetAll()
+	if err != nil {
+		fmt.Println(err.Error())
+		return c.Status(200).JSON(fiber.Map{
+			"ok":      false,
+			"message": "Unable to connect to database",
+		})
+	}
+	var res []models.Group
+
+	for _, group := range groups {
+		model := models.Group{
+			Uid:        group.Data()["uid"].(string),
+			GroupName:  group.Data()["groupName"].(string),
+			Pics:       group.Data()["pics"].([]string),
+			CreateTime: group.CreateTime,
+			Bio:        group.Data()["bio"].(string),
+		}
+		res = append(res, model)
+	}
 	return c.JSON(fiber.Map{
 		"ok":      true,
-		"message": "Create Group successfully",
+		"message": "Fetch Groups successfully",
+		"data":    res,
 	})
 }
 
@@ -48,8 +87,10 @@ func CreateGroup(c *fiber.Ctx) error {
 	uid := uuid.New()
 	group := db.Collection("groups").Doc(uid.String())
 
+	// TODO
+	// Check if user is in group
+	// Duplication check
 	for _, member := range input.Friends {
-		fmt.Print(member)
 		friend, err := db.Collection("users").Doc(user.Uid).Collection("friends").Where("username", "==", member).Documents(context.Background()).GetAll()
 		if err != nil {
 			return c.Status(500).JSON(fiber.Map{
@@ -63,7 +104,6 @@ func CreateGroup(c *fiber.Ctx) error {
 				"message": "Friend not found",
 			})
 		}
-		fmt.Print()
 
 		f, err := db.Collection("users").Doc(friend[0].Data()["uid"].(string)).Get(context.Background())
 		if err != nil {
@@ -83,10 +123,13 @@ func CreateGroup(c *fiber.Ctx) error {
 	}
 	group.Collection("members").Doc(user.Uid).Set(context.Background(), me)
 	_, err = group.Set(context.Background(), map[string]interface{}{
-		"uid":       uid.String(),
-		"groupName": input.GroupName,
-		"pics":      input.Pics,
-		"bio":       input.Bio,
+		"uid":        uid.String(),
+		"groupName":  input.GroupName,
+		"pics":       input.Pics,
+		"bio":        input.Bio,
+		"CreateTime": time.Now(),
+		"UpdateTime": time.Now(),
+		"ReadTime":   time.Now(),
 	})
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{

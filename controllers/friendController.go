@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go/v4"
@@ -123,9 +124,27 @@ func AcceptFriendRequest(c *fiber.Ctx) error {
 		})
 	}
 	_, err = db.Collection("users").Doc(user.Uid).Collection("friends").Doc(reqRef[0].Data()["uid"].(string)).Set(context.Background(), map[string]interface{}{
-		"uid":      reqRef[0].Data()["uid"],
-		"username": reqRef[0].Data()["username"],
+		"Ref":        "users/" + reqRef[0].Data()["uid"].(string),
+		"username":   reqRef[0].Data()["username"],
+		"CreateTime": time.Now(),
+		"UpdateTime": time.Now(),
+		"ReadTime":   time.Now(),
 	})
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"ok":      false,
+			"message": "friend request not found",
+		})
+	}
+
+	_, err = db.Collection("users").Doc(reqRef[0].Data()["uid"].(string)).Collection("friends").Doc(user.Uid).Set(context.Background(), map[string]interface{}{
+		"Ref":        "users/" + user.Uid,
+		"username":   user.Username,
+		"CreateTime": time.Now(),
+		"UpdateTime": time.Now(),
+		"ReadTime":   time.Now(),
+	})
+
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"ok":      false,
