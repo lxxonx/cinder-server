@@ -6,7 +6,6 @@ type AuthInput struct {
 }
 
 type SignUpInput struct {
-	Email    string `json:"email"`
 	Password string `json:"password"`
 	Username string `json:"username"`
 	Uni      string `json:"uni"`

@@ -16,7 +16,6 @@ import (
 func GetGroups(c *fiber.Ctx) error {
 
 	input := new(dto.GetGroupsInput)
-	fmt.Print(c.Body())
 
 	if len(c.Body()) > 0 {
 		if err := c.BodyParser(input); err != nil {
@@ -46,29 +45,55 @@ func GetGroups(c *fiber.Ctx) error {
 			"message": "Unable to connect to database",
 		})
 	}
+
 	var res []models.Group
 
 	for _, group := range groups {
+		users, err := group.Ref.Collection("members").Documents(context.Background()).GetAll()
+		if err != nil {
+			fmt.Println(err.Error())
+			return c.Status(200).JSON(fiber.Map{
+				"ok":      false,
+				"message": "Unable to connect to database",
+			})
+		}
+		var members []models.User
+		for _, u := range users {
+			user, err := db.Collection("users").Doc(u.Ref.ID).Get(context.Background())
+			if err != nil {
+				fmt.Println(err.Error())
+				return c.Status(200).JSON(fiber.Map{
+					"ok":      false,
+					"message": "Unable to connect to database",
+				})
+			}
+			member := models.User{}
+			member = member.Create(user)
+			members = append(members, member)
+		}
 		model := models.Group{
 			Uid:        group.Data()["uid"].(string),
 			GroupName:  group.Data()["groupName"].(string),
-			Pics:       group.Data()["pics"].([]string),
+			Pics:       group.Data()["pics"].([]interface{}),
 			CreateTime: group.CreateTime,
 			Bio:        group.Data()["bio"].(string),
+			Members:    members,
 		}
 		res = append(res, model)
 	}
 	return c.JSON(fiber.Map{
 		"ok":      true,
 		"message": "Fetch Groups successfully",
-		"data":    res,
+		"data": fiber.Map{
+			"groups": res,
+		},
 	})
 }
 
 func CreateGroup(c *fiber.Ctx) error {
 	user := c.Locals("user").(models.UserCtx)
 
-	input := new(dto.CreateGroupIput)
+	input := new(dto.CreateGroupInput)
 	if err := c.BodyParser(input); err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"ok":      false,

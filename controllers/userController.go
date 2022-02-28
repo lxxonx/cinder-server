@@ -13,11 +13,12 @@ import (
 	"log"
 
 	firebase "firebase.google.com/go/v4"
-	"firebase.google.com/go/v4/auth"
 	"github.com/anthonynsimon/bild/blur"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/lxxonx/cinder-server/config"
 	"github.com/lxxonx/cinder-server/dto"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func SignUpUser(c *fiber.Ctx) error {
@@ -28,61 +29,31 @@ func SignUpUser(c *fiber.Ctx) error {
 			"message": "Unable to parse request body",
 		})
 	}
-
-	firebaseApp := c.Locals("firebase").(*firebase.App)
-	authClient, err := firebaseApp.Auth(context.Background())
+	password, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"ok":      false,
-			"message": "Unable to connect to auth",
+			"message": "Unable to parse request body",
 		})
 	}
 
-	params := (&auth.UserToCreate{}).
-		Email(input.Email).
-		EmailVerified(false).
-		Password(input.Password).
-		DisplayName(input.Username).
-		Disabled(false)
-	user, err := authClient.CreateUser(context.Background(), params)
-	if err != nil {
-		fmt.Print(err)
-
-		return c.Status(500).JSON(fiber.Map{
-			"ok":      false,
-			"message": "Fail to create user",
-		})
-	}
-
-	db, err := firebaseApp.Firestore(context.Background())
+	_, err = config.DB.User. // UserClient.
+					Create(). // User create builder.
+					SetUsername(input.Username).
+					SetPassword(password).
+					SetBio("").
+					SetUni(input.Uni).
+					SetDep(input.Dep).
+					Save(c.Context()) // Create and return.
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"ok":      false,
-			"message": "Unable to connect to database",
+			"message": "Unable to parse request body",
 		})
 	}
-
-	_, err = db.Collection("users").Doc(user.UID).Set(context.Background(), map[string]interface{}{
-		"uid":      user.UID,
-		"username": input.Username,
-		"email":    input.Email,
-		"password": input.Password,
-		"avatar":   "",
-		"dep":      input.Dep,
-		"uni":      input.Uni,
-		"bio":      "",
-	})
-	if err != nil {
-		fmt.Print(err)
-		return c.Status(500).JSON(fiber.Map{
-			"ok":      false,
-			"message": "Fail to create user",
-		})
-	}
-
-	return c.JSON(fiber.Map{
+	return c.Status(200).JSON(fiber.Map{
 		"ok":      true,
-		"message": "Create user successfully",
+		"message": "success",
 	})
 }
 

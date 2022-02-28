@@ -5,9 +5,13 @@ type GetGroupsInput struct {
 	Cursor string `json:"cursor"`
 }
 
-type CreateGroupIput struct {
+type CreateGroupInput struct {
 	GroupName string   `json:"groupName"`
 	Friends   []string `json:"friends"`
 	Pics      []string `json:"pics"`
 	Bio       string   `json:"bio"`
+}
+
+type LikeGroupInput struct {
+	GroupName string `json:"groupName"`
 }
