@@ -3,7 +3,6 @@
 package ent
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -28,8 +27,6 @@ type User struct {
 	Dep string `json:"dep,omitempty"`
 	// Bio holds the value of the "bio" field.
 	Bio string `json:"bio,omitempty"`
-	// Pics holds the value of the "pics" field.
-	Pics []string `json:"pics,omitempty"`
 	// GroupID holds the value of the "group_id" field.
 	GroupID string `json:"group_id,omitempty"`
 	// CreatedAt holds the value of the "createdAt" field.
@@ -57,9 +54,11 @@ type UserEdges struct {
 	Chatroom []*ChatRoom `json:"chatroom,omitempty"`
 	// Message holds the value of the message edge.
 	Message []*ChatMessage `json:"message,omitempty"`
+	// Pics holds the value of the pics edge.
+	Pics []*Pic `json:"pics,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [6]bool
+	loadedTypes [7]bool
 }
 
 // FriendsOrErr returns the Friends value or an error if the edge
@@ -121,12 +120,21 @@ func (e UserEdges) MessageOrErr() ([]*ChatMessage, error) {
 	return nil, &NotLoadedError{edge: "message"}
 }
 
+// PicsOrErr returns the Pics value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) PicsOrErr() ([]*Pic, error) {
+	if e.loadedTypes[6] {
+		return e.Pics, nil
+	}
+	return nil, &NotLoadedError{edge: "pics"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*User) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldPassword, user.FieldPics:
+		case user.FieldPassword:
 			values[i] = new([]byte)
 		case user.FieldID, user.FieldUsername, user.FieldUni, user.FieldDep, user.FieldBio, user.FieldGroupID:
 			values[i] = new(sql.NullString)
@@ -182,14 +190,6 @@ func (u *User) assignValues(columns []string, values []interface{}) error {
 				return fmt.Errorf("unexpected type %T for field bio", values[i])
 			} else if value.Valid {
 				u.Bio = value.String
-			}
-		case user.FieldPics:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field pics", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &u.Pics); err != nil {
-					return fmt.Errorf("unmarshal field pics: %w", err)
-				}
 			}
 		case user.FieldGroupID:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -250,6 +250,11 @@ func (u *User) QueryMessage() *ChatMessageQuery {
 	return (&UserClient{config: u.config}).QueryMessage(u)
 }
 
+// QueryPics queries the "pics" edge of the User entity.
+func (u *User) QueryPics() *PicQuery {
+	return (&UserClient{config: u.config}).QueryPics(u)
+}
+
 // Update returns a builder for updating this User.
 // Note that you need to call User.Unwrap() before calling this method if this User
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -282,8 +287,6 @@ func (u *User) String() string {
 	builder.WriteString(u.Dep)
 	builder.WriteString(", bio=")
 	builder.WriteString(u.Bio)
-	builder.WriteString(", pics=")
-	builder.WriteString(fmt.Sprintf("%v", u.Pics))
 	builder.WriteString(", group_id=")
 	builder.WriteString(u.GroupID)
 	builder.WriteString(", createdAt=")

@@ -18,6 +18,8 @@ type Tx struct {
 	ChatRoom *ChatRoomClient
 	// Group is the client for interacting with the Group builders.
 	Group *GroupClient
+	// Pic is the client for interacting with the Pic builders.
+	Pic *PicClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -158,6 +160,7 @@ func (tx *Tx) init() {
 	tx.ChatMessage = NewChatMessageClient(tx.config)
 	tx.ChatRoom = NewChatRoomClient(tx.config)
 	tx.Group = NewGroupClient(tx.config)
+	tx.Pic = NewPicClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 

@@ -21,8 +21,6 @@ const (
 	FieldDep = "dep"
 	// FieldBio holds the string denoting the bio field in the database.
 	FieldBio = "bio"
-	// FieldPics holds the string denoting the pics field in the database.
-	FieldPics = "pics"
 	// FieldGroupID holds the string denoting the group_id field in the database.
 	FieldGroupID = "group_id"
 	// FieldCreatedAt holds the string denoting the createdat field in the database.
@@ -43,6 +41,8 @@ const (
 	EdgeChatroom = "chatroom"
 	// EdgeMessage holds the string denoting the message edge name in mutations.
 	EdgeMessage = "message"
+	// EdgePics holds the string denoting the pics edge name in mutations.
+	EdgePics = "pics"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// FriendsTable is the table that holds the friends relation/edge. The primary key declared below.
@@ -76,6 +76,13 @@ const (
 	MessageInverseTable = "chat_messages"
 	// MessageColumn is the table column denoting the message relation/edge.
 	MessageColumn = "user_id"
+	// PicsTable is the table that holds the pics relation/edge.
+	PicsTable = "pics"
+	// PicsInverseTable is the table name for the Pic entity.
+	// It exists in this package in order to avoid circular dependency with the "pic" package.
+	PicsInverseTable = "pics"
+	// PicsColumn is the table column denoting the pics relation/edge.
+	PicsColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -86,7 +93,6 @@ var Columns = []string{
 	FieldUni,
 	FieldDep,
 	FieldBio,
-	FieldPics,
 	FieldGroupID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
@@ -125,10 +131,6 @@ var (
 	UniValidator func(string) error
 	// DepValidator is a validator for the "dep" field. It is called by the builders before save.
 	DepValidator func(string) error
-	// BioValidator is a validator for the "bio" field. It is called by the builders before save.
-	BioValidator func(string) error
-	// DefaultPics holds the default value on creation for the "pics" field.
-	DefaultPics []string
 	// DefaultCreatedAt holds the default value on creation for the "createdAt" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updatedAt" field.

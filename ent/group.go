@@ -3,7 +3,6 @@
 package ent
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -21,8 +20,6 @@ type Group struct {
 	Groupname string `json:"groupname,omitempty"`
 	// Bio holds the value of the "bio" field.
 	Bio string `json:"bio,omitempty"`
-	// Pics holds the value of the "pics" field.
-	Pics []string `json:"pics,omitempty"`
 	// CreatedAt holds the value of the "createdAt" field.
 	CreatedAt time.Time `json:"createdAt,omitempty"`
 	// UpdatedAt holds the value of the "updatedAt" field.
@@ -46,9 +43,11 @@ type GroupEdges struct {
 	LikeFromGroup []*Group `json:"like_from_group,omitempty"`
 	// LikeTo holds the value of the like_to edge.
 	LikeTo []*Group `json:"like_to,omitempty"`
+	// Pics holds the value of the pics edge.
+	Pics []*Pic `json:"pics,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [5]bool
+	loadedTypes [6]bool
 }
 
 // MembersOrErr returns the Members value or an error if the edge
@@ -96,13 +95,20 @@ func (e GroupEdges) LikeToOrErr() ([]*Group, error) {
 	return nil, &NotLoadedError{edge: "like_to"}
 }
 
+// PicsOrErr returns the Pics value or an error if the edge
+// was not loaded in eager-loading.
+func (e GroupEdges) PicsOrErr() ([]*Pic, error) {
+	if e.loadedTypes[5] {
+		return e.Pics, nil
+	}
+	return nil, &NotLoadedError{edge: "pics"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Group) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case group.FieldPics:
-			values[i] = new([]byte)
 		case group.FieldID, group.FieldGroupname, group.FieldBio:
 			values[i] = new(sql.NullString)
 		case group.FieldCreatedAt, group.FieldUpdatedAt, group.FieldReadAt:
@@ -139,14 +145,6 @@ func (gr *Group) assignValues(columns []string, values []interface{}) error {
 				return fmt.Errorf("unexpected type %T for field bio", values[i])
 			} else if value.Valid {
 				gr.Bio = value.String
-			}
-		case group.FieldPics:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field pics", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &gr.Pics); err != nil {
-					return fmt.Errorf("unmarshal field pics: %w", err)
-				}
 			}
 		case group.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -196,6 +194,11 @@ func (gr *Group) QueryLikeTo() *GroupQuery {
 	return (&GroupClient{config: gr.config}).QueryLikeTo(gr)
 }
 
+// QueryPics queries the "pics" edge of the Group entity.
+func (gr *Group) QueryPics() *PicQuery {
+	return (&GroupClient{config: gr.config}).QueryPics(gr)
+}
+
 // Update returns a builder for updating this Group.
 // Note that you need to call Group.Unwrap() before calling this method if this Group
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -223,8 +226,6 @@ func (gr *Group) String() string {
 	builder.WriteString(gr.Groupname)
 	builder.WriteString(", bio=")
 	builder.WriteString(gr.Bio)
-	builder.WriteString(", pics=")
-	builder.WriteString(fmt.Sprintf("%v", gr.Pics))
 	builder.WriteString(", createdAt=")
 	builder.WriteString(gr.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", updatedAt=")

@@ -12,6 +12,7 @@ import (
 	"github.com/lxxonx/cinder-server/ent/chatmessage"
 	"github.com/lxxonx/cinder-server/ent/chatroom"
 	"github.com/lxxonx/cinder-server/ent/group"
+	"github.com/lxxonx/cinder-server/ent/pic"
 	"github.com/lxxonx/cinder-server/ent/predicate"
 	"github.com/lxxonx/cinder-server/ent/user"
 
@@ -30,6 +31,7 @@ const (
 	TypeChatMessage = "ChatMessage"
 	TypeChatRoom    = "ChatRoom"
 	TypeGroup       = "Group"
+	TypePic         = "Pic"
 	TypeUser        = "User"
 )
 
@@ -1316,7 +1318,6 @@ type GroupMutation struct {
 	id                     *string
 	groupname              *string
 	bio                    *string
-	pics                   *[]string
 	createdAt              *time.Time
 	updatedAt              *time.Time
 	readAt                 *time.Time
@@ -1336,6 +1337,9 @@ type GroupMutation struct {
 	like_to                map[string]struct{}
 	removedlike_to         map[string]struct{}
 	clearedlike_to         bool
+	pics                   map[int]struct{}
+	removedpics            map[int]struct{}
+	clearedpics            bool
 	done                   bool
 	oldValue               func(context.Context) (*Group, error)
 	predicates             []predicate.Group
@@ -1515,42 +1519,6 @@ func (m *GroupMutation) OldBio(ctx context.Context) (v string, err error) {
 // ResetBio resets all changes to the "bio" field.
 func (m *GroupMutation) ResetBio() {
 	m.bio = nil
-}
-
-// SetPics sets the "pics" field.
-func (m *GroupMutation) SetPics(s []string) {
-	m.pics = &s
-}
-
-// Pics returns the value of the "pics" field in the mutation.
-func (m *GroupMutation) Pics() (r []string, exists bool) {
-	v := m.pics
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldPics returns the old "pics" field's value of the Group entity.
-// If the Group object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GroupMutation) OldPics(ctx context.Context) (v []string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldPics is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldPics requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldPics: %w", err)
-	}
-	return oldValue.Pics, nil
-}
-
-// ResetPics resets all changes to the "pics" field.
-func (m *GroupMutation) ResetPics() {
-	m.pics = nil
 }
 
 // SetCreatedAt sets the "createdAt" field.
@@ -1931,6 +1899,60 @@ func (m *GroupMutation) ResetLikeTo() {
 	m.removedlike_to = nil
 }
 
+// AddPicIDs adds the "pics" edge to the Pic entity by ids.
+func (m *GroupMutation) AddPicIDs(ids ...int) {
+	if m.pics == nil {
+		m.pics = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.pics[ids[i]] = struct{}{}
+	}
+}
+
+// ClearPics clears the "pics" edge to the Pic entity.
+func (m *GroupMutation) ClearPics() {
+	m.clearedpics = true
+}
+
+// PicsCleared reports if the "pics" edge to the Pic entity was cleared.
+func (m *GroupMutation) PicsCleared() bool {
+	return m.clearedpics
+}
+
+// RemovePicIDs removes the "pics" edge to the Pic entity by IDs.
+func (m *GroupMutation) RemovePicIDs(ids ...int) {
+	if m.removedpics == nil {
+		m.removedpics = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.pics, ids[i])
+		m.removedpics[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedPics returns the removed IDs of the "pics" edge to the Pic entity.
+func (m *GroupMutation) RemovedPicsIDs() (ids []int) {
+	for id := range m.removedpics {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// PicsIDs returns the "pics" edge IDs in the mutation.
+func (m *GroupMutation) PicsIDs() (ids []int) {
+	for id := range m.pics {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetPics resets all changes to the "pics" edge.
+func (m *GroupMutation) ResetPics() {
+	m.pics = nil
+	m.clearedpics = false
+	m.removedpics = nil
+}
+
 // Where appends a list predicates to the GroupMutation builder.
 func (m *GroupMutation) Where(ps ...predicate.Group) {
 	m.predicates = append(m.predicates, ps...)
@@ -1950,15 +1972,12 @@ func (m *GroupMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GroupMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 5)
 	if m.groupname != nil {
 		fields = append(fields, group.FieldGroupname)
 	}
 	if m.bio != nil {
 		fields = append(fields, group.FieldBio)
-	}
-	if m.pics != nil {
-		fields = append(fields, group.FieldPics)
 	}
 	if m.createdAt != nil {
 		fields = append(fields, group.FieldCreatedAt)
@@ -1981,8 +2000,6 @@ func (m *GroupMutation) Field(name string) (ent.Value, bool) {
 		return m.Groupname()
 	case group.FieldBio:
 		return m.Bio()
-	case group.FieldPics:
-		return m.Pics()
 	case group.FieldCreatedAt:
 		return m.CreatedAt()
 	case group.FieldUpdatedAt:
@@ -2002,8 +2019,6 @@ func (m *GroupMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldGroupname(ctx)
 	case group.FieldBio:
 		return m.OldBio(ctx)
-	case group.FieldPics:
-		return m.OldPics(ctx)
 	case group.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case group.FieldUpdatedAt:
@@ -2032,13 +2047,6 @@ func (m *GroupMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetBio(v)
-		return nil
-	case group.FieldPics:
-		v, ok := value.([]string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetPics(v)
 		return nil
 	case group.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -2116,9 +2124,6 @@ func (m *GroupMutation) ResetField(name string) error {
 	case group.FieldBio:
 		m.ResetBio()
 		return nil
-	case group.FieldPics:
-		m.ResetPics()
-		return nil
 	case group.FieldCreatedAt:
 		m.ResetCreatedAt()
 		return nil
@@ -2134,7 +2139,7 @@ func (m *GroupMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *GroupMutation) AddedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 6)
 	if m.members != nil {
 		edges = append(edges, group.EdgeMembers)
 	}
@@ -2149,6 +2154,9 @@ func (m *GroupMutation) AddedEdges() []string {
 	}
 	if m.like_to != nil {
 		edges = append(edges, group.EdgeLikeTo)
+	}
+	if m.pics != nil {
+		edges = append(edges, group.EdgePics)
 	}
 	return edges
 }
@@ -2187,13 +2195,19 @@ func (m *GroupMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case group.EdgePics:
+		ids := make([]ent.Value, 0, len(m.pics))
+		for id := range m.pics {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *GroupMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 6)
 	if m.removedmembers != nil {
 		edges = append(edges, group.EdgeMembers)
 	}
@@ -2208,6 +2222,9 @@ func (m *GroupMutation) RemovedEdges() []string {
 	}
 	if m.removedlike_to != nil {
 		edges = append(edges, group.EdgeLikeTo)
+	}
+	if m.removedpics != nil {
+		edges = append(edges, group.EdgePics)
 	}
 	return edges
 }
@@ -2246,13 +2263,19 @@ func (m *GroupMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case group.EdgePics:
+		ids := make([]ent.Value, 0, len(m.removedpics))
+		for id := range m.removedpics {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *GroupMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 6)
 	if m.clearedmembers {
 		edges = append(edges, group.EdgeMembers)
 	}
@@ -2267,6 +2290,9 @@ func (m *GroupMutation) ClearedEdges() []string {
 	}
 	if m.clearedlike_to {
 		edges = append(edges, group.EdgeLikeTo)
+	}
+	if m.clearedpics {
+		edges = append(edges, group.EdgePics)
 	}
 	return edges
 }
@@ -2285,6 +2311,8 @@ func (m *GroupMutation) EdgeCleared(name string) bool {
 		return m.clearedlike_from_group
 	case group.EdgeLikeTo:
 		return m.clearedlike_to
+	case group.EdgePics:
+		return m.clearedpics
 	}
 	return false
 }
@@ -2316,8 +2344,733 @@ func (m *GroupMutation) ResetEdge(name string) error {
 	case group.EdgeLikeTo:
 		m.ResetLikeTo()
 		return nil
+	case group.EdgePics:
+		m.ResetPics()
+		return nil
 	}
 	return fmt.Errorf("unknown Group edge %s", name)
+}
+
+// PicMutation represents an operation that mutates the Pic nodes in the graph.
+type PicMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	adress        *string
+	createdAt     *time.Time
+	updatedAt     *time.Time
+	readAt        *time.Time
+	clearedFields map[string]struct{}
+	user          *string
+	cleareduser   bool
+	group         *string
+	clearedgroup  bool
+	done          bool
+	oldValue      func(context.Context) (*Pic, error)
+	predicates    []predicate.Pic
+}
+
+var _ ent.Mutation = (*PicMutation)(nil)
+
+// picOption allows management of the mutation configuration using functional options.
+type picOption func(*PicMutation)
+
+// newPicMutation creates new mutation for the Pic entity.
+func newPicMutation(c config, op Op, opts ...picOption) *PicMutation {
+	m := &PicMutation{
+		config:        c,
+		op:            op,
+		typ:           TypePic,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withPicID sets the ID field of the mutation.
+func withPicID(id int) picOption {
+	return func(m *PicMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Pic
+		)
+		m.oldValue = func(ctx context.Context) (*Pic, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Pic.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withPic sets the old Pic of the mutation.
+func withPic(node *Pic) picOption {
+	return func(m *PicMutation) {
+		m.oldValue = func(context.Context) (*Pic, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m PicMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m PicMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *PicMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *PicMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Pic.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetUserID sets the "user_id" field.
+func (m *PicMutation) SetUserID(s string) {
+	m.user = &s
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *PicMutation) UserID() (r string, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the Pic entity.
+// If the Pic object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PicMutation) OldUserID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ClearUserID clears the value of the "user_id" field.
+func (m *PicMutation) ClearUserID() {
+	m.user = nil
+	m.clearedFields[pic.FieldUserID] = struct{}{}
+}
+
+// UserIDCleared returns if the "user_id" field was cleared in this mutation.
+func (m *PicMutation) UserIDCleared() bool {
+	_, ok := m.clearedFields[pic.FieldUserID]
+	return ok
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *PicMutation) ResetUserID() {
+	m.user = nil
+	delete(m.clearedFields, pic.FieldUserID)
+}
+
+// SetGroupID sets the "group_id" field.
+func (m *PicMutation) SetGroupID(s string) {
+	m.group = &s
+}
+
+// GroupID returns the value of the "group_id" field in the mutation.
+func (m *PicMutation) GroupID() (r string, exists bool) {
+	v := m.group
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGroupID returns the old "group_id" field's value of the Pic entity.
+// If the Pic object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PicMutation) OldGroupID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGroupID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGroupID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGroupID: %w", err)
+	}
+	return oldValue.GroupID, nil
+}
+
+// ClearGroupID clears the value of the "group_id" field.
+func (m *PicMutation) ClearGroupID() {
+	m.group = nil
+	m.clearedFields[pic.FieldGroupID] = struct{}{}
+}
+
+// GroupIDCleared returns if the "group_id" field was cleared in this mutation.
+func (m *PicMutation) GroupIDCleared() bool {
+	_, ok := m.clearedFields[pic.FieldGroupID]
+	return ok
+}
+
+// ResetGroupID resets all changes to the "group_id" field.
+func (m *PicMutation) ResetGroupID() {
+	m.group = nil
+	delete(m.clearedFields, pic.FieldGroupID)
+}
+
+// SetAdress sets the "adress" field.
+func (m *PicMutation) SetAdress(s string) {
+	m.adress = &s
+}
+
+// Adress returns the value of the "adress" field in the mutation.
+func (m *PicMutation) Adress() (r string, exists bool) {
+	v := m.adress
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAdress returns the old "adress" field's value of the Pic entity.
+// If the Pic object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PicMutation) OldAdress(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAdress is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAdress requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAdress: %w", err)
+	}
+	return oldValue.Adress, nil
+}
+
+// ResetAdress resets all changes to the "adress" field.
+func (m *PicMutation) ResetAdress() {
+	m.adress = nil
+}
+
+// SetCreatedAt sets the "createdAt" field.
+func (m *PicMutation) SetCreatedAt(t time.Time) {
+	m.createdAt = &t
+}
+
+// CreatedAt returns the value of the "createdAt" field in the mutation.
+func (m *PicMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.createdAt
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "createdAt" field's value of the Pic entity.
+// If the Pic object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PicMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "createdAt" field.
+func (m *PicMutation) ResetCreatedAt() {
+	m.createdAt = nil
+}
+
+// SetUpdatedAt sets the "updatedAt" field.
+func (m *PicMutation) SetUpdatedAt(t time.Time) {
+	m.updatedAt = &t
+}
+
+// UpdatedAt returns the value of the "updatedAt" field in the mutation.
+func (m *PicMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updatedAt
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updatedAt" field's value of the Pic entity.
+// If the Pic object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PicMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updatedAt" field.
+func (m *PicMutation) ResetUpdatedAt() {
+	m.updatedAt = nil
+}
+
+// SetReadAt sets the "readAt" field.
+func (m *PicMutation) SetReadAt(t time.Time) {
+	m.readAt = &t
+}
+
+// ReadAt returns the value of the "readAt" field in the mutation.
+func (m *PicMutation) ReadAt() (r time.Time, exists bool) {
+	v := m.readAt
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReadAt returns the old "readAt" field's value of the Pic entity.
+// If the Pic object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PicMutation) OldReadAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReadAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReadAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReadAt: %w", err)
+	}
+	return oldValue.ReadAt, nil
+}
+
+// ResetReadAt resets all changes to the "readAt" field.
+func (m *PicMutation) ResetReadAt() {
+	m.readAt = nil
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (m *PicMutation) ClearUser() {
+	m.cleareduser = true
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *PicMutation) UserCleared() bool {
+	return m.UserIDCleared() || m.cleareduser
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *PicMutation) UserIDs() (ids []string) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *PicMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
+// ClearGroup clears the "group" edge to the Group entity.
+func (m *PicMutation) ClearGroup() {
+	m.clearedgroup = true
+}
+
+// GroupCleared reports if the "group" edge to the Group entity was cleared.
+func (m *PicMutation) GroupCleared() bool {
+	return m.GroupIDCleared() || m.clearedgroup
+}
+
+// GroupIDs returns the "group" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// GroupID instead. It exists only for internal usage by the builders.
+func (m *PicMutation) GroupIDs() (ids []string) {
+	if id := m.group; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetGroup resets all changes to the "group" edge.
+func (m *PicMutation) ResetGroup() {
+	m.group = nil
+	m.clearedgroup = false
+}
+
+// Where appends a list predicates to the PicMutation builder.
+func (m *PicMutation) Where(ps ...predicate.Pic) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// Op returns the operation name.
+func (m *PicMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (Pic).
+func (m *PicMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *PicMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.user != nil {
+		fields = append(fields, pic.FieldUserID)
+	}
+	if m.group != nil {
+		fields = append(fields, pic.FieldGroupID)
+	}
+	if m.adress != nil {
+		fields = append(fields, pic.FieldAdress)
+	}
+	if m.createdAt != nil {
+		fields = append(fields, pic.FieldCreatedAt)
+	}
+	if m.updatedAt != nil {
+		fields = append(fields, pic.FieldUpdatedAt)
+	}
+	if m.readAt != nil {
+		fields = append(fields, pic.FieldReadAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *PicMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case pic.FieldUserID:
+		return m.UserID()
+	case pic.FieldGroupID:
+		return m.GroupID()
+	case pic.FieldAdress:
+		return m.Adress()
+	case pic.FieldCreatedAt:
+		return m.CreatedAt()
+	case pic.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case pic.FieldReadAt:
+		return m.ReadAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *PicMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case pic.FieldUserID:
+		return m.OldUserID(ctx)
+	case pic.FieldGroupID:
+		return m.OldGroupID(ctx)
+	case pic.FieldAdress:
+		return m.OldAdress(ctx)
+	case pic.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case pic.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case pic.FieldReadAt:
+		return m.OldReadAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown Pic field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *PicMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case pic.FieldUserID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case pic.FieldGroupID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGroupID(v)
+		return nil
+	case pic.FieldAdress:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAdress(v)
+		return nil
+	case pic.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case pic.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case pic.FieldReadAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReadAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Pic field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *PicMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *PicMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *PicMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Pic numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *PicMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(pic.FieldUserID) {
+		fields = append(fields, pic.FieldUserID)
+	}
+	if m.FieldCleared(pic.FieldGroupID) {
+		fields = append(fields, pic.FieldGroupID)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *PicMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *PicMutation) ClearField(name string) error {
+	switch name {
+	case pic.FieldUserID:
+		m.ClearUserID()
+		return nil
+	case pic.FieldGroupID:
+		m.ClearGroupID()
+		return nil
+	}
+	return fmt.Errorf("unknown Pic nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *PicMutation) ResetField(name string) error {
+	switch name {
+	case pic.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case pic.FieldGroupID:
+		m.ResetGroupID()
+		return nil
+	case pic.FieldAdress:
+		m.ResetAdress()
+		return nil
+	case pic.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case pic.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case pic.FieldReadAt:
+		m.ResetReadAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Pic field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *PicMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.user != nil {
+		edges = append(edges, pic.EdgeUser)
+	}
+	if m.group != nil {
+		edges = append(edges, pic.EdgeGroup)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *PicMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case pic.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	case pic.EdgeGroup:
+		if id := m.group; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *PicMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *PicMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *PicMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.cleareduser {
+		edges = append(edges, pic.EdgeUser)
+	}
+	if m.clearedgroup {
+		edges = append(edges, pic.EdgeGroup)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *PicMutation) EdgeCleared(name string) bool {
+	switch name {
+	case pic.EdgeUser:
+		return m.cleareduser
+	case pic.EdgeGroup:
+		return m.clearedgroup
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *PicMutation) ClearEdge(name string) error {
+	switch name {
+	case pic.EdgeUser:
+		m.ClearUser()
+		return nil
+	case pic.EdgeGroup:
+		m.ClearGroup()
+		return nil
+	}
+	return fmt.Errorf("unknown Pic unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *PicMutation) ResetEdge(name string) error {
+	switch name {
+	case pic.EdgeUser:
+		m.ResetUser()
+		return nil
+	case pic.EdgeGroup:
+		m.ResetGroup()
+		return nil
+	}
+	return fmt.Errorf("unknown Pic edge %s", name)
 }
 
 // UserMutation represents an operation that mutates the User nodes in the graph.
@@ -2331,7 +3084,6 @@ type UserMutation struct {
 	uni             *string
 	dep             *string
 	bio             *string
-	pics            *[]string
 	createdAt       *time.Time
 	updatedAt       *time.Time
 	readAt          *time.Time
@@ -2353,6 +3105,9 @@ type UserMutation struct {
 	message         map[string]struct{}
 	removedmessage  map[string]struct{}
 	clearedmessage  bool
+	pics            map[int]struct{}
+	removedpics     map[int]struct{}
+	clearedpics     bool
 	done            bool
 	oldValue        func(context.Context) (*User, error)
 	predicates      []predicate.User
@@ -2637,45 +3392,22 @@ func (m *UserMutation) OldBio(ctx context.Context) (v string, err error) {
 	return oldValue.Bio, nil
 }
 
+// ClearBio clears the value of the "bio" field.
+func (m *UserMutation) ClearBio() {
+	m.bio = nil
+	m.clearedFields[user.FieldBio] = struct{}{}
+}
+
+// BioCleared returns if the "bio" field was cleared in this mutation.
+func (m *UserMutation) BioCleared() bool {
+	_, ok := m.clearedFields[user.FieldBio]
+	return ok
+}
+
 // ResetBio resets all changes to the "bio" field.
 func (m *UserMutation) ResetBio() {
 	m.bio = nil
-}
-
-// SetPics sets the "pics" field.
-func (m *UserMutation) SetPics(s []string) {
-	m.pics = &s
-}
-
-// Pics returns the value of the "pics" field in the mutation.
-func (m *UserMutation) Pics() (r []string, exists bool) {
-	v := m.pics
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldPics returns the old "pics" field's value of the User entity.
-// If the User object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldPics(ctx context.Context) (v []string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldPics is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldPics requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldPics: %w", err)
-	}
-	return oldValue.Pics, nil
-}
-
-// ResetPics resets all changes to the "pics" field.
-func (m *UserMutation) ResetPics() {
-	m.pics = nil
+	delete(m.clearedFields, user.FieldBio)
 }
 
 // SetGroupID sets the "group_id" field.
@@ -3131,6 +3863,60 @@ func (m *UserMutation) ResetMessage() {
 	m.removedmessage = nil
 }
 
+// AddPicIDs adds the "pics" edge to the Pic entity by ids.
+func (m *UserMutation) AddPicIDs(ids ...int) {
+	if m.pics == nil {
+		m.pics = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.pics[ids[i]] = struct{}{}
+	}
+}
+
+// ClearPics clears the "pics" edge to the Pic entity.
+func (m *UserMutation) ClearPics() {
+	m.clearedpics = true
+}
+
+// PicsCleared reports if the "pics" edge to the Pic entity was cleared.
+func (m *UserMutation) PicsCleared() bool {
+	return m.clearedpics
+}
+
+// RemovePicIDs removes the "pics" edge to the Pic entity by IDs.
+func (m *UserMutation) RemovePicIDs(ids ...int) {
+	if m.removedpics == nil {
+		m.removedpics = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.pics, ids[i])
+		m.removedpics[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedPics returns the removed IDs of the "pics" edge to the Pic entity.
+func (m *UserMutation) RemovedPicsIDs() (ids []int) {
+	for id := range m.removedpics {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// PicsIDs returns the "pics" edge IDs in the mutation.
+func (m *UserMutation) PicsIDs() (ids []int) {
+	for id := range m.pics {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetPics resets all changes to the "pics" edge.
+func (m *UserMutation) ResetPics() {
+	m.pics = nil
+	m.clearedpics = false
+	m.removedpics = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -3150,7 +3936,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 9)
 	if m.username != nil {
 		fields = append(fields, user.FieldUsername)
 	}
@@ -3165,9 +3951,6 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.bio != nil {
 		fields = append(fields, user.FieldBio)
-	}
-	if m.pics != nil {
-		fields = append(fields, user.FieldPics)
 	}
 	if m.group != nil {
 		fields = append(fields, user.FieldGroupID)
@@ -3199,8 +3982,6 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.Dep()
 	case user.FieldBio:
 		return m.Bio()
-	case user.FieldPics:
-		return m.Pics()
 	case user.FieldGroupID:
 		return m.GroupID()
 	case user.FieldCreatedAt:
@@ -3228,8 +4009,6 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldDep(ctx)
 	case user.FieldBio:
 		return m.OldBio(ctx)
-	case user.FieldPics:
-		return m.OldPics(ctx)
 	case user.FieldGroupID:
 		return m.OldGroupID(ctx)
 	case user.FieldCreatedAt:
@@ -3281,13 +4060,6 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetBio(v)
-		return nil
-	case user.FieldPics:
-		v, ok := value.([]string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetPics(v)
 		return nil
 	case user.FieldGroupID:
 		v, ok := value.(string)
@@ -3347,6 +4119,9 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *UserMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(user.FieldBio) {
+		fields = append(fields, user.FieldBio)
+	}
 	if m.FieldCleared(user.FieldGroupID) {
 		fields = append(fields, user.FieldGroupID)
 	}
@@ -3364,6 +4139,9 @@ func (m *UserMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *UserMutation) ClearField(name string) error {
 	switch name {
+	case user.FieldBio:
+		m.ClearBio()
+		return nil
 	case user.FieldGroupID:
 		m.ClearGroupID()
 		return nil
@@ -3390,9 +4168,6 @@ func (m *UserMutation) ResetField(name string) error {
 	case user.FieldBio:
 		m.ResetBio()
 		return nil
-	case user.FieldPics:
-		m.ResetPics()
-		return nil
 	case user.FieldGroupID:
 		m.ResetGroupID()
 		return nil
@@ -3411,7 +4186,7 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 7)
 	if m.friends != nil {
 		edges = append(edges, user.EdgeFriends)
 	}
@@ -3429,6 +4204,9 @@ func (m *UserMutation) AddedEdges() []string {
 	}
 	if m.message != nil {
 		edges = append(edges, user.EdgeMessage)
+	}
+	if m.pics != nil {
+		edges = append(edges, user.EdgePics)
 	}
 	return edges
 }
@@ -3471,13 +4249,19 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgePics:
+		ids := make([]ent.Value, 0, len(m.pics))
+		for id := range m.pics {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 7)
 	if m.removedfriends != nil {
 		edges = append(edges, user.EdgeFriends)
 	}
@@ -3492,6 +4276,9 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedmessage != nil {
 		edges = append(edges, user.EdgeMessage)
+	}
+	if m.removedpics != nil {
+		edges = append(edges, user.EdgePics)
 	}
 	return edges
 }
@@ -3530,13 +4317,19 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgePics:
+		ids := make([]ent.Value, 0, len(m.removedpics))
+		for id := range m.removedpics {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 7)
 	if m.clearedfriends {
 		edges = append(edges, user.EdgeFriends)
 	}
@@ -3554,6 +4347,9 @@ func (m *UserMutation) ClearedEdges() []string {
 	}
 	if m.clearedmessage {
 		edges = append(edges, user.EdgeMessage)
+	}
+	if m.clearedpics {
+		edges = append(edges, user.EdgePics)
 	}
 	return edges
 }
@@ -3574,6 +4370,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedchatroom
 	case user.EdgeMessage:
 		return m.clearedmessage
+	case user.EdgePics:
+		return m.clearedpics
 	}
 	return false
 }
@@ -3610,6 +4408,9 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgeMessage:
 		m.ResetMessage()
+		return nil
+	case user.EdgePics:
+		m.ResetPics()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

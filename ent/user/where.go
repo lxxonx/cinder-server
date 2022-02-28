@@ -662,6 +662,20 @@ func BioHasSuffix(v string) predicate.User {
 	})
 }
 
+// BioIsNil applies the IsNil predicate on the "bio" field.
+func BioIsNil() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldBio)))
+	})
+}
+
+// BioNotNil applies the NotNil predicate on the "bio" field.
+func BioNotNil() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldBio)))
+	})
+}
+
 // BioEqualFold applies the EqualFold predicate on the "bio" field.
 func BioEqualFold(v string) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
@@ -1188,6 +1202,34 @@ func HasMessageWith(preds ...predicate.ChatMessage) predicate.User {
 			sqlgraph.From(Table, FieldID),
 			sqlgraph.To(MessageInverseTable, FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, MessageTable, MessageColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasPics applies the HasEdge predicate on the "pics" edge.
+func HasPics() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(PicsTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, PicsTable, PicsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPicsWith applies the HasEdge predicate on the "pics" edge with a given conditions (other predicates).
+func HasPicsWith(preds ...predicate.Pic) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(PicsInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, PicsTable, PicsColumn),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

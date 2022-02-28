@@ -55,7 +55,6 @@ var (
 		{Name: "id", Type: field.TypeString, Unique: true},
 		{Name: "groupname", Type: field.TypeString, Default: ""},
 		{Name: "bio", Type: field.TypeString, Default: ""},
-		{Name: "pics", Type: field.TypeJSON},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "read_at", Type: field.TypeTime},
@@ -66,6 +65,36 @@ var (
 		Columns:    GroupsColumns,
 		PrimaryKey: []*schema.Column{GroupsColumns[0]},
 	}
+	// PicsColumns holds the columns for the "pics" table.
+	PicsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "adress", Type: field.TypeString},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "read_at", Type: field.TypeTime},
+		{Name: "group_id", Type: field.TypeString, Nullable: true},
+		{Name: "user_id", Type: field.TypeString, Nullable: true},
+	}
+	// PicsTable holds the schema information for the "pics" table.
+	PicsTable = &schema.Table{
+		Name:       "pics",
+		Columns:    PicsColumns,
+		PrimaryKey: []*schema.Column{PicsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "pics_groups_pics",
+				Columns:    []*schema.Column{PicsColumns[5]},
+				RefColumns: []*schema.Column{GroupsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "pics_users_pics",
+				Columns:    []*schema.Column{PicsColumns[6]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeString, Unique: true},
@@ -73,8 +102,7 @@ var (
 		{Name: "password", Type: field.TypeBytes},
 		{Name: "uni", Type: field.TypeString},
 		{Name: "dep", Type: field.TypeString},
-		{Name: "bio", Type: field.TypeString},
-		{Name: "pics", Type: field.TypeJSON},
+		{Name: "bio", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "read_at", Type: field.TypeTime},
@@ -88,7 +116,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "users_groups_members",
-				Columns:    []*schema.Column{UsersColumns[10]},
+				Columns:    []*schema.Column{UsersColumns[9]},
 				RefColumns: []*schema.Column{GroupsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -224,6 +252,7 @@ var (
 		ChatMessagesTable,
 		ChatRoomsTable,
 		GroupsTable,
+		PicsTable,
 		UsersTable,
 		ChatRoomParticipantsTable,
 		GroupLikeToTable,
@@ -236,6 +265,8 @@ var (
 func init() {
 	ChatMessagesTable.ForeignKeys[0].RefTable = ChatRoomsTable
 	ChatMessagesTable.ForeignKeys[1].RefTable = UsersTable
+	PicsTable.ForeignKeys[0].RefTable = GroupsTable
+	PicsTable.ForeignKeys[1].RefTable = UsersTable
 	UsersTable.ForeignKeys[0].RefTable = GroupsTable
 	ChatRoomParticipantsTable.ForeignKeys[0].RefTable = ChatRoomsTable
 	ChatRoomParticipantsTable.ForeignKeys[1].RefTable = UsersTable

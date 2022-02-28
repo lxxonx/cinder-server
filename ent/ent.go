@@ -11,6 +11,7 @@ import (
 	"github.com/lxxonx/cinder-server/ent/chatmessage"
 	"github.com/lxxonx/cinder-server/ent/chatroom"
 	"github.com/lxxonx/cinder-server/ent/group"
+	"github.com/lxxonx/cinder-server/ent/pic"
 	"github.com/lxxonx/cinder-server/ent/user"
 )
 
@@ -35,6 +36,7 @@ func columnChecker(table string) func(string) error {
 		chatmessage.Table: chatmessage.ValidColumn,
 		chatroom.Table:    chatroom.ValidColumn,
 		group.Table:       group.ValidColumn,
+		pic.Table:         pic.ValidColumn,
 		user.Table:        user.ValidColumn,
 	}
 	check, ok := checks[table]

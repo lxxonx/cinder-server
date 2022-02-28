@@ -12,6 +12,7 @@ import (
 	"github.com/lxxonx/cinder-server/ent/chatmessage"
 	"github.com/lxxonx/cinder-server/ent/chatroom"
 	"github.com/lxxonx/cinder-server/ent/group"
+	"github.com/lxxonx/cinder-server/ent/pic"
 	"github.com/lxxonx/cinder-server/ent/user"
 
 	"entgo.io/ent/dialect"
@@ -30,6 +31,8 @@ type Client struct {
 	ChatRoom *ChatRoomClient
 	// Group is the client for interacting with the Group builders.
 	Group *GroupClient
+	// Pic is the client for interacting with the Pic builders.
+	Pic *PicClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -48,6 +51,7 @@ func (c *Client) init() {
 	c.ChatMessage = NewChatMessageClient(c.config)
 	c.ChatRoom = NewChatRoomClient(c.config)
 	c.Group = NewGroupClient(c.config)
+	c.Pic = NewPicClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -85,6 +89,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ChatMessage: NewChatMessageClient(cfg),
 		ChatRoom:    NewChatRoomClient(cfg),
 		Group:       NewGroupClient(cfg),
+		Pic:         NewPicClient(cfg),
 		User:        NewUserClient(cfg),
 	}, nil
 }
@@ -108,6 +113,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ChatMessage: NewChatMessageClient(cfg),
 		ChatRoom:    NewChatRoomClient(cfg),
 		Group:       NewGroupClient(cfg),
+		Pic:         NewPicClient(cfg),
 		User:        NewUserClient(cfg),
 	}, nil
 }
@@ -141,6 +147,7 @@ func (c *Client) Use(hooks ...Hook) {
 	c.ChatMessage.Use(hooks...)
 	c.ChatRoom.Use(hooks...)
 	c.Group.Use(hooks...)
+	c.Pic.Use(hooks...)
 	c.User.Use(hooks...)
 }
 
@@ -553,9 +560,147 @@ func (c *GroupClient) QueryLikeTo(gr *Group) *GroupQuery {
 	return query
 }
 
+// QueryPics queries the pics edge of a Group.
+func (c *GroupClient) QueryPics(gr *Group) *PicQuery {
+	query := &PicQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := gr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(group.Table, group.FieldID, id),
+			sqlgraph.To(pic.Table, pic.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, group.PicsTable, group.PicsColumn),
+		)
+		fromV = sqlgraph.Neighbors(gr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *GroupClient) Hooks() []Hook {
 	return c.hooks.Group
+}
+
+// PicClient is a client for the Pic schema.
+type PicClient struct {
+	config
+}
+
+// NewPicClient returns a client for the Pic from the given config.
+func NewPicClient(c config) *PicClient {
+	return &PicClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `pic.Hooks(f(g(h())))`.
+func (c *PicClient) Use(hooks ...Hook) {
+	c.hooks.Pic = append(c.hooks.Pic, hooks...)
+}
+
+// Create returns a create builder for Pic.
+func (c *PicClient) Create() *PicCreate {
+	mutation := newPicMutation(c.config, OpCreate)
+	return &PicCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Pic entities.
+func (c *PicClient) CreateBulk(builders ...*PicCreate) *PicCreateBulk {
+	return &PicCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Pic.
+func (c *PicClient) Update() *PicUpdate {
+	mutation := newPicMutation(c.config, OpUpdate)
+	return &PicUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PicClient) UpdateOne(pi *Pic) *PicUpdateOne {
+	mutation := newPicMutation(c.config, OpUpdateOne, withPic(pi))
+	return &PicUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PicClient) UpdateOneID(id int) *PicUpdateOne {
+	mutation := newPicMutation(c.config, OpUpdateOne, withPicID(id))
+	return &PicUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Pic.
+func (c *PicClient) Delete() *PicDelete {
+	mutation := newPicMutation(c.config, OpDelete)
+	return &PicDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *PicClient) DeleteOne(pi *Pic) *PicDeleteOne {
+	return c.DeleteOneID(pi.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *PicClient) DeleteOneID(id int) *PicDeleteOne {
+	builder := c.Delete().Where(pic.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PicDeleteOne{builder}
+}
+
+// Query returns a query builder for Pic.
+func (c *PicClient) Query() *PicQuery {
+	return &PicQuery{
+		config: c.config,
+	}
+}
+
+// Get returns a Pic entity by its id.
+func (c *PicClient) Get(ctx context.Context, id int) (*Pic, error) {
+	return c.Query().Where(pic.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PicClient) GetX(ctx context.Context, id int) *Pic {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a Pic.
+func (c *PicClient) QueryUser(pi *Pic) *UserQuery {
+	query := &UserQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := pi.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(pic.Table, pic.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, pic.UserTable, pic.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(pi.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryGroup queries the group edge of a Pic.
+func (c *PicClient) QueryGroup(pi *Pic) *GroupQuery {
+	query := &GroupQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := pi.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(pic.Table, pic.FieldID, id),
+			sqlgraph.To(group.Table, group.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, pic.GroupTable, pic.GroupColumn),
+		)
+		fromV = sqlgraph.Neighbors(pi.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *PicClient) Hooks() []Hook {
+	return c.hooks.Pic
 }
 
 // UserClient is a client for the User schema.
@@ -732,6 +877,22 @@ func (c *UserClient) QueryMessage(u *User) *ChatMessageQuery {
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(chatmessage.Table, chatmessage.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.MessageTable, user.MessageColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPics queries the pics edge of a User.
+func (c *UserClient) QueryPics(u *User) *PicQuery {
+	query := &PicQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(pic.Table, pic.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.PicsTable, user.PicsColumn),
 		)
 		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
 		return fromV, nil

@@ -718,6 +718,34 @@ func HasLikeToWith(preds ...predicate.Group) predicate.Group {
 	})
 }
 
+// HasPics applies the HasEdge predicate on the "pics" edge.
+func HasPics() predicate.Group {
+	return predicate.Group(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(PicsTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, PicsTable, PicsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPicsWith applies the HasEdge predicate on the "pics" edge with a given conditions (other predicates).
+func HasPicsWith(preds ...predicate.Pic) predicate.Group {
+	return predicate.Group(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(PicsInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, PicsTable, PicsColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Group) predicate.Group {
 	return predicate.Group(func(s *sql.Selector) {

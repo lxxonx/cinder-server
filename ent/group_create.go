@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/lxxonx/cinder-server/ent/group"
+	"github.com/lxxonx/cinder-server/ent/pic"
 	"github.com/lxxonx/cinder-server/ent/user"
 )
 
@@ -46,12 +47,6 @@ func (gc *GroupCreate) SetNillableBio(s *string) *GroupCreate {
 	if s != nil {
 		gc.SetBio(*s)
 	}
-	return gc
-}
-
-// SetPics sets the "pics" field.
-func (gc *GroupCreate) SetPics(s []string) *GroupCreate {
-	gc.mutation.SetPics(s)
 	return gc
 }
 
@@ -178,6 +173,21 @@ func (gc *GroupCreate) AddLikeTo(g ...*Group) *GroupCreate {
 	return gc.AddLikeToIDs(ids...)
 }
 
+// AddPicIDs adds the "pics" edge to the Pic entity by IDs.
+func (gc *GroupCreate) AddPicIDs(ids ...int) *GroupCreate {
+	gc.mutation.AddPicIDs(ids...)
+	return gc
+}
+
+// AddPics adds the "pics" edges to the Pic entity.
+func (gc *GroupCreate) AddPics(p ...*Pic) *GroupCreate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return gc.AddPicIDs(ids...)
+}
+
 // Mutation returns the GroupMutation object of the builder.
 func (gc *GroupCreate) Mutation() *GroupMutation {
 	return gc.mutation
@@ -257,10 +267,6 @@ func (gc *GroupCreate) defaults() {
 		v := group.DefaultBio
 		gc.mutation.SetBio(v)
 	}
-	if _, ok := gc.mutation.Pics(); !ok {
-		v := group.DefaultPics
-		gc.mutation.SetPics(v)
-	}
 	if _, ok := gc.mutation.CreatedAt(); !ok {
 		v := group.DefaultCreatedAt()
 		gc.mutation.SetCreatedAt(v)
@@ -282,9 +288,6 @@ func (gc *GroupCreate) check() error {
 	}
 	if _, ok := gc.mutation.Bio(); !ok {
 		return &ValidationError{Name: "bio", err: errors.New(`ent: missing required field "Group.bio"`)}
-	}
-	if _, ok := gc.mutation.Pics(); !ok {
-		return &ValidationError{Name: "pics", err: errors.New(`ent: missing required field "Group.pics"`)}
 	}
 	if _, ok := gc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "createdAt", err: errors.New(`ent: missing required field "Group.createdAt"`)}
@@ -346,14 +349,6 @@ func (gc *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 			Column: group.FieldBio,
 		})
 		_node.Bio = value
-	}
-	if value, ok := gc.mutation.Pics(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: group.FieldPics,
-		})
-		_node.Pics = value
 	}
 	if value, ok := gc.mutation.CreatedAt(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
@@ -466,6 +461,25 @@ func (gc *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
 					Column: group.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := gc.mutation.PicsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   group.PicsTable,
+			Columns: []string{group.PicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: pic.FieldID,
 				},
 			},
 		}

@@ -8,6 +8,7 @@ import (
 	"github.com/lxxonx/cinder-server/ent/chatmessage"
 	"github.com/lxxonx/cinder-server/ent/chatroom"
 	"github.com/lxxonx/cinder-server/ent/group"
+	"github.com/lxxonx/cinder-server/ent/pic"
 	"github.com/lxxonx/cinder-server/ent/schema"
 	"github.com/lxxonx/cinder-server/ent/user"
 )
@@ -54,22 +55,36 @@ func init() {
 	groupDescBio := groupFields[2].Descriptor()
 	// group.DefaultBio holds the default value on creation for the bio field.
 	group.DefaultBio = groupDescBio.Default.(string)
-	// groupDescPics is the schema descriptor for pics field.
-	groupDescPics := groupFields[3].Descriptor()
-	// group.DefaultPics holds the default value on creation for the pics field.
-	group.DefaultPics = groupDescPics.Default.([]string)
 	// groupDescCreatedAt is the schema descriptor for createdAt field.
-	groupDescCreatedAt := groupFields[4].Descriptor()
+	groupDescCreatedAt := groupFields[3].Descriptor()
 	// group.DefaultCreatedAt holds the default value on creation for the createdAt field.
 	group.DefaultCreatedAt = groupDescCreatedAt.Default.(func() time.Time)
 	// groupDescUpdatedAt is the schema descriptor for updatedAt field.
-	groupDescUpdatedAt := groupFields[5].Descriptor()
+	groupDescUpdatedAt := groupFields[4].Descriptor()
 	// group.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
 	group.DefaultUpdatedAt = groupDescUpdatedAt.Default.(func() time.Time)
 	// groupDescReadAt is the schema descriptor for readAt field.
-	groupDescReadAt := groupFields[6].Descriptor()
+	groupDescReadAt := groupFields[5].Descriptor()
 	// group.DefaultReadAt holds the default value on creation for the readAt field.
 	group.DefaultReadAt = groupDescReadAt.Default.(func() time.Time)
+	picFields := schema.Pic{}.Fields()
+	_ = picFields
+	// picDescAdress is the schema descriptor for adress field.
+	picDescAdress := picFields[2].Descriptor()
+	// pic.AdressValidator is a validator for the "adress" field. It is called by the builders before save.
+	pic.AdressValidator = picDescAdress.Validators[0].(func(string) error)
+	// picDescCreatedAt is the schema descriptor for createdAt field.
+	picDescCreatedAt := picFields[3].Descriptor()
+	// pic.DefaultCreatedAt holds the default value on creation for the createdAt field.
+	pic.DefaultCreatedAt = picDescCreatedAt.Default.(func() time.Time)
+	// picDescUpdatedAt is the schema descriptor for updatedAt field.
+	picDescUpdatedAt := picFields[4].Descriptor()
+	// pic.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
+	pic.DefaultUpdatedAt = picDescUpdatedAt.Default.(func() time.Time)
+	// picDescReadAt is the schema descriptor for readAt field.
+	picDescReadAt := picFields[5].Descriptor()
+	// pic.DefaultReadAt holds the default value on creation for the readAt field.
+	pic.DefaultReadAt = picDescReadAt.Default.(func() time.Time)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescUsername is the schema descriptor for username field.
@@ -84,24 +99,16 @@ func init() {
 	userDescDep := userFields[4].Descriptor()
 	// user.DepValidator is a validator for the "dep" field. It is called by the builders before save.
 	user.DepValidator = userDescDep.Validators[0].(func(string) error)
-	// userDescBio is the schema descriptor for bio field.
-	userDescBio := userFields[5].Descriptor()
-	// user.BioValidator is a validator for the "bio" field. It is called by the builders before save.
-	user.BioValidator = userDescBio.Validators[0].(func(string) error)
-	// userDescPics is the schema descriptor for pics field.
-	userDescPics := userFields[6].Descriptor()
-	// user.DefaultPics holds the default value on creation for the pics field.
-	user.DefaultPics = userDescPics.Default.([]string)
 	// userDescCreatedAt is the schema descriptor for createdAt field.
-	userDescCreatedAt := userFields[8].Descriptor()
+	userDescCreatedAt := userFields[7].Descriptor()
 	// user.DefaultCreatedAt holds the default value on creation for the createdAt field.
 	user.DefaultCreatedAt = userDescCreatedAt.Default.(func() time.Time)
 	// userDescUpdatedAt is the schema descriptor for updatedAt field.
-	userDescUpdatedAt := userFields[9].Descriptor()
+	userDescUpdatedAt := userFields[8].Descriptor()
 	// user.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
 	user.DefaultUpdatedAt = userDescUpdatedAt.Default.(func() time.Time)
 	// userDescReadAt is the schema descriptor for readAt field.
-	userDescReadAt := userFields[10].Descriptor()
+	userDescReadAt := userFields[9].Descriptor()
 	// user.DefaultReadAt holds the default value on creation for the readAt field.
 	user.DefaultReadAt = userDescReadAt.Default.(func() time.Time)
 }

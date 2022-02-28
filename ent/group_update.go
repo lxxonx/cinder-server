@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/lxxonx/cinder-server/ent/group"
+	"github.com/lxxonx/cinder-server/ent/pic"
 	"github.com/lxxonx/cinder-server/ent/predicate"
 	"github.com/lxxonx/cinder-server/ent/user"
 )
@@ -54,12 +55,6 @@ func (gu *GroupUpdate) SetNillableBio(s *string) *GroupUpdate {
 	if s != nil {
 		gu.SetBio(*s)
 	}
-	return gu
-}
-
-// SetPics sets the "pics" field.
-func (gu *GroupUpdate) SetPics(s []string) *GroupUpdate {
-	gu.mutation.SetPics(s)
 	return gu
 }
 
@@ -180,6 +175,21 @@ func (gu *GroupUpdate) AddLikeTo(g ...*Group) *GroupUpdate {
 	return gu.AddLikeToIDs(ids...)
 }
 
+// AddPicIDs adds the "pics" edge to the Pic entity by IDs.
+func (gu *GroupUpdate) AddPicIDs(ids ...int) *GroupUpdate {
+	gu.mutation.AddPicIDs(ids...)
+	return gu
+}
+
+// AddPics adds the "pics" edges to the Pic entity.
+func (gu *GroupUpdate) AddPics(p ...*Pic) *GroupUpdate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return gu.AddPicIDs(ids...)
+}
+
 // Mutation returns the GroupMutation object of the builder.
 func (gu *GroupUpdate) Mutation() *GroupMutation {
 	return gu.mutation
@@ -290,6 +300,27 @@ func (gu *GroupUpdate) RemoveLikeTo(g ...*Group) *GroupUpdate {
 	return gu.RemoveLikeToIDs(ids...)
 }
 
+// ClearPics clears all "pics" edges to the Pic entity.
+func (gu *GroupUpdate) ClearPics() *GroupUpdate {
+	gu.mutation.ClearPics()
+	return gu
+}
+
+// RemovePicIDs removes the "pics" edge to Pic entities by IDs.
+func (gu *GroupUpdate) RemovePicIDs(ids ...int) *GroupUpdate {
+	gu.mutation.RemovePicIDs(ids...)
+	return gu
+}
+
+// RemovePics removes "pics" edges to Pic entities.
+func (gu *GroupUpdate) RemovePics(p ...*Pic) *GroupUpdate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return gu.RemovePicIDs(ids...)
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (gu *GroupUpdate) Save(ctx context.Context) (int, error) {
 	var (
@@ -374,13 +405,6 @@ func (gu *GroupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Type:   field.TypeString,
 			Value:  value,
 			Column: group.FieldBio,
-		})
-	}
-	if value, ok := gu.mutation.Pics(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: group.FieldPics,
 		})
 	}
 	if value, ok := gu.mutation.CreatedAt(); ok {
@@ -674,6 +698,60 @@ func (gu *GroupUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if gu.mutation.PicsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   group.PicsTable,
+			Columns: []string{group.PicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: pic.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.RemovedPicsIDs(); len(nodes) > 0 && !gu.mutation.PicsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   group.PicsTable,
+			Columns: []string{group.PicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: pic.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.PicsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   group.PicsTable,
+			Columns: []string{group.PicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: pic.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, gu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{group.Label}
@@ -718,12 +796,6 @@ func (guo *GroupUpdateOne) SetNillableBio(s *string) *GroupUpdateOne {
 	if s != nil {
 		guo.SetBio(*s)
 	}
-	return guo
-}
-
-// SetPics sets the "pics" field.
-func (guo *GroupUpdateOne) SetPics(s []string) *GroupUpdateOne {
-	guo.mutation.SetPics(s)
 	return guo
 }
 
@@ -844,6 +916,21 @@ func (guo *GroupUpdateOne) AddLikeTo(g ...*Group) *GroupUpdateOne {
 	return guo.AddLikeToIDs(ids...)
 }
 
+// AddPicIDs adds the "pics" edge to the Pic entity by IDs.
+func (guo *GroupUpdateOne) AddPicIDs(ids ...int) *GroupUpdateOne {
+	guo.mutation.AddPicIDs(ids...)
+	return guo
+}
+
+// AddPics adds the "pics" edges to the Pic entity.
+func (guo *GroupUpdateOne) AddPics(p ...*Pic) *GroupUpdateOne {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return guo.AddPicIDs(ids...)
+}
+
 // Mutation returns the GroupMutation object of the builder.
 func (guo *GroupUpdateOne) Mutation() *GroupMutation {
 	return guo.mutation
@@ -954,6 +1041,27 @@ func (guo *GroupUpdateOne) RemoveLikeTo(g ...*Group) *GroupUpdateOne {
 	return guo.RemoveLikeToIDs(ids...)
 }
 
+// ClearPics clears all "pics" edges to the Pic entity.
+func (guo *GroupUpdateOne) ClearPics() *GroupUpdateOne {
+	guo.mutation.ClearPics()
+	return guo
+}
+
+// RemovePicIDs removes the "pics" edge to Pic entities by IDs.
+func (guo *GroupUpdateOne) RemovePicIDs(ids ...int) *GroupUpdateOne {
+	guo.mutation.RemovePicIDs(ids...)
+	return guo
+}
+
+// RemovePics removes "pics" edges to Pic entities.
+func (guo *GroupUpdateOne) RemovePics(p ...*Pic) *GroupUpdateOne {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return guo.RemovePicIDs(ids...)
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (guo *GroupUpdateOne) Select(field string, fields ...string) *GroupUpdateOne {
@@ -1062,13 +1170,6 @@ func (guo *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error
 			Type:   field.TypeString,
 			Value:  value,
 			Column: group.FieldBio,
-		})
-	}
-	if value, ok := guo.mutation.Pics(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: group.FieldPics,
 		})
 	}
 	if value, ok := guo.mutation.CreatedAt(); ok {
@@ -1354,6 +1455,60 @@ func (guo *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
 					Column: group.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if guo.mutation.PicsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   group.PicsTable,
+			Columns: []string{group.PicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: pic.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.RemovedPicsIDs(); len(nodes) > 0 && !guo.mutation.PicsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   group.PicsTable,
+			Columns: []string{group.PicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: pic.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.PicsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   group.PicsTable,
+			Columns: []string{group.PicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: pic.FieldID,
 				},
 			},
 		}

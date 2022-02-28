@@ -19,7 +19,7 @@ func (Group) Fields() []ent.Field {
 		field.String("id").Unique(),
 		field.String("groupname").Default(""),
 		field.String("bio").Default(""),
-		field.Strings("pics").Default([]string{""}),
+		// field.Strings("pics").Default([]string{""}),
 		field.Time("createdAt").Default(time.Now),
 		field.Time("updatedAt").Default(time.Now),
 		field.Time("readAt").Default(time.Now),
@@ -41,5 +41,6 @@ func (Group) Edges() []ent.Edge {
 			Ref("save"),
 		edge.To("like_to", Group.Type).
 			From("like_from_group"),
+		edge.To("pics", Pic.Type),
 	}
 }

@@ -21,8 +21,7 @@ func (User) Fields() []ent.Field {
 		field.Bytes("password").Sensitive(),
 		field.String("uni").NotEmpty(),
 		field.String("dep").NotEmpty(),
-		field.String("bio").NotEmpty(),
-		field.Strings("pics").Default([]string{""}),
+		field.String("bio").Optional(),
 		field.String("group_id").Optional(),
 		field.Time("createdAt").Default(time.Now),
 		field.Time("updatedAt").Default(time.Now),
@@ -47,5 +46,6 @@ func (User) Edges() []ent.Edge {
 		edge.From("chatroom", ChatRoom.Type).
 			Ref("participants"),
 		edge.To("message", ChatMessage.Type),
+		edge.To("pics", Pic.Type),
 	}
 }

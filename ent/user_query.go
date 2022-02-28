@@ -15,6 +15,7 @@ import (
 	"github.com/lxxonx/cinder-server/ent/chatmessage"
 	"github.com/lxxonx/cinder-server/ent/chatroom"
 	"github.com/lxxonx/cinder-server/ent/group"
+	"github.com/lxxonx/cinder-server/ent/pic"
 	"github.com/lxxonx/cinder-server/ent/predicate"
 	"github.com/lxxonx/cinder-server/ent/user"
 )
@@ -35,6 +36,7 @@ type UserQuery struct {
 	withGroup    *GroupQuery
 	withChatroom *ChatRoomQuery
 	withMessage  *ChatMessageQuery
+	withPics     *PicQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -196,6 +198,28 @@ func (uq *UserQuery) QueryMessage() *ChatMessageQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(chatmessage.Table, chatmessage.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.MessageTable, user.MessageColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryPics chains the current query on the "pics" edge.
+func (uq *UserQuery) QueryPics() *PicQuery {
+	query := &PicQuery{config: uq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(pic.Table, pic.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.PicsTable, user.PicsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -390,6 +414,7 @@ func (uq *UserQuery) Clone() *UserQuery {
 		withGroup:    uq.withGroup.Clone(),
 		withChatroom: uq.withChatroom.Clone(),
 		withMessage:  uq.withMessage.Clone(),
+		withPics:     uq.withPics.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
 		path: uq.path,
@@ -462,6 +487,17 @@ func (uq *UserQuery) WithMessage(opts ...func(*ChatMessageQuery)) *UserQuery {
 	return uq
 }
 
+// WithPics tells the query-builder to eager-load the nodes that are connected to
+// the "pics" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithPics(opts ...func(*PicQuery)) *UserQuery {
+	query := &PicQuery{config: uq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withPics = query
+	return uq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -527,13 +563,14 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 	var (
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
-		loadedTypes = [6]bool{
+		loadedTypes = [7]bool{
 			uq.withFriends != nil,
 			uq.withLikeTo != nil,
 			uq.withSave != nil,
 			uq.withGroup != nil,
 			uq.withChatroom != nil,
 			uq.withMessage != nil,
+			uq.withPics != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
@@ -864,6 +901,31 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 				return nil, fmt.Errorf(`unexpected foreign-key "user_id" returned %v for node %v`, fk, n.ID)
 			}
 			node.Edges.Message = append(node.Edges.Message, n)
+		}
+	}
+
+	if query := uq.withPics; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[string]*User)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.Pics = []*Pic{}
+		}
+		query.Where(predicate.Pic(func(s *sql.Selector) {
+			s.Where(sql.InValues(user.PicsColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.UserID
+			node, ok := nodeids[fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "user_id" returned %v for node %v`, fk, n.ID)
+			}
+			node.Edges.Pics = append(node.Edges.Pics, n)
 		}
 	}
 

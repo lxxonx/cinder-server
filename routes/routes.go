@@ -2,13 +2,12 @@ package routes
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/lxxonx/cinder-server/config"
 	"github.com/lxxonx/cinder-server/controllers"
 )
 
 func SetupRoutes(app *fiber.App) {
 
-	api := app.Group("/api", config.AuthMiddleware) // /api
+	api := app.Group("/api") // /api
 
 	users := api.Group("/users")
 	users.Get("/current", controllers.GetCurrentUser)

@@ -15,8 +15,6 @@ const (
 	FieldGroupname = "groupname"
 	// FieldBio holds the string denoting the bio field in the database.
 	FieldBio = "bio"
-	// FieldPics holds the string denoting the pics field in the database.
-	FieldPics = "pics"
 	// FieldCreatedAt holds the string denoting the createdat field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updatedat field in the database.
@@ -33,6 +31,8 @@ const (
 	EdgeLikeFromGroup = "like_from_group"
 	// EdgeLikeTo holds the string denoting the like_to edge name in mutations.
 	EdgeLikeTo = "like_to"
+	// EdgePics holds the string denoting the pics edge name in mutations.
+	EdgePics = "pics"
 	// Table holds the table name of the group in the database.
 	Table = "groups"
 	// MembersTable is the table that holds the members relation/edge.
@@ -56,6 +56,13 @@ const (
 	LikeFromGroupTable = "group_like_to"
 	// LikeToTable is the table that holds the like_to relation/edge. The primary key declared below.
 	LikeToTable = "group_like_to"
+	// PicsTable is the table that holds the pics relation/edge.
+	PicsTable = "pics"
+	// PicsInverseTable is the table name for the Pic entity.
+	// It exists in this package in order to avoid circular dependency with the "pic" package.
+	PicsInverseTable = "pics"
+	// PicsColumn is the table column denoting the pics relation/edge.
+	PicsColumn = "group_id"
 )
 
 // Columns holds all SQL columns for group fields.
@@ -63,7 +70,6 @@ var Columns = []string{
 	FieldID,
 	FieldGroupname,
 	FieldBio,
-	FieldPics,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldReadAt,
@@ -99,8 +105,6 @@ var (
 	DefaultGroupname string
 	// DefaultBio holds the default value on creation for the "bio" field.
 	DefaultBio string
-	// DefaultPics holds the default value on creation for the "pics" field.
-	DefaultPics []string
 	// DefaultCreatedAt holds the default value on creation for the "createdAt" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updatedAt" field.

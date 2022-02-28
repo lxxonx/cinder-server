@@ -31,14 +31,16 @@ func SignUpUser(c *fiber.Ctx) error {
 	}
 	password, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
+		fmt.Println(err.Error())
 		return c.Status(500).JSON(fiber.Map{
 			"ok":      false,
-			"message": "Unable to parse request body",
+			"message": "unable to hash password",
 		})
 	}
 
 	_, err = config.DB.User. // UserClient.
 					Create(). // User create builder.
+					SetID(input.Id).
 					SetUsername(input.Username).
 					SetPassword(password).
 					SetBio("").
@@ -46,9 +48,10 @@ func SignUpUser(c *fiber.Ctx) error {
 					SetDep(input.Dep).
 					Save(c.Context()) // Create and return.
 	if err != nil {
+		fmt.Println(err.Error())
 		return c.Status(500).JSON(fiber.Map{
 			"ok":      false,
-			"message": "Unable to parse request body",
+			"message": "unable to create user",
 		})
 	}
 	return c.Status(200).JSON(fiber.Map{

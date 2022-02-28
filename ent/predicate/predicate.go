@@ -15,5 +15,8 @@ type ChatRoom func(*sql.Selector)
 // Group is the predicate function for group builders.
 type Group func(*sql.Selector)
 
+// Pic is the predicate function for pic builders.
+type Pic func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

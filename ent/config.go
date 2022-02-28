@@ -27,6 +27,7 @@ type hooks struct {
 	ChatMessage []ent.Hook
 	ChatRoom    []ent.Hook
 	Group       []ent.Hook
+	Pic         []ent.Hook
 	User        []ent.Hook
 }
 

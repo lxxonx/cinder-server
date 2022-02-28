@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/lxxonx/cinder-server/ent/group"
+	"github.com/lxxonx/cinder-server/ent/pic"
 	"github.com/lxxonx/cinder-server/ent/predicate"
 	"github.com/lxxonx/cinder-server/ent/user"
 )
@@ -32,6 +33,7 @@ type GroupQuery struct {
 	withSaved         *UserQuery
 	withLikeFromGroup *GroupQuery
 	withLikeTo        *GroupQuery
+	withPics          *PicQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -171,6 +173,28 @@ func (gq *GroupQuery) QueryLikeTo() *GroupQuery {
 			sqlgraph.From(group.Table, group.FieldID, selector),
 			sqlgraph.To(group.Table, group.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, false, group.LikeToTable, group.LikeToPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryPics chains the current query on the "pics" edge.
+func (gq *GroupQuery) QueryPics() *PicQuery {
+	query := &PicQuery{config: gq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := gq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := gq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(group.Table, group.FieldID, selector),
+			sqlgraph.To(pic.Table, pic.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, group.PicsTable, group.PicsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
 		return fromU, nil
@@ -364,6 +388,7 @@ func (gq *GroupQuery) Clone() *GroupQuery {
 		withSaved:         gq.withSaved.Clone(),
 		withLikeFromGroup: gq.withLikeFromGroup.Clone(),
 		withLikeTo:        gq.withLikeTo.Clone(),
+		withPics:          gq.withPics.Clone(),
 		// clone intermediate query.
 		sql:  gq.sql.Clone(),
 		path: gq.path,
@@ -422,6 +447,17 @@ func (gq *GroupQuery) WithLikeTo(opts ...func(*GroupQuery)) *GroupQuery {
 		opt(query)
 	}
 	gq.withLikeTo = query
+	return gq
+}
+
+// WithPics tells the query-builder to eager-load the nodes that are connected to
+// the "pics" edge. The optional arguments are used to configure the query builder of the edge.
+func (gq *GroupQuery) WithPics(opts ...func(*PicQuery)) *GroupQuery {
+	query := &PicQuery{config: gq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	gq.withPics = query
 	return gq
 }
 
@@ -490,12 +526,13 @@ func (gq *GroupQuery) sqlAll(ctx context.Context) ([]*Group, error) {
 	var (
 		nodes       = []*Group{}
 		_spec       = gq.querySpec()
-		loadedTypes = [5]bool{
+		loadedTypes = [6]bool{
 			gq.withMembers != nil,
 			gq.withLikeFromUser != nil,
 			gq.withSaved != nil,
 			gq.withLikeFromGroup != nil,
 			gq.withLikeTo != nil,
+			gq.withPics != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
@@ -800,6 +837,31 @@ func (gq *GroupQuery) sqlAll(ctx context.Context) ([]*Group, error) {
 			for i := range nodes {
 				nodes[i].Edges.LikeTo = append(nodes[i].Edges.LikeTo, n)
 			}
+		}
+	}
+
+	if query := gq.withPics; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[string]*Group)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.Pics = []*Pic{}
+		}
+		query.Where(predicate.Pic(func(s *sql.Selector) {
+			s.Where(sql.InValues(group.PicsColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.GroupID
+			node, ok := nodeids[fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "group_id" returned %v for node %v`, fk, n.ID)
+			}
+			node.Edges.Pics = append(node.Edges.Pics, n)
 		}
 	}
 

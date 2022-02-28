@@ -7,14 +7,13 @@ import (
 
 	firebase "firebase.google.com/go/v4"
 	"github.com/gofiber/fiber/v2"
-	"github.com/lxxonx/cinder-server/models"
 )
 
 func AuthMiddleware(c *fiber.Ctx) error {
 	env := os.Getenv("ENV")
 
 	if env == "dev" {
-		c.Locals("user", models.UserCtx{Uid: "Zjx9cgDlESMb9Nq4WcuDwNe4gSu1", Username: "wleifns"})
+		c.Locals("uid", "Zjx9cgDlESMb9Nq4WcuDwNe4gSu1")
 		return c.Next()
 	}
 
@@ -44,7 +43,7 @@ func AuthMiddleware(c *fiber.Ctx) error {
 			"message": "Invalid token",
 		})
 	}
-	c.Locals("user", models.UserCtx{Uid: token.UID, Username: token.Issuer})
+	c.Locals("uid", token.UID)
 
 	return c.Next()
 }

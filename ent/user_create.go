@@ -13,6 +13,7 @@ import (
 	"github.com/lxxonx/cinder-server/ent/chatmessage"
 	"github.com/lxxonx/cinder-server/ent/chatroom"
 	"github.com/lxxonx/cinder-server/ent/group"
+	"github.com/lxxonx/cinder-server/ent/pic"
 	"github.com/lxxonx/cinder-server/ent/user"
 )
 
@@ -53,9 +54,11 @@ func (uc *UserCreate) SetBio(s string) *UserCreate {
 	return uc
 }
 
-// SetPics sets the "pics" field.
-func (uc *UserCreate) SetPics(s []string) *UserCreate {
-	uc.mutation.SetPics(s)
+// SetNillableBio sets the "bio" field if the given value is not nil.
+func (uc *UserCreate) SetNillableBio(s *string) *UserCreate {
+	if s != nil {
+		uc.SetBio(*s)
+	}
 	return uc
 }
 
@@ -201,6 +204,21 @@ func (uc *UserCreate) AddMessage(c ...*ChatMessage) *UserCreate {
 	return uc.AddMessageIDs(ids...)
 }
 
+// AddPicIDs adds the "pics" edge to the Pic entity by IDs.
+func (uc *UserCreate) AddPicIDs(ids ...int) *UserCreate {
+	uc.mutation.AddPicIDs(ids...)
+	return uc
+}
+
+// AddPics adds the "pics" edges to the Pic entity.
+func (uc *UserCreate) AddPics(p ...*Pic) *UserCreate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uc.AddPicIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uc *UserCreate) Mutation() *UserMutation {
 	return uc.mutation
@@ -272,10 +290,6 @@ func (uc *UserCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (uc *UserCreate) defaults() {
-	if _, ok := uc.mutation.Pics(); !ok {
-		v := user.DefaultPics
-		uc.mutation.SetPics(v)
-	}
 	if _, ok := uc.mutation.CreatedAt(); !ok {
 		v := user.DefaultCreatedAt()
 		uc.mutation.SetCreatedAt(v)
@@ -318,17 +332,6 @@ func (uc *UserCreate) check() error {
 		if err := user.DepValidator(v); err != nil {
 			return &ValidationError{Name: "dep", err: fmt.Errorf(`ent: validator failed for field "User.dep": %w`, err)}
 		}
-	}
-	if _, ok := uc.mutation.Bio(); !ok {
-		return &ValidationError{Name: "bio", err: errors.New(`ent: missing required field "User.bio"`)}
-	}
-	if v, ok := uc.mutation.Bio(); ok {
-		if err := user.BioValidator(v); err != nil {
-			return &ValidationError{Name: "bio", err: fmt.Errorf(`ent: validator failed for field "User.bio": %w`, err)}
-		}
-	}
-	if _, ok := uc.mutation.Pics(); !ok {
-		return &ValidationError{Name: "pics", err: errors.New(`ent: missing required field "User.pics"`)}
 	}
 	if _, ok := uc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "createdAt", err: errors.New(`ent: missing required field "User.createdAt"`)}
@@ -414,14 +417,6 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Column: user.FieldBio,
 		})
 		_node.Bio = value
-	}
-	if value, ok := uc.mutation.Pics(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: user.FieldPics,
-		})
-		_node.Pics = value
 	}
 	if value, ok := uc.mutation.CreatedAt(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
@@ -554,6 +549,25 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
 					Column: chatmessage.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.PicsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PicsTable,
+			Columns: []string{user.PicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: pic.FieldID,
 				},
 			},
 		}

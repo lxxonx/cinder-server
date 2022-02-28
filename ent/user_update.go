@@ -14,6 +14,7 @@ import (
 	"github.com/lxxonx/cinder-server/ent/chatmessage"
 	"github.com/lxxonx/cinder-server/ent/chatroom"
 	"github.com/lxxonx/cinder-server/ent/group"
+	"github.com/lxxonx/cinder-server/ent/pic"
 	"github.com/lxxonx/cinder-server/ent/predicate"
 	"github.com/lxxonx/cinder-server/ent/user"
 )
@@ -61,9 +62,17 @@ func (uu *UserUpdate) SetBio(s string) *UserUpdate {
 	return uu
 }
 
-// SetPics sets the "pics" field.
-func (uu *UserUpdate) SetPics(s []string) *UserUpdate {
-	uu.mutation.SetPics(s)
+// SetNillableBio sets the "bio" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableBio(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetBio(*s)
+	}
+	return uu
+}
+
+// ClearBio clears the value of the "bio" field.
+func (uu *UserUpdate) ClearBio() *UserUpdate {
+	uu.mutation.ClearBio()
 	return uu
 }
 
@@ -209,6 +218,21 @@ func (uu *UserUpdate) AddMessage(c ...*ChatMessage) *UserUpdate {
 	return uu.AddMessageIDs(ids...)
 }
 
+// AddPicIDs adds the "pics" edge to the Pic entity by IDs.
+func (uu *UserUpdate) AddPicIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddPicIDs(ids...)
+	return uu
+}
+
+// AddPics adds the "pics" edges to the Pic entity.
+func (uu *UserUpdate) AddPics(p ...*Pic) *UserUpdate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uu.AddPicIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
@@ -325,6 +349,27 @@ func (uu *UserUpdate) RemoveMessage(c ...*ChatMessage) *UserUpdate {
 	return uu.RemoveMessageIDs(ids...)
 }
 
+// ClearPics clears all "pics" edges to the Pic entity.
+func (uu *UserUpdate) ClearPics() *UserUpdate {
+	uu.mutation.ClearPics()
+	return uu
+}
+
+// RemovePicIDs removes the "pics" edge to Pic entities by IDs.
+func (uu *UserUpdate) RemovePicIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemovePicIDs(ids...)
+	return uu
+}
+
+// RemovePics removes "pics" edges to Pic entities.
+func (uu *UserUpdate) RemovePics(p ...*Pic) *UserUpdate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uu.RemovePicIDs(ids...)
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (uu *UserUpdate) Save(ctx context.Context) (int, error) {
 	var (
@@ -402,11 +447,6 @@ func (uu *UserUpdate) check() error {
 			return &ValidationError{Name: "dep", err: fmt.Errorf(`ent: validator failed for field "User.dep": %w`, err)}
 		}
 	}
-	if v, ok := uu.mutation.Bio(); ok {
-		if err := user.BioValidator(v); err != nil {
-			return &ValidationError{Name: "bio", err: fmt.Errorf(`ent: validator failed for field "User.bio": %w`, err)}
-		}
-	}
 	return nil
 }
 
@@ -463,11 +503,10 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: user.FieldBio,
 		})
 	}
-	if value, ok := uu.mutation.Pics(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: user.FieldPics,
+	if uu.mutation.BioCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: user.FieldBio,
 		})
 	}
 	if value, ok := uu.mutation.CreatedAt(); ok {
@@ -796,6 +835,60 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if uu.mutation.PicsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PicsTable,
+			Columns: []string{user.PicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: pic.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedPicsIDs(); len(nodes) > 0 && !uu.mutation.PicsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PicsTable,
+			Columns: []string{user.PicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: pic.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.PicsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PicsTable,
+			Columns: []string{user.PicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: pic.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -845,9 +938,17 @@ func (uuo *UserUpdateOne) SetBio(s string) *UserUpdateOne {
 	return uuo
 }
 
-// SetPics sets the "pics" field.
-func (uuo *UserUpdateOne) SetPics(s []string) *UserUpdateOne {
-	uuo.mutation.SetPics(s)
+// SetNillableBio sets the "bio" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableBio(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetBio(*s)
+	}
+	return uuo
+}
+
+// ClearBio clears the value of the "bio" field.
+func (uuo *UserUpdateOne) ClearBio() *UserUpdateOne {
+	uuo.mutation.ClearBio()
 	return uuo
 }
 
@@ -993,6 +1094,21 @@ func (uuo *UserUpdateOne) AddMessage(c ...*ChatMessage) *UserUpdateOne {
 	return uuo.AddMessageIDs(ids...)
 }
 
+// AddPicIDs adds the "pics" edge to the Pic entity by IDs.
+func (uuo *UserUpdateOne) AddPicIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddPicIDs(ids...)
+	return uuo
+}
+
+// AddPics adds the "pics" edges to the Pic entity.
+func (uuo *UserUpdateOne) AddPics(p ...*Pic) *UserUpdateOne {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uuo.AddPicIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
@@ -1109,6 +1225,27 @@ func (uuo *UserUpdateOne) RemoveMessage(c ...*ChatMessage) *UserUpdateOne {
 	return uuo.RemoveMessageIDs(ids...)
 }
 
+// ClearPics clears all "pics" edges to the Pic entity.
+func (uuo *UserUpdateOne) ClearPics() *UserUpdateOne {
+	uuo.mutation.ClearPics()
+	return uuo
+}
+
+// RemovePicIDs removes the "pics" edge to Pic entities by IDs.
+func (uuo *UserUpdateOne) RemovePicIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemovePicIDs(ids...)
+	return uuo
+}
+
+// RemovePics removes "pics" edges to Pic entities.
+func (uuo *UserUpdateOne) RemovePics(p ...*Pic) *UserUpdateOne {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uuo.RemovePicIDs(ids...)
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (uuo *UserUpdateOne) Select(field string, fields ...string) *UserUpdateOne {
@@ -1193,11 +1330,6 @@ func (uuo *UserUpdateOne) check() error {
 			return &ValidationError{Name: "dep", err: fmt.Errorf(`ent: validator failed for field "User.dep": %w`, err)}
 		}
 	}
-	if v, ok := uuo.mutation.Bio(); ok {
-		if err := user.BioValidator(v); err != nil {
-			return &ValidationError{Name: "bio", err: fmt.Errorf(`ent: validator failed for field "User.bio": %w`, err)}
-		}
-	}
 	return nil
 }
 
@@ -1271,11 +1403,10 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Column: user.FieldBio,
 		})
 	}
-	if value, ok := uuo.mutation.Pics(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeJSON,
-			Value:  value,
-			Column: user.FieldPics,
+	if uuo.mutation.BioCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: user.FieldBio,
 		})
 	}
 	if value, ok := uuo.mutation.CreatedAt(); ok {
@@ -1596,6 +1727,60 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeString,
 					Column: chatmessage.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.PicsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PicsTable,
+			Columns: []string{user.PicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: pic.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedPicsIDs(); len(nodes) > 0 && !uuo.mutation.PicsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PicsTable,
+			Columns: []string{user.PicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: pic.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.PicsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PicsTable,
+			Columns: []string{user.PicsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: pic.FieldID,
 				},
 			},
 		}
