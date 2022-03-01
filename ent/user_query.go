@@ -30,13 +30,15 @@ type UserQuery struct {
 	fields     []string
 	predicates []predicate.User
 	// eager-loading edges.
-	withFriends  *UserQuery
-	withLikeTo   *GroupQuery
-	withSave     *GroupQuery
-	withGroup    *GroupQuery
-	withChatroom *ChatRoomQuery
-	withMessage  *ChatMessageQuery
-	withPics     *PicQuery
+	withFriends    *UserQuery
+	withRequests   *UserQuery
+	withFriendsReq *UserQuery
+	withLikeTo     *GroupQuery
+	withSave       *GroupQuery
+	withGroup      *GroupQuery
+	withChatroom   *ChatRoomQuery
+	withMessage    *ChatMessageQuery
+	withPics       *PicQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -88,6 +90,50 @@ func (uq *UserQuery) QueryFriends() *UserQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, false, user.FriendsTable, user.FriendsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRequests chains the current query on the "requests" edge.
+func (uq *UserQuery) QueryRequests() *UserQuery {
+	query := &UserQuery{config: uq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, user.RequestsTable, user.RequestsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryFriendsReq chains the current query on the "friendsReq" edge.
+func (uq *UserQuery) QueryFriendsReq() *UserQuery {
+	query := &UserQuery{config: uq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, user.FriendsReqTable, user.FriendsReqPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -251,8 +297,8 @@ func (uq *UserQuery) FirstX(ctx context.Context) *User {
 
 // FirstID returns the first User ID from the query.
 // Returns a *NotFoundError when no User ID was found.
-func (uq *UserQuery) FirstID(ctx context.Context) (id string, err error) {
-	var ids []string
+func (uq *UserQuery) FirstID(ctx context.Context) (id int, err error) {
+	var ids []int
 	if ids, err = uq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
@@ -264,7 +310,7 @@ func (uq *UserQuery) FirstID(ctx context.Context) (id string, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (uq *UserQuery) FirstIDX(ctx context.Context) string {
+func (uq *UserQuery) FirstIDX(ctx context.Context) int {
 	id, err := uq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -302,8 +348,8 @@ func (uq *UserQuery) OnlyX(ctx context.Context) *User {
 // OnlyID is like Only, but returns the only User ID in the query.
 // Returns a *NotSingularError when exactly one User ID is not found.
 // Returns a *NotFoundError when no entities are found.
-func (uq *UserQuery) OnlyID(ctx context.Context) (id string, err error) {
-	var ids []string
+func (uq *UserQuery) OnlyID(ctx context.Context) (id int, err error) {
+	var ids []int
 	if ids, err = uq.Limit(2).IDs(ctx); err != nil {
 		return
 	}
@@ -319,7 +365,7 @@ func (uq *UserQuery) OnlyID(ctx context.Context) (id string, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (uq *UserQuery) OnlyIDX(ctx context.Context) string {
+func (uq *UserQuery) OnlyIDX(ctx context.Context) int {
 	id, err := uq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -345,8 +391,8 @@ func (uq *UserQuery) AllX(ctx context.Context) []*User {
 }
 
 // IDs executes the query and returns a list of User IDs.
-func (uq *UserQuery) IDs(ctx context.Context) ([]string, error) {
-	var ids []string
+func (uq *UserQuery) IDs(ctx context.Context) ([]int, error) {
+	var ids []int
 	if err := uq.Select(user.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -354,7 +400,7 @@ func (uq *UserQuery) IDs(ctx context.Context) ([]string, error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (uq *UserQuery) IDsX(ctx context.Context) []string {
+func (uq *UserQuery) IDsX(ctx context.Context) []int {
 	ids, err := uq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -403,18 +449,20 @@ func (uq *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:       uq.config,
-		limit:        uq.limit,
-		offset:       uq.offset,
-		order:        append([]OrderFunc{}, uq.order...),
-		predicates:   append([]predicate.User{}, uq.predicates...),
-		withFriends:  uq.withFriends.Clone(),
-		withLikeTo:   uq.withLikeTo.Clone(),
-		withSave:     uq.withSave.Clone(),
-		withGroup:    uq.withGroup.Clone(),
-		withChatroom: uq.withChatroom.Clone(),
-		withMessage:  uq.withMessage.Clone(),
-		withPics:     uq.withPics.Clone(),
+		config:         uq.config,
+		limit:          uq.limit,
+		offset:         uq.offset,
+		order:          append([]OrderFunc{}, uq.order...),
+		predicates:     append([]predicate.User{}, uq.predicates...),
+		withFriends:    uq.withFriends.Clone(),
+		withRequests:   uq.withRequests.Clone(),
+		withFriendsReq: uq.withFriendsReq.Clone(),
+		withLikeTo:     uq.withLikeTo.Clone(),
+		withSave:       uq.withSave.Clone(),
+		withGroup:      uq.withGroup.Clone(),
+		withChatroom:   uq.withChatroom.Clone(),
+		withMessage:    uq.withMessage.Clone(),
+		withPics:       uq.withPics.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
 		path: uq.path,
@@ -429,6 +477,28 @@ func (uq *UserQuery) WithFriends(opts ...func(*UserQuery)) *UserQuery {
 		opt(query)
 	}
 	uq.withFriends = query
+	return uq
+}
+
+// WithRequests tells the query-builder to eager-load the nodes that are connected to
+// the "requests" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithRequests(opts ...func(*UserQuery)) *UserQuery {
+	query := &UserQuery{config: uq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withRequests = query
+	return uq
+}
+
+// WithFriendsReq tells the query-builder to eager-load the nodes that are connected to
+// the "friendsReq" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithFriendsReq(opts ...func(*UserQuery)) *UserQuery {
+	query := &UserQuery{config: uq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withFriendsReq = query
 	return uq
 }
 
@@ -504,12 +574,12 @@ func (uq *UserQuery) WithPics(opts ...func(*PicQuery)) *UserQuery {
 // Example:
 //
 //	var v []struct {
-//		Username string `json:"username,omitempty"`
+//		UID string `json:"uid,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.User.Query().
-//		GroupBy(user.FieldUsername).
+//		GroupBy(user.FieldUID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 //
@@ -531,11 +601,11 @@ func (uq *UserQuery) GroupBy(field string, fields ...string) *UserGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Username string `json:"username,omitempty"`
+//		UID string `json:"uid,omitempty"`
 //	}
 //
 //	client.User.Query().
-//		Select(user.FieldUsername).
+//		Select(user.FieldUID).
 //		Scan(ctx, &v)
 //
 func (uq *UserQuery) Select(fields ...string) *UserSelect {
@@ -563,8 +633,10 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 	var (
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
-		loadedTypes = [7]bool{
+		loadedTypes = [9]bool{
 			uq.withFriends != nil,
+			uq.withRequests != nil,
+			uq.withFriendsReq != nil,
 			uq.withLikeTo != nil,
 			uq.withSave != nil,
 			uq.withGroup != nil,
@@ -595,15 +667,15 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 
 	if query := uq.withFriends; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
-		ids := make(map[string]*User, len(nodes))
+		ids := make(map[int]*User, len(nodes))
 		for _, node := range nodes {
 			ids[node.ID] = node
 			fks = append(fks, node.ID)
 			node.Edges.Friends = []*User{}
 		}
 		var (
-			edgeids []string
-			edges   = make(map[string][]*User)
+			edgeids []int
+			edges   = make(map[int][]*User)
 		)
 		_spec := &sqlgraph.EdgeQuerySpec{
 			Edge: &sqlgraph.EdgeSpec{
@@ -615,19 +687,19 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 				s.Where(sql.InValues(user.FriendsPrimaryKey[0], fks...))
 			},
 			ScanValues: func() [2]interface{} {
-				return [2]interface{}{new(sql.NullString), new(sql.NullString)}
+				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
 			},
 			Assign: func(out, in interface{}) error {
-				eout, ok := out.(*sql.NullString)
+				eout, ok := out.(*sql.NullInt64)
 				if !ok || eout == nil {
 					return fmt.Errorf("unexpected id value for edge-out")
 				}
-				ein, ok := in.(*sql.NullString)
+				ein, ok := in.(*sql.NullInt64)
 				if !ok || ein == nil {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
-				outValue := eout.String
-				inValue := ein.String
+				outValue := int(eout.Int64)
+				inValue := int(ein.Int64)
 				node, ok := ids[outValue]
 				if !ok {
 					return fmt.Errorf("unexpected node id in edges: %v", outValue)
@@ -658,17 +730,147 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 		}
 	}
 
+	if query := uq.withRequests; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		ids := make(map[int]*User, len(nodes))
+		for _, node := range nodes {
+			ids[node.ID] = node
+			fks = append(fks, node.ID)
+			node.Edges.Requests = []*User{}
+		}
+		var (
+			edgeids []int
+			edges   = make(map[int][]*User)
+		)
+		_spec := &sqlgraph.EdgeQuerySpec{
+			Edge: &sqlgraph.EdgeSpec{
+				Inverse: true,
+				Table:   user.RequestsTable,
+				Columns: user.RequestsPrimaryKey,
+			},
+			Predicate: func(s *sql.Selector) {
+				s.Where(sql.InValues(user.RequestsPrimaryKey[1], fks...))
+			},
+			ScanValues: func() [2]interface{} {
+				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
+			},
+			Assign: func(out, in interface{}) error {
+				eout, ok := out.(*sql.NullInt64)
+				if !ok || eout == nil {
+					return fmt.Errorf("unexpected id value for edge-out")
+				}
+				ein, ok := in.(*sql.NullInt64)
+				if !ok || ein == nil {
+					return fmt.Errorf("unexpected id value for edge-in")
+				}
+				outValue := int(eout.Int64)
+				inValue := int(ein.Int64)
+				node, ok := ids[outValue]
+				if !ok {
+					return fmt.Errorf("unexpected node id in edges: %v", outValue)
+				}
+				if _, ok := edges[inValue]; !ok {
+					edgeids = append(edgeids, inValue)
+				}
+				edges[inValue] = append(edges[inValue], node)
+				return nil
+			},
+		}
+		if err := sqlgraph.QueryEdges(ctx, uq.driver, _spec); err != nil {
+			return nil, fmt.Errorf(`query edges "requests": %w`, err)
+		}
+		query.Where(user.IDIn(edgeids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := edges[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected "requests" node returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Requests = append(nodes[i].Edges.Requests, n)
+			}
+		}
+	}
+
+	if query := uq.withFriendsReq; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		ids := make(map[int]*User, len(nodes))
+		for _, node := range nodes {
+			ids[node.ID] = node
+			fks = append(fks, node.ID)
+			node.Edges.FriendsReq = []*User{}
+		}
+		var (
+			edgeids []int
+			edges   = make(map[int][]*User)
+		)
+		_spec := &sqlgraph.EdgeQuerySpec{
+			Edge: &sqlgraph.EdgeSpec{
+				Inverse: false,
+				Table:   user.FriendsReqTable,
+				Columns: user.FriendsReqPrimaryKey,
+			},
+			Predicate: func(s *sql.Selector) {
+				s.Where(sql.InValues(user.FriendsReqPrimaryKey[0], fks...))
+			},
+			ScanValues: func() [2]interface{} {
+				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
+			},
+			Assign: func(out, in interface{}) error {
+				eout, ok := out.(*sql.NullInt64)
+				if !ok || eout == nil {
+					return fmt.Errorf("unexpected id value for edge-out")
+				}
+				ein, ok := in.(*sql.NullInt64)
+				if !ok || ein == nil {
+					return fmt.Errorf("unexpected id value for edge-in")
+				}
+				outValue := int(eout.Int64)
+				inValue := int(ein.Int64)
+				node, ok := ids[outValue]
+				if !ok {
+					return fmt.Errorf("unexpected node id in edges: %v", outValue)
+				}
+				if _, ok := edges[inValue]; !ok {
+					edgeids = append(edgeids, inValue)
+				}
+				edges[inValue] = append(edges[inValue], node)
+				return nil
+			},
+		}
+		if err := sqlgraph.QueryEdges(ctx, uq.driver, _spec); err != nil {
+			return nil, fmt.Errorf(`query edges "friendsReq": %w`, err)
+		}
+		query.Where(user.IDIn(edgeids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := edges[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected "friendsReq" node returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.FriendsReq = append(nodes[i].Edges.FriendsReq, n)
+			}
+		}
+	}
+
 	if query := uq.withLikeTo; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
-		ids := make(map[string]*User, len(nodes))
+		ids := make(map[int]*User, len(nodes))
 		for _, node := range nodes {
 			ids[node.ID] = node
 			fks = append(fks, node.ID)
 			node.Edges.LikeTo = []*Group{}
 		}
 		var (
-			edgeids []string
-			edges   = make(map[string][]*User)
+			edgeids []int
+			edges   = make(map[int][]*User)
 		)
 		_spec := &sqlgraph.EdgeQuerySpec{
 			Edge: &sqlgraph.EdgeSpec{
@@ -680,19 +882,19 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 				s.Where(sql.InValues(user.LikeToPrimaryKey[0], fks...))
 			},
 			ScanValues: func() [2]interface{} {
-				return [2]interface{}{new(sql.NullString), new(sql.NullString)}
+				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
 			},
 			Assign: func(out, in interface{}) error {
-				eout, ok := out.(*sql.NullString)
+				eout, ok := out.(*sql.NullInt64)
 				if !ok || eout == nil {
 					return fmt.Errorf("unexpected id value for edge-out")
 				}
-				ein, ok := in.(*sql.NullString)
+				ein, ok := in.(*sql.NullInt64)
 				if !ok || ein == nil {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
-				outValue := eout.String
-				inValue := ein.String
+				outValue := int(eout.Int64)
+				inValue := int(ein.Int64)
 				node, ok := ids[outValue]
 				if !ok {
 					return fmt.Errorf("unexpected node id in edges: %v", outValue)
@@ -725,15 +927,15 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 
 	if query := uq.withSave; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
-		ids := make(map[string]*User, len(nodes))
+		ids := make(map[int]*User, len(nodes))
 		for _, node := range nodes {
 			ids[node.ID] = node
 			fks = append(fks, node.ID)
 			node.Edges.Save = []*Group{}
 		}
 		var (
-			edgeids []string
-			edges   = make(map[string][]*User)
+			edgeids []int
+			edges   = make(map[int][]*User)
 		)
 		_spec := &sqlgraph.EdgeQuerySpec{
 			Edge: &sqlgraph.EdgeSpec{
@@ -745,19 +947,19 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 				s.Where(sql.InValues(user.SavePrimaryKey[0], fks...))
 			},
 			ScanValues: func() [2]interface{} {
-				return [2]interface{}{new(sql.NullString), new(sql.NullString)}
+				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
 			},
 			Assign: func(out, in interface{}) error {
-				eout, ok := out.(*sql.NullString)
+				eout, ok := out.(*sql.NullInt64)
 				if !ok || eout == nil {
 					return fmt.Errorf("unexpected id value for edge-out")
 				}
-				ein, ok := in.(*sql.NullString)
+				ein, ok := in.(*sql.NullInt64)
 				if !ok || ein == nil {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
-				outValue := eout.String
-				inValue := ein.String
+				outValue := int(eout.Int64)
+				inValue := int(ein.Int64)
 				node, ok := ids[outValue]
 				if !ok {
 					return fmt.Errorf("unexpected node id in edges: %v", outValue)
@@ -789,8 +991,8 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 	}
 
 	if query := uq.withGroup; query != nil {
-		ids := make([]string, 0, len(nodes))
-		nodeids := make(map[string][]*User)
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*User)
 		for i := range nodes {
 			fk := nodes[i].GroupID
 			if _, ok := nodeids[fk]; !ok {
@@ -816,15 +1018,15 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 
 	if query := uq.withChatroom; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
-		ids := make(map[string]*User, len(nodes))
+		ids := make(map[int]*User, len(nodes))
 		for _, node := range nodes {
 			ids[node.ID] = node
 			fks = append(fks, node.ID)
 			node.Edges.Chatroom = []*ChatRoom{}
 		}
 		var (
-			edgeids []string
-			edges   = make(map[string][]*User)
+			edgeids []int
+			edges   = make(map[int][]*User)
 		)
 		_spec := &sqlgraph.EdgeQuerySpec{
 			Edge: &sqlgraph.EdgeSpec{
@@ -836,19 +1038,19 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 				s.Where(sql.InValues(user.ChatroomPrimaryKey[1], fks...))
 			},
 			ScanValues: func() [2]interface{} {
-				return [2]interface{}{new(sql.NullString), new(sql.NullString)}
+				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
 			},
 			Assign: func(out, in interface{}) error {
-				eout, ok := out.(*sql.NullString)
+				eout, ok := out.(*sql.NullInt64)
 				if !ok || eout == nil {
 					return fmt.Errorf("unexpected id value for edge-out")
 				}
-				ein, ok := in.(*sql.NullString)
+				ein, ok := in.(*sql.NullInt64)
 				if !ok || ein == nil {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
-				outValue := eout.String
-				inValue := ein.String
+				outValue := int(eout.Int64)
+				inValue := int(ein.Int64)
 				node, ok := ids[outValue]
 				if !ok {
 					return fmt.Errorf("unexpected node id in edges: %v", outValue)
@@ -881,7 +1083,7 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 
 	if query := uq.withMessage; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
-		nodeids := make(map[string]*User)
+		nodeids := make(map[int]*User)
 		for i := range nodes {
 			fks = append(fks, nodes[i].ID)
 			nodeids[nodes[i].ID] = nodes[i]
@@ -906,7 +1108,7 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 
 	if query := uq.withPics; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
-		nodeids := make(map[string]*User)
+		nodeids := make(map[int]*User)
 		for i := range nodes {
 			fks = append(fks, nodes[i].ID)
 			nodeids[nodes[i].ID] = nodes[i]
@@ -955,7 +1157,7 @@ func (uq *UserQuery) querySpec() *sqlgraph.QuerySpec {
 			Table:   user.Table,
 			Columns: user.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
+				Type:   field.TypeInt,
 				Column: user.FieldID,
 			},
 		},

@@ -16,10 +16,10 @@ type ChatMessage struct {
 // Fields of the ChatMessage.
 func (ChatMessage) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("id").Unique(),
+		field.String("uid").Unique(),
 		field.String("message").Default(""),
-		field.String("room_id").Optional(),
-		field.String("user_id").Optional(),
+		field.Int("room_id").Optional(),
+		field.Int("user_id").Optional(),
 		field.Time("createdAt").Default(time.Now),
 		field.Time("readAt").Default(time.Now),
 	}

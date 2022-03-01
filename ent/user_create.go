@@ -24,6 +24,12 @@ type UserCreate struct {
 	hooks    []Hook
 }
 
+// SetUID sets the "uid" field.
+func (uc *UserCreate) SetUID(s string) *UserCreate {
+	uc.mutation.SetUID(s)
+	return uc
+}
+
 // SetUsername sets the "username" field.
 func (uc *UserCreate) SetUsername(s string) *UserCreate {
 	uc.mutation.SetUsername(s)
@@ -63,15 +69,15 @@ func (uc *UserCreate) SetNillableBio(s *string) *UserCreate {
 }
 
 // SetGroupID sets the "group_id" field.
-func (uc *UserCreate) SetGroupID(s string) *UserCreate {
-	uc.mutation.SetGroupID(s)
+func (uc *UserCreate) SetGroupID(i int) *UserCreate {
+	uc.mutation.SetGroupID(i)
 	return uc
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (uc *UserCreate) SetNillableGroupID(s *string) *UserCreate {
-	if s != nil {
-		uc.SetGroupID(*s)
+func (uc *UserCreate) SetNillableGroupID(i *int) *UserCreate {
+	if i != nil {
+		uc.SetGroupID(*i)
 	}
 	return uc
 }
@@ -118,36 +124,60 @@ func (uc *UserCreate) SetNillableReadAt(t *time.Time) *UserCreate {
 	return uc
 }
 
-// SetID sets the "id" field.
-func (uc *UserCreate) SetID(s string) *UserCreate {
-	uc.mutation.SetID(s)
-	return uc
-}
-
 // AddFriendIDs adds the "friends" edge to the User entity by IDs.
-func (uc *UserCreate) AddFriendIDs(ids ...string) *UserCreate {
+func (uc *UserCreate) AddFriendIDs(ids ...int) *UserCreate {
 	uc.mutation.AddFriendIDs(ids...)
 	return uc
 }
 
 // AddFriends adds the "friends" edges to the User entity.
 func (uc *UserCreate) AddFriends(u ...*User) *UserCreate {
-	ids := make([]string, len(u))
+	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
 	return uc.AddFriendIDs(ids...)
 }
 
+// AddRequestIDs adds the "requests" edge to the User entity by IDs.
+func (uc *UserCreate) AddRequestIDs(ids ...int) *UserCreate {
+	uc.mutation.AddRequestIDs(ids...)
+	return uc
+}
+
+// AddRequests adds the "requests" edges to the User entity.
+func (uc *UserCreate) AddRequests(u ...*User) *UserCreate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uc.AddRequestIDs(ids...)
+}
+
+// AddFriendsReqIDs adds the "friendsReq" edge to the User entity by IDs.
+func (uc *UserCreate) AddFriendsReqIDs(ids ...int) *UserCreate {
+	uc.mutation.AddFriendsReqIDs(ids...)
+	return uc
+}
+
+// AddFriendsReq adds the "friendsReq" edges to the User entity.
+func (uc *UserCreate) AddFriendsReq(u ...*User) *UserCreate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uc.AddFriendsReqIDs(ids...)
+}
+
 // AddLikeToIDs adds the "like_to" edge to the Group entity by IDs.
-func (uc *UserCreate) AddLikeToIDs(ids ...string) *UserCreate {
+func (uc *UserCreate) AddLikeToIDs(ids ...int) *UserCreate {
 	uc.mutation.AddLikeToIDs(ids...)
 	return uc
 }
 
 // AddLikeTo adds the "like_to" edges to the Group entity.
 func (uc *UserCreate) AddLikeTo(g ...*Group) *UserCreate {
-	ids := make([]string, len(g))
+	ids := make([]int, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -155,14 +185,14 @@ func (uc *UserCreate) AddLikeTo(g ...*Group) *UserCreate {
 }
 
 // AddSaveIDs adds the "save" edge to the Group entity by IDs.
-func (uc *UserCreate) AddSaveIDs(ids ...string) *UserCreate {
+func (uc *UserCreate) AddSaveIDs(ids ...int) *UserCreate {
 	uc.mutation.AddSaveIDs(ids...)
 	return uc
 }
 
 // AddSave adds the "save" edges to the Group entity.
 func (uc *UserCreate) AddSave(g ...*Group) *UserCreate {
-	ids := make([]string, len(g))
+	ids := make([]int, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -175,14 +205,14 @@ func (uc *UserCreate) SetGroup(g *Group) *UserCreate {
 }
 
 // AddChatroomIDs adds the "chatroom" edge to the ChatRoom entity by IDs.
-func (uc *UserCreate) AddChatroomIDs(ids ...string) *UserCreate {
+func (uc *UserCreate) AddChatroomIDs(ids ...int) *UserCreate {
 	uc.mutation.AddChatroomIDs(ids...)
 	return uc
 }
 
 // AddChatroom adds the "chatroom" edges to the ChatRoom entity.
 func (uc *UserCreate) AddChatroom(c ...*ChatRoom) *UserCreate {
-	ids := make([]string, len(c))
+	ids := make([]int, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
@@ -190,14 +220,14 @@ func (uc *UserCreate) AddChatroom(c ...*ChatRoom) *UserCreate {
 }
 
 // AddMessageIDs adds the "message" edge to the ChatMessage entity by IDs.
-func (uc *UserCreate) AddMessageIDs(ids ...string) *UserCreate {
+func (uc *UserCreate) AddMessageIDs(ids ...int) *UserCreate {
 	uc.mutation.AddMessageIDs(ids...)
 	return uc
 }
 
 // AddMessage adds the "message" edges to the ChatMessage entity.
 func (uc *UserCreate) AddMessage(c ...*ChatMessage) *UserCreate {
-	ids := make([]string, len(c))
+	ids := make([]int, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
@@ -306,6 +336,9 @@ func (uc *UserCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (uc *UserCreate) check() error {
+	if _, ok := uc.mutation.UID(); !ok {
+		return &ValidationError{Name: "uid", err: errors.New(`ent: missing required field "User.uid"`)}
+	}
 	if _, ok := uc.mutation.Username(); !ok {
 		return &ValidationError{Name: "username", err: errors.New(`ent: missing required field "User.username"`)}
 	}
@@ -353,13 +386,8 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 		}
 		return nil, err
 	}
-	if _spec.ID.Value != nil {
-		if id, ok := _spec.ID.Value.(string); ok {
-			_node.ID = id
-		} else {
-			return nil, fmt.Errorf("unexpected User.ID type: %T", _spec.ID.Value)
-		}
-	}
+	id := _spec.ID.Value.(int64)
+	_node.ID = int(id)
 	return _node, nil
 }
 
@@ -369,14 +397,18 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: user.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
+				Type:   field.TypeInt,
 				Column: user.FieldID,
 			},
 		}
 	)
-	if id, ok := uc.mutation.ID(); ok {
-		_node.ID = id
-		_spec.ID.Value = id
+	if value, ok := uc.mutation.UID(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: user.FieldUID,
+		})
+		_node.UID = value
 	}
 	if value, ok := uc.mutation.Username(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
@@ -451,7 +483,45 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    true,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.RequestsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.RequestsTable,
+			Columns: user.RequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.FriendsReqIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.FriendsReqTable,
+			Columns: user.FriendsReqPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -470,7 +540,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -489,7 +559,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -508,7 +578,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -528,7 +598,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: chatroom.FieldID,
 				},
 			},
@@ -547,7 +617,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: chatmessage.FieldID,
 				},
 			},
@@ -621,6 +691,10 @@ func (ucb *UserCreateBulk) Save(ctx context.Context) ([]*User, error) {
 				}
 				mutation.id = &nodes[i].ID
 				mutation.done = true
+				if specs[i].ID.Value != nil {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int(id)
+				}
 				return nodes[i], nil
 			})
 			for i := len(builder.hooks) - 1; i >= 0; i-- {

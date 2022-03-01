@@ -12,6 +12,7 @@ import (
 )
 
 func GetGroups(c *fiber.Ctx) error {
+	userId := c.Locals("userId").(int)
 
 	input := new(dto.GetGroupsInput)
 
@@ -27,13 +28,14 @@ func GetGroups(c *fiber.Ctx) error {
 		input.Cursor = ""
 	}
 
-	groups := config.DB.Group.
-		Query().
-		Where(
+	gid := config.DB.User.Query().Where(user.IDEQ(userId)).QueryGroup().OnlyIDX(c.Context())
+
+	groups := config.DB.Group.Query().Where(
+		group.And(
 			group.ReadAtGTE(time.Now().AddDate(0, 0, -2)),
-		).
-		QueryMembers().
-		QueryPics()
+			group.IDNEQ(gid),
+		),
+	).WithPics().WithMembers().AllX(c.Context())
 
 	return c.JSON(fiber.Map{
 		"ok":      true,
@@ -44,8 +46,8 @@ func GetGroups(c *fiber.Ctx) error {
 	})
 }
 
-func CreateGroup(c *fiber.Ctx) error {
-	uid := c.Locals("uid").(string)
+func JoinGroup(c *fiber.Ctx) error {
+	userId := c.Locals("userId").(int)
 
 	input := new(dto.CreateGroupInput)
 	if err := c.BodyParser(input); err != nil {
@@ -55,24 +57,32 @@ func CreateGroup(c *fiber.Ctx) error {
 		})
 	}
 
-	var friendsIDs []string
+	var friendsIDs []int
 
-	friendsIDs = append(friendsIDs, uid)
+	friendsIDs = append(friendsIDs, userId)
 	for _, friend := range input.Friends {
-		fr, _ := config.DB.User.Query().Where(user.Username(friend)).First(c.Context())
-
-		friendsIDs = append(friendsIDs, fr.ID)
+		frID, err := config.DB.User.Query().Where(user.IDEQ(userId)).Clone().QueryFriends().Where(user.UsernameEQ(friend)).OnlyID(c.Context())
+		if err != nil {
+			return c.Status(200).JSON(fiber.Map{
+				"ok":      false,
+				"message": "cannot find friend",
+			})
+		}
+		friendsIDs = append(friendsIDs, frID)
 	}
 
 	gid := uuid.New().String()
 
-	config.DB.Group.
+	g := config.DB.Group.
 		Create().
-		SetID(gid).SetGroupname(input.GroupName).
+		SetUID(gid).SetGroupname(input.GroupName).
 		SetBio(input.Bio).AddMemberIDs(friendsIDs...).SaveX(c.Context())
 
 	return c.JSON(fiber.Map{
 		"ok":      true,
 		"message": "Create Group successfully",
+		"data": fiber.Map{
+			"group": g,
+		},
 	})
 }

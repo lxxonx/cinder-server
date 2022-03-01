@@ -22,6 +22,12 @@ type ChatMessageCreate struct {
 	hooks    []Hook
 }
 
+// SetUID sets the "uid" field.
+func (cmc *ChatMessageCreate) SetUID(s string) *ChatMessageCreate {
+	cmc.mutation.SetUID(s)
+	return cmc
+}
+
 // SetMessage sets the "message" field.
 func (cmc *ChatMessageCreate) SetMessage(s string) *ChatMessageCreate {
 	cmc.mutation.SetMessage(s)
@@ -37,29 +43,29 @@ func (cmc *ChatMessageCreate) SetNillableMessage(s *string) *ChatMessageCreate {
 }
 
 // SetRoomID sets the "room_id" field.
-func (cmc *ChatMessageCreate) SetRoomID(s string) *ChatMessageCreate {
-	cmc.mutation.SetRoomID(s)
+func (cmc *ChatMessageCreate) SetRoomID(i int) *ChatMessageCreate {
+	cmc.mutation.SetRoomID(i)
 	return cmc
 }
 
 // SetNillableRoomID sets the "room_id" field if the given value is not nil.
-func (cmc *ChatMessageCreate) SetNillableRoomID(s *string) *ChatMessageCreate {
-	if s != nil {
-		cmc.SetRoomID(*s)
+func (cmc *ChatMessageCreate) SetNillableRoomID(i *int) *ChatMessageCreate {
+	if i != nil {
+		cmc.SetRoomID(*i)
 	}
 	return cmc
 }
 
 // SetUserID sets the "user_id" field.
-func (cmc *ChatMessageCreate) SetUserID(s string) *ChatMessageCreate {
-	cmc.mutation.SetUserID(s)
+func (cmc *ChatMessageCreate) SetUserID(i int) *ChatMessageCreate {
+	cmc.mutation.SetUserID(i)
 	return cmc
 }
 
 // SetNillableUserID sets the "user_id" field if the given value is not nil.
-func (cmc *ChatMessageCreate) SetNillableUserID(s *string) *ChatMessageCreate {
-	if s != nil {
-		cmc.SetUserID(*s)
+func (cmc *ChatMessageCreate) SetNillableUserID(i *int) *ChatMessageCreate {
+	if i != nil {
+		cmc.SetUserID(*i)
 	}
 	return cmc
 }
@@ -89,12 +95,6 @@ func (cmc *ChatMessageCreate) SetNillableReadAt(t *time.Time) *ChatMessageCreate
 	if t != nil {
 		cmc.SetReadAt(*t)
 	}
-	return cmc
-}
-
-// SetID sets the "id" field.
-func (cmc *ChatMessageCreate) SetID(s string) *ChatMessageCreate {
-	cmc.mutation.SetID(s)
 	return cmc
 }
 
@@ -195,6 +195,9 @@ func (cmc *ChatMessageCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (cmc *ChatMessageCreate) check() error {
+	if _, ok := cmc.mutation.UID(); !ok {
+		return &ValidationError{Name: "uid", err: errors.New(`ent: missing required field "ChatMessage.uid"`)}
+	}
 	if _, ok := cmc.mutation.Message(); !ok {
 		return &ValidationError{Name: "message", err: errors.New(`ent: missing required field "ChatMessage.message"`)}
 	}
@@ -215,13 +218,8 @@ func (cmc *ChatMessageCreate) sqlSave(ctx context.Context) (*ChatMessage, error)
 		}
 		return nil, err
 	}
-	if _spec.ID.Value != nil {
-		if id, ok := _spec.ID.Value.(string); ok {
-			_node.ID = id
-		} else {
-			return nil, fmt.Errorf("unexpected ChatMessage.ID type: %T", _spec.ID.Value)
-		}
-	}
+	id := _spec.ID.Value.(int64)
+	_node.ID = int(id)
 	return _node, nil
 }
 
@@ -231,14 +229,18 @@ func (cmc *ChatMessageCreate) createSpec() (*ChatMessage, *sqlgraph.CreateSpec) 
 		_spec = &sqlgraph.CreateSpec{
 			Table: chatmessage.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
+				Type:   field.TypeInt,
 				Column: chatmessage.FieldID,
 			},
 		}
 	)
-	if id, ok := cmc.mutation.ID(); ok {
-		_node.ID = id
-		_spec.ID.Value = id
+	if value, ok := cmc.mutation.UID(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: chatmessage.FieldUID,
+		})
+		_node.UID = value
 	}
 	if value, ok := cmc.mutation.Message(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
@@ -273,7 +275,7 @@ func (cmc *ChatMessageCreate) createSpec() (*ChatMessage, *sqlgraph.CreateSpec) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -293,7 +295,7 @@ func (cmc *ChatMessageCreate) createSpec() (*ChatMessage, *sqlgraph.CreateSpec) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: chatroom.FieldID,
 				},
 			},
@@ -349,6 +351,10 @@ func (cmcb *ChatMessageCreateBulk) Save(ctx context.Context) ([]*ChatMessage, er
 				}
 				mutation.id = &nodes[i].ID
 				mutation.done = true
+				if specs[i].ID.Value != nil {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int(id)
+				}
 				return nodes[i], nil
 			})
 			for i := len(builder.hooks) - 1; i >= 0; i-- {

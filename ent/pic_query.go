@@ -326,12 +326,12 @@ func (pq *PicQuery) WithGroup(opts ...func(*GroupQuery)) *PicQuery {
 // Example:
 //
 //	var v []struct {
-//		UserID string `json:"user_id,omitempty"`
+//		UID string `json:"uid,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Pic.Query().
-//		GroupBy(pic.FieldUserID).
+//		GroupBy(pic.FieldUID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 //
@@ -353,11 +353,11 @@ func (pq *PicQuery) GroupBy(field string, fields ...string) *PicGroupBy {
 // Example:
 //
 //	var v []struct {
-//		UserID string `json:"user_id,omitempty"`
+//		UID string `json:"uid,omitempty"`
 //	}
 //
 //	client.Pic.Query().
-//		Select(pic.FieldUserID).
+//		Select(pic.FieldUID).
 //		Scan(ctx, &v)
 //
 func (pq *PicQuery) Select(fields ...string) *PicSelect {
@@ -411,8 +411,8 @@ func (pq *PicQuery) sqlAll(ctx context.Context) ([]*Pic, error) {
 	}
 
 	if query := pq.withUser; query != nil {
-		ids := make([]string, 0, len(nodes))
-		nodeids := make(map[string][]*Pic)
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Pic)
 		for i := range nodes {
 			fk := nodes[i].UserID
 			if _, ok := nodeids[fk]; !ok {
@@ -437,8 +437,8 @@ func (pq *PicQuery) sqlAll(ctx context.Context) ([]*Pic, error) {
 	}
 
 	if query := pq.withGroup; query != nil {
-		ids := make([]string, 0, len(nodes))
-		nodeids := make(map[string][]*Pic)
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Pic)
 		for i := range nodes {
 			fk := nodes[i].GroupID
 			if _, ok := nodeids[fk]; !ok {

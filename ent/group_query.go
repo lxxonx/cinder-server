@@ -226,8 +226,8 @@ func (gq *GroupQuery) FirstX(ctx context.Context) *Group {
 
 // FirstID returns the first Group ID from the query.
 // Returns a *NotFoundError when no Group ID was found.
-func (gq *GroupQuery) FirstID(ctx context.Context) (id string, err error) {
-	var ids []string
+func (gq *GroupQuery) FirstID(ctx context.Context) (id int, err error) {
+	var ids []int
 	if ids, err = gq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
@@ -239,7 +239,7 @@ func (gq *GroupQuery) FirstID(ctx context.Context) (id string, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (gq *GroupQuery) FirstIDX(ctx context.Context) string {
+func (gq *GroupQuery) FirstIDX(ctx context.Context) int {
 	id, err := gq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -277,8 +277,8 @@ func (gq *GroupQuery) OnlyX(ctx context.Context) *Group {
 // OnlyID is like Only, but returns the only Group ID in the query.
 // Returns a *NotSingularError when exactly one Group ID is not found.
 // Returns a *NotFoundError when no entities are found.
-func (gq *GroupQuery) OnlyID(ctx context.Context) (id string, err error) {
-	var ids []string
+func (gq *GroupQuery) OnlyID(ctx context.Context) (id int, err error) {
+	var ids []int
 	if ids, err = gq.Limit(2).IDs(ctx); err != nil {
 		return
 	}
@@ -294,7 +294,7 @@ func (gq *GroupQuery) OnlyID(ctx context.Context) (id string, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (gq *GroupQuery) OnlyIDX(ctx context.Context) string {
+func (gq *GroupQuery) OnlyIDX(ctx context.Context) int {
 	id, err := gq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -320,8 +320,8 @@ func (gq *GroupQuery) AllX(ctx context.Context) []*Group {
 }
 
 // IDs executes the query and returns a list of Group IDs.
-func (gq *GroupQuery) IDs(ctx context.Context) ([]string, error) {
-	var ids []string
+func (gq *GroupQuery) IDs(ctx context.Context) ([]int, error) {
+	var ids []int
 	if err := gq.Select(group.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -329,7 +329,7 @@ func (gq *GroupQuery) IDs(ctx context.Context) ([]string, error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (gq *GroupQuery) IDsX(ctx context.Context) []string {
+func (gq *GroupQuery) IDsX(ctx context.Context) []int {
 	ids, err := gq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -467,12 +467,12 @@ func (gq *GroupQuery) WithPics(opts ...func(*PicQuery)) *GroupQuery {
 // Example:
 //
 //	var v []struct {
-//		Groupname string `json:"groupname,omitempty"`
+//		UID string `json:"uid,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Group.Query().
-//		GroupBy(group.FieldGroupname).
+//		GroupBy(group.FieldUID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 //
@@ -494,11 +494,11 @@ func (gq *GroupQuery) GroupBy(field string, fields ...string) *GroupGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Groupname string `json:"groupname,omitempty"`
+//		UID string `json:"uid,omitempty"`
 //	}
 //
 //	client.Group.Query().
-//		Select(group.FieldGroupname).
+//		Select(group.FieldUID).
 //		Scan(ctx, &v)
 //
 func (gq *GroupQuery) Select(fields ...string) *GroupSelect {
@@ -557,7 +557,7 @@ func (gq *GroupQuery) sqlAll(ctx context.Context) ([]*Group, error) {
 
 	if query := gq.withMembers; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
-		nodeids := make(map[string]*Group)
+		nodeids := make(map[int]*Group)
 		for i := range nodes {
 			fks = append(fks, nodes[i].ID)
 			nodeids[nodes[i].ID] = nodes[i]
@@ -582,15 +582,15 @@ func (gq *GroupQuery) sqlAll(ctx context.Context) ([]*Group, error) {
 
 	if query := gq.withLikeFromUser; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
-		ids := make(map[string]*Group, len(nodes))
+		ids := make(map[int]*Group, len(nodes))
 		for _, node := range nodes {
 			ids[node.ID] = node
 			fks = append(fks, node.ID)
 			node.Edges.LikeFromUser = []*User{}
 		}
 		var (
-			edgeids []string
-			edges   = make(map[string][]*Group)
+			edgeids []int
+			edges   = make(map[int][]*Group)
 		)
 		_spec := &sqlgraph.EdgeQuerySpec{
 			Edge: &sqlgraph.EdgeSpec{
@@ -602,19 +602,19 @@ func (gq *GroupQuery) sqlAll(ctx context.Context) ([]*Group, error) {
 				s.Where(sql.InValues(group.LikeFromUserPrimaryKey[1], fks...))
 			},
 			ScanValues: func() [2]interface{} {
-				return [2]interface{}{new(sql.NullString), new(sql.NullString)}
+				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
 			},
 			Assign: func(out, in interface{}) error {
-				eout, ok := out.(*sql.NullString)
+				eout, ok := out.(*sql.NullInt64)
 				if !ok || eout == nil {
 					return fmt.Errorf("unexpected id value for edge-out")
 				}
-				ein, ok := in.(*sql.NullString)
+				ein, ok := in.(*sql.NullInt64)
 				if !ok || ein == nil {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
-				outValue := eout.String
-				inValue := ein.String
+				outValue := int(eout.Int64)
+				inValue := int(ein.Int64)
 				node, ok := ids[outValue]
 				if !ok {
 					return fmt.Errorf("unexpected node id in edges: %v", outValue)
@@ -647,15 +647,15 @@ func (gq *GroupQuery) sqlAll(ctx context.Context) ([]*Group, error) {
 
 	if query := gq.withSaved; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
-		ids := make(map[string]*Group, len(nodes))
+		ids := make(map[int]*Group, len(nodes))
 		for _, node := range nodes {
 			ids[node.ID] = node
 			fks = append(fks, node.ID)
 			node.Edges.Saved = []*User{}
 		}
 		var (
-			edgeids []string
-			edges   = make(map[string][]*Group)
+			edgeids []int
+			edges   = make(map[int][]*Group)
 		)
 		_spec := &sqlgraph.EdgeQuerySpec{
 			Edge: &sqlgraph.EdgeSpec{
@@ -667,19 +667,19 @@ func (gq *GroupQuery) sqlAll(ctx context.Context) ([]*Group, error) {
 				s.Where(sql.InValues(group.SavedPrimaryKey[1], fks...))
 			},
 			ScanValues: func() [2]interface{} {
-				return [2]interface{}{new(sql.NullString), new(sql.NullString)}
+				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
 			},
 			Assign: func(out, in interface{}) error {
-				eout, ok := out.(*sql.NullString)
+				eout, ok := out.(*sql.NullInt64)
 				if !ok || eout == nil {
 					return fmt.Errorf("unexpected id value for edge-out")
 				}
-				ein, ok := in.(*sql.NullString)
+				ein, ok := in.(*sql.NullInt64)
 				if !ok || ein == nil {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
-				outValue := eout.String
-				inValue := ein.String
+				outValue := int(eout.Int64)
+				inValue := int(ein.Int64)
 				node, ok := ids[outValue]
 				if !ok {
 					return fmt.Errorf("unexpected node id in edges: %v", outValue)
@@ -712,15 +712,15 @@ func (gq *GroupQuery) sqlAll(ctx context.Context) ([]*Group, error) {
 
 	if query := gq.withLikeFromGroup; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
-		ids := make(map[string]*Group, len(nodes))
+		ids := make(map[int]*Group, len(nodes))
 		for _, node := range nodes {
 			ids[node.ID] = node
 			fks = append(fks, node.ID)
 			node.Edges.LikeFromGroup = []*Group{}
 		}
 		var (
-			edgeids []string
-			edges   = make(map[string][]*Group)
+			edgeids []int
+			edges   = make(map[int][]*Group)
 		)
 		_spec := &sqlgraph.EdgeQuerySpec{
 			Edge: &sqlgraph.EdgeSpec{
@@ -732,19 +732,19 @@ func (gq *GroupQuery) sqlAll(ctx context.Context) ([]*Group, error) {
 				s.Where(sql.InValues(group.LikeFromGroupPrimaryKey[1], fks...))
 			},
 			ScanValues: func() [2]interface{} {
-				return [2]interface{}{new(sql.NullString), new(sql.NullString)}
+				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
 			},
 			Assign: func(out, in interface{}) error {
-				eout, ok := out.(*sql.NullString)
+				eout, ok := out.(*sql.NullInt64)
 				if !ok || eout == nil {
 					return fmt.Errorf("unexpected id value for edge-out")
 				}
-				ein, ok := in.(*sql.NullString)
+				ein, ok := in.(*sql.NullInt64)
 				if !ok || ein == nil {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
-				outValue := eout.String
-				inValue := ein.String
+				outValue := int(eout.Int64)
+				inValue := int(ein.Int64)
 				node, ok := ids[outValue]
 				if !ok {
 					return fmt.Errorf("unexpected node id in edges: %v", outValue)
@@ -777,15 +777,15 @@ func (gq *GroupQuery) sqlAll(ctx context.Context) ([]*Group, error) {
 
 	if query := gq.withLikeTo; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
-		ids := make(map[string]*Group, len(nodes))
+		ids := make(map[int]*Group, len(nodes))
 		for _, node := range nodes {
 			ids[node.ID] = node
 			fks = append(fks, node.ID)
 			node.Edges.LikeTo = []*Group{}
 		}
 		var (
-			edgeids []string
-			edges   = make(map[string][]*Group)
+			edgeids []int
+			edges   = make(map[int][]*Group)
 		)
 		_spec := &sqlgraph.EdgeQuerySpec{
 			Edge: &sqlgraph.EdgeSpec{
@@ -797,19 +797,19 @@ func (gq *GroupQuery) sqlAll(ctx context.Context) ([]*Group, error) {
 				s.Where(sql.InValues(group.LikeToPrimaryKey[0], fks...))
 			},
 			ScanValues: func() [2]interface{} {
-				return [2]interface{}{new(sql.NullString), new(sql.NullString)}
+				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
 			},
 			Assign: func(out, in interface{}) error {
-				eout, ok := out.(*sql.NullString)
+				eout, ok := out.(*sql.NullInt64)
 				if !ok || eout == nil {
 					return fmt.Errorf("unexpected id value for edge-out")
 				}
-				ein, ok := in.(*sql.NullString)
+				ein, ok := in.(*sql.NullInt64)
 				if !ok || ein == nil {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
-				outValue := eout.String
-				inValue := ein.String
+				outValue := int(eout.Int64)
+				inValue := int(ein.Int64)
 				node, ok := ids[outValue]
 				if !ok {
 					return fmt.Errorf("unexpected node id in edges: %v", outValue)
@@ -842,7 +842,7 @@ func (gq *GroupQuery) sqlAll(ctx context.Context) ([]*Group, error) {
 
 	if query := gq.withPics; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
-		nodeids := make(map[string]*Group)
+		nodeids := make(map[int]*Group)
 		for i := range nodes {
 			fks = append(fks, nodes[i].ID)
 			nodeids[nodes[i].ID] = nodes[i]
@@ -891,7 +891,7 @@ func (gq *GroupQuery) querySpec() *sqlgraph.QuerySpec {
 			Table:   group.Table,
 			Columns: group.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
+				Type:   field.TypeInt,
 				Column: group.FieldID,
 			},
 		},

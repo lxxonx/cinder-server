@@ -22,6 +22,12 @@ type ChatRoomCreate struct {
 	hooks    []Hook
 }
 
+// SetUID sets the "uid" field.
+func (crc *ChatRoomCreate) SetUID(s string) *ChatRoomCreate {
+	crc.mutation.SetUID(s)
+	return crc
+}
+
 // SetCreatedAt sets the "createdAt" field.
 func (crc *ChatRoomCreate) SetCreatedAt(t time.Time) *ChatRoomCreate {
 	crc.mutation.SetCreatedAt(t)
@@ -64,21 +70,15 @@ func (crc *ChatRoomCreate) SetNillableReadAt(t *time.Time) *ChatRoomCreate {
 	return crc
 }
 
-// SetID sets the "id" field.
-func (crc *ChatRoomCreate) SetID(s string) *ChatRoomCreate {
-	crc.mutation.SetID(s)
-	return crc
-}
-
 // AddParticipantIDs adds the "participants" edge to the User entity by IDs.
-func (crc *ChatRoomCreate) AddParticipantIDs(ids ...string) *ChatRoomCreate {
+func (crc *ChatRoomCreate) AddParticipantIDs(ids ...int) *ChatRoomCreate {
 	crc.mutation.AddParticipantIDs(ids...)
 	return crc
 }
 
 // AddParticipants adds the "participants" edges to the User entity.
 func (crc *ChatRoomCreate) AddParticipants(u ...*User) *ChatRoomCreate {
-	ids := make([]string, len(u))
+	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -86,14 +86,14 @@ func (crc *ChatRoomCreate) AddParticipants(u ...*User) *ChatRoomCreate {
 }
 
 // AddMessageIDs adds the "messages" edge to the ChatMessage entity by IDs.
-func (crc *ChatRoomCreate) AddMessageIDs(ids ...string) *ChatRoomCreate {
+func (crc *ChatRoomCreate) AddMessageIDs(ids ...int) *ChatRoomCreate {
 	crc.mutation.AddMessageIDs(ids...)
 	return crc
 }
 
 // AddMessages adds the "messages" edges to the ChatMessage entity.
 func (crc *ChatRoomCreate) AddMessages(c ...*ChatMessage) *ChatRoomCreate {
-	ids := make([]string, len(c))
+	ids := make([]int, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
@@ -187,6 +187,9 @@ func (crc *ChatRoomCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (crc *ChatRoomCreate) check() error {
+	if _, ok := crc.mutation.UID(); !ok {
+		return &ValidationError{Name: "uid", err: errors.New(`ent: missing required field "ChatRoom.uid"`)}
+	}
 	if _, ok := crc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "createdAt", err: errors.New(`ent: missing required field "ChatRoom.createdAt"`)}
 	}
@@ -207,13 +210,8 @@ func (crc *ChatRoomCreate) sqlSave(ctx context.Context) (*ChatRoom, error) {
 		}
 		return nil, err
 	}
-	if _spec.ID.Value != nil {
-		if id, ok := _spec.ID.Value.(string); ok {
-			_node.ID = id
-		} else {
-			return nil, fmt.Errorf("unexpected ChatRoom.ID type: %T", _spec.ID.Value)
-		}
-	}
+	id := _spec.ID.Value.(int64)
+	_node.ID = int(id)
 	return _node, nil
 }
 
@@ -223,14 +221,18 @@ func (crc *ChatRoomCreate) createSpec() (*ChatRoom, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: chatroom.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
+				Type:   field.TypeInt,
 				Column: chatroom.FieldID,
 			},
 		}
 	)
-	if id, ok := crc.mutation.ID(); ok {
-		_node.ID = id
-		_spec.ID.Value = id
+	if value, ok := crc.mutation.UID(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: chatroom.FieldUID,
+		})
+		_node.UID = value
 	}
 	if value, ok := crc.mutation.CreatedAt(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
@@ -265,7 +267,7 @@ func (crc *ChatRoomCreate) createSpec() (*ChatRoom, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -284,7 +286,7 @@ func (crc *ChatRoomCreate) createSpec() (*ChatRoom, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: chatmessage.FieldID,
 				},
 			},
@@ -339,6 +341,10 @@ func (crcb *ChatRoomCreateBulk) Save(ctx context.Context) ([]*ChatRoom, error) {
 				}
 				mutation.id = &nodes[i].ID
 				mutation.done = true
+				if specs[i].ID.Value != nil {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int(id)
+				}
 				return nodes[i], nil
 			})
 			for i := len(builder.hooks) - 1; i >= 0; i-- {

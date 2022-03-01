@@ -69,20 +69,20 @@ func init() {
 	group.DefaultReadAt = groupDescReadAt.Default.(func() time.Time)
 	picFields := schema.Pic{}.Fields()
 	_ = picFields
-	// picDescAdress is the schema descriptor for adress field.
-	picDescAdress := picFields[2].Descriptor()
-	// pic.AdressValidator is a validator for the "adress" field. It is called by the builders before save.
-	pic.AdressValidator = picDescAdress.Validators[0].(func(string) error)
+	// picDescURL is the schema descriptor for url field.
+	picDescURL := picFields[3].Descriptor()
+	// pic.URLValidator is a validator for the "url" field. It is called by the builders before save.
+	pic.URLValidator = picDescURL.Validators[0].(func(string) error)
 	// picDescCreatedAt is the schema descriptor for createdAt field.
-	picDescCreatedAt := picFields[3].Descriptor()
+	picDescCreatedAt := picFields[4].Descriptor()
 	// pic.DefaultCreatedAt holds the default value on creation for the createdAt field.
 	pic.DefaultCreatedAt = picDescCreatedAt.Default.(func() time.Time)
 	// picDescUpdatedAt is the schema descriptor for updatedAt field.
-	picDescUpdatedAt := picFields[4].Descriptor()
+	picDescUpdatedAt := picFields[5].Descriptor()
 	// pic.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
 	pic.DefaultUpdatedAt = picDescUpdatedAt.Default.(func() time.Time)
 	// picDescReadAt is the schema descriptor for readAt field.
-	picDescReadAt := picFields[5].Descriptor()
+	picDescReadAt := picFields[6].Descriptor()
 	// pic.DefaultReadAt holds the default value on creation for the readAt field.
 	pic.DefaultReadAt = picDescReadAt.Default.(func() time.Time)
 	userFields := schema.User{}.Fields()

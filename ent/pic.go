@@ -18,12 +18,14 @@ type Pic struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// UID holds the value of the "uid" field.
+	UID string `json:"uid,omitempty"`
 	// UserID holds the value of the "user_id" field.
-	UserID string `json:"user_id,omitempty"`
+	UserID int `json:"user_id,omitempty"`
 	// GroupID holds the value of the "group_id" field.
-	GroupID string `json:"group_id,omitempty"`
-	// Adress holds the value of the "adress" field.
-	Adress string `json:"adress,omitempty"`
+	GroupID int `json:"group_id,omitempty"`
+	// URL holds the value of the "url" field.
+	URL string `json:"url,omitempty"`
 	// CreatedAt holds the value of the "createdAt" field.
 	CreatedAt time.Time `json:"createdAt,omitempty"`
 	// UpdatedAt holds the value of the "updatedAt" field.
@@ -79,9 +81,9 @@ func (*Pic) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case pic.FieldID:
+		case pic.FieldID, pic.FieldUserID, pic.FieldGroupID:
 			values[i] = new(sql.NullInt64)
-		case pic.FieldUserID, pic.FieldGroupID, pic.FieldAdress:
+		case pic.FieldUID, pic.FieldURL:
 			values[i] = new(sql.NullString)
 		case pic.FieldCreatedAt, pic.FieldUpdatedAt, pic.FieldReadAt:
 			values[i] = new(sql.NullTime)
@@ -106,23 +108,29 @@ func (pi *Pic) assignValues(columns []string, values []interface{}) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			pi.ID = int(value.Int64)
-		case pic.FieldUserID:
+		case pic.FieldUID:
 			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field uid", values[i])
+			} else if value.Valid {
+				pi.UID = value.String
+			}
+		case pic.FieldUserID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field user_id", values[i])
 			} else if value.Valid {
-				pi.UserID = value.String
+				pi.UserID = int(value.Int64)
 			}
 		case pic.FieldGroupID:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field group_id", values[i])
 			} else if value.Valid {
-				pi.GroupID = value.String
+				pi.GroupID = int(value.Int64)
 			}
-		case pic.FieldAdress:
+		case pic.FieldURL:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field adress", values[i])
+				return fmt.Errorf("unexpected type %T for field url", values[i])
 			} else if value.Valid {
-				pi.Adress = value.String
+				pi.URL = value.String
 			}
 		case pic.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -180,12 +188,14 @@ func (pi *Pic) String() string {
 	var builder strings.Builder
 	builder.WriteString("Pic(")
 	builder.WriteString(fmt.Sprintf("id=%v", pi.ID))
+	builder.WriteString(", uid=")
+	builder.WriteString(pi.UID)
 	builder.WriteString(", user_id=")
-	builder.WriteString(pi.UserID)
+	builder.WriteString(fmt.Sprintf("%v", pi.UserID))
 	builder.WriteString(", group_id=")
-	builder.WriteString(pi.GroupID)
-	builder.WriteString(", adress=")
-	builder.WriteString(pi.Adress)
+	builder.WriteString(fmt.Sprintf("%v", pi.GroupID))
+	builder.WriteString(", url=")
+	builder.WriteString(pi.URL)
 	builder.WriteString(", createdAt=")
 	builder.WriteString(pi.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", updatedAt=")

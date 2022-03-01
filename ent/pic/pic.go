@@ -11,12 +11,14 @@ const (
 	Label = "pic"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldUID holds the string denoting the uid field in the database.
+	FieldUID = "uid"
 	// FieldUserID holds the string denoting the user_id field in the database.
 	FieldUserID = "user_id"
 	// FieldGroupID holds the string denoting the group_id field in the database.
 	FieldGroupID = "group_id"
-	// FieldAdress holds the string denoting the adress field in the database.
-	FieldAdress = "adress"
+	// FieldURL holds the string denoting the url field in the database.
+	FieldURL = "url"
 	// FieldCreatedAt holds the string denoting the createdat field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updatedat field in the database.
@@ -48,9 +50,10 @@ const (
 // Columns holds all SQL columns for pic fields.
 var Columns = []string{
 	FieldID,
+	FieldUID,
 	FieldUserID,
 	FieldGroupID,
-	FieldAdress,
+	FieldURL,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldReadAt,
@@ -67,8 +70,8 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// AdressValidator is a validator for the "adress" field. It is called by the builders before save.
-	AdressValidator func(string) error
+	// URLValidator is a validator for the "url" field. It is called by the builders before save.
+	URLValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "createdAt" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updatedAt" field.

@@ -11,28 +11,28 @@ import (
 )
 
 // ID filters vertices based on their ID field.
-func ID(id string) predicate.ChatMessage {
+func ID(id int) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
 	})
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id string) predicate.ChatMessage {
+func IDEQ(id int) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
 	})
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id string) predicate.ChatMessage {
+func IDNEQ(id int) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldID), id))
 	})
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...string) predicate.ChatMessage {
+func IDIn(ids ...int) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		// if not arguments were provided, append the FALSE constants,
 		// since we can't apply "IN ()". This will make this predicate falsy.
@@ -49,7 +49,7 @@ func IDIn(ids ...string) predicate.ChatMessage {
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...string) predicate.ChatMessage {
+func IDNotIn(ids ...int) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		// if not arguments were provided, append the FALSE constants,
 		// since we can't apply "IN ()". This will make this predicate falsy.
@@ -66,30 +66,37 @@ func IDNotIn(ids ...string) predicate.ChatMessage {
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id string) predicate.ChatMessage {
+func IDGT(id int) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldID), id))
 	})
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id string) predicate.ChatMessage {
+func IDGTE(id int) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldID), id))
 	})
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id string) predicate.ChatMessage {
+func IDLT(id int) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldID), id))
 	})
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id string) predicate.ChatMessage {
+func IDLTE(id int) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldID), id))
+	})
+}
+
+// UID applies equality check predicate on the "uid" field. It's identical to UIDEQ.
+func UID(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldUID), v))
 	})
 }
 
@@ -101,14 +108,14 @@ func Message(v string) predicate.ChatMessage {
 }
 
 // RoomID applies equality check predicate on the "room_id" field. It's identical to RoomIDEQ.
-func RoomID(v string) predicate.ChatMessage {
+func RoomID(v int) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldRoomID), v))
 	})
 }
 
 // UserID applies equality check predicate on the "user_id" field. It's identical to UserIDEQ.
-func UserID(v string) predicate.ChatMessage {
+func UserID(v int) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldUserID), v))
 	})
@@ -125,6 +132,117 @@ func CreatedAt(v time.Time) predicate.ChatMessage {
 func ReadAt(v time.Time) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldReadAt), v))
+	})
+}
+
+// UIDEQ applies the EQ predicate on the "uid" field.
+func UIDEQ(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldUID), v))
+	})
+}
+
+// UIDNEQ applies the NEQ predicate on the "uid" field.
+func UIDNEQ(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldUID), v))
+	})
+}
+
+// UIDIn applies the In predicate on the "uid" field.
+func UIDIn(vs ...string) predicate.ChatMessage {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldUID), v...))
+	})
+}
+
+// UIDNotIn applies the NotIn predicate on the "uid" field.
+func UIDNotIn(vs ...string) predicate.ChatMessage {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldUID), v...))
+	})
+}
+
+// UIDGT applies the GT predicate on the "uid" field.
+func UIDGT(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldUID), v))
+	})
+}
+
+// UIDGTE applies the GTE predicate on the "uid" field.
+func UIDGTE(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldUID), v))
+	})
+}
+
+// UIDLT applies the LT predicate on the "uid" field.
+func UIDLT(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldUID), v))
+	})
+}
+
+// UIDLTE applies the LTE predicate on the "uid" field.
+func UIDLTE(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldUID), v))
+	})
+}
+
+// UIDContains applies the Contains predicate on the "uid" field.
+func UIDContains(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldUID), v))
+	})
+}
+
+// UIDHasPrefix applies the HasPrefix predicate on the "uid" field.
+func UIDHasPrefix(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldUID), v))
+	})
+}
+
+// UIDHasSuffix applies the HasSuffix predicate on the "uid" field.
+func UIDHasSuffix(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldUID), v))
+	})
+}
+
+// UIDEqualFold applies the EqualFold predicate on the "uid" field.
+func UIDEqualFold(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldUID), v))
+	})
+}
+
+// UIDContainsFold applies the ContainsFold predicate on the "uid" field.
+func UIDContainsFold(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldUID), v))
 	})
 }
 
@@ -240,21 +358,21 @@ func MessageContainsFold(v string) predicate.ChatMessage {
 }
 
 // RoomIDEQ applies the EQ predicate on the "room_id" field.
-func RoomIDEQ(v string) predicate.ChatMessage {
+func RoomIDEQ(v int) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldRoomID), v))
 	})
 }
 
 // RoomIDNEQ applies the NEQ predicate on the "room_id" field.
-func RoomIDNEQ(v string) predicate.ChatMessage {
+func RoomIDNEQ(v int) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldRoomID), v))
 	})
 }
 
 // RoomIDIn applies the In predicate on the "room_id" field.
-func RoomIDIn(vs ...string) predicate.ChatMessage {
+func RoomIDIn(vs ...int) predicate.ChatMessage {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -271,7 +389,7 @@ func RoomIDIn(vs ...string) predicate.ChatMessage {
 }
 
 // RoomIDNotIn applies the NotIn predicate on the "room_id" field.
-func RoomIDNotIn(vs ...string) predicate.ChatMessage {
+func RoomIDNotIn(vs ...int) predicate.ChatMessage {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -284,55 +402,6 @@ func RoomIDNotIn(vs ...string) predicate.ChatMessage {
 			return
 		}
 		s.Where(sql.NotIn(s.C(FieldRoomID), v...))
-	})
-}
-
-// RoomIDGT applies the GT predicate on the "room_id" field.
-func RoomIDGT(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldRoomID), v))
-	})
-}
-
-// RoomIDGTE applies the GTE predicate on the "room_id" field.
-func RoomIDGTE(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldRoomID), v))
-	})
-}
-
-// RoomIDLT applies the LT predicate on the "room_id" field.
-func RoomIDLT(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldRoomID), v))
-	})
-}
-
-// RoomIDLTE applies the LTE predicate on the "room_id" field.
-func RoomIDLTE(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldRoomID), v))
-	})
-}
-
-// RoomIDContains applies the Contains predicate on the "room_id" field.
-func RoomIDContains(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldRoomID), v))
-	})
-}
-
-// RoomIDHasPrefix applies the HasPrefix predicate on the "room_id" field.
-func RoomIDHasPrefix(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldRoomID), v))
-	})
-}
-
-// RoomIDHasSuffix applies the HasSuffix predicate on the "room_id" field.
-func RoomIDHasSuffix(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldRoomID), v))
 	})
 }
 
@@ -350,36 +419,22 @@ func RoomIDNotNil() predicate.ChatMessage {
 	})
 }
 
-// RoomIDEqualFold applies the EqualFold predicate on the "room_id" field.
-func RoomIDEqualFold(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldRoomID), v))
-	})
-}
-
-// RoomIDContainsFold applies the ContainsFold predicate on the "room_id" field.
-func RoomIDContainsFold(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldRoomID), v))
-	})
-}
-
 // UserIDEQ applies the EQ predicate on the "user_id" field.
-func UserIDEQ(v string) predicate.ChatMessage {
+func UserIDEQ(v int) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldUserID), v))
 	})
 }
 
 // UserIDNEQ applies the NEQ predicate on the "user_id" field.
-func UserIDNEQ(v string) predicate.ChatMessage {
+func UserIDNEQ(v int) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldUserID), v))
 	})
 }
 
 // UserIDIn applies the In predicate on the "user_id" field.
-func UserIDIn(vs ...string) predicate.ChatMessage {
+func UserIDIn(vs ...int) predicate.ChatMessage {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -396,7 +451,7 @@ func UserIDIn(vs ...string) predicate.ChatMessage {
 }
 
 // UserIDNotIn applies the NotIn predicate on the "user_id" field.
-func UserIDNotIn(vs ...string) predicate.ChatMessage {
+func UserIDNotIn(vs ...int) predicate.ChatMessage {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -412,55 +467,6 @@ func UserIDNotIn(vs ...string) predicate.ChatMessage {
 	})
 }
 
-// UserIDGT applies the GT predicate on the "user_id" field.
-func UserIDGT(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldUserID), v))
-	})
-}
-
-// UserIDGTE applies the GTE predicate on the "user_id" field.
-func UserIDGTE(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldUserID), v))
-	})
-}
-
-// UserIDLT applies the LT predicate on the "user_id" field.
-func UserIDLT(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldUserID), v))
-	})
-}
-
-// UserIDLTE applies the LTE predicate on the "user_id" field.
-func UserIDLTE(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldUserID), v))
-	})
-}
-
-// UserIDContains applies the Contains predicate on the "user_id" field.
-func UserIDContains(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldUserID), v))
-	})
-}
-
-// UserIDHasPrefix applies the HasPrefix predicate on the "user_id" field.
-func UserIDHasPrefix(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldUserID), v))
-	})
-}
-
-// UserIDHasSuffix applies the HasSuffix predicate on the "user_id" field.
-func UserIDHasSuffix(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldUserID), v))
-	})
-}
-
 // UserIDIsNil applies the IsNil predicate on the "user_id" field.
 func UserIDIsNil() predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
@@ -472,20 +478,6 @@ func UserIDIsNil() predicate.ChatMessage {
 func UserIDNotNil() predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.NotNull(s.C(FieldUserID)))
-	})
-}
-
-// UserIDEqualFold applies the EqualFold predicate on the "user_id" field.
-func UserIDEqualFold(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldUserID), v))
-	})
-}
-
-// UserIDContainsFold applies the ContainsFold predicate on the "user_id" field.
-func UserIDContainsFold(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldUserID), v))
 	})
 }
 

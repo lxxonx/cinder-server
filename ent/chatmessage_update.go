@@ -30,6 +30,12 @@ func (cmu *ChatMessageUpdate) Where(ps ...predicate.ChatMessage) *ChatMessageUpd
 	return cmu
 }
 
+// SetUID sets the "uid" field.
+func (cmu *ChatMessageUpdate) SetUID(s string) *ChatMessageUpdate {
+	cmu.mutation.SetUID(s)
+	return cmu
+}
+
 // SetMessage sets the "message" field.
 func (cmu *ChatMessageUpdate) SetMessage(s string) *ChatMessageUpdate {
 	cmu.mutation.SetMessage(s)
@@ -45,15 +51,15 @@ func (cmu *ChatMessageUpdate) SetNillableMessage(s *string) *ChatMessageUpdate {
 }
 
 // SetRoomID sets the "room_id" field.
-func (cmu *ChatMessageUpdate) SetRoomID(s string) *ChatMessageUpdate {
-	cmu.mutation.SetRoomID(s)
+func (cmu *ChatMessageUpdate) SetRoomID(i int) *ChatMessageUpdate {
+	cmu.mutation.SetRoomID(i)
 	return cmu
 }
 
 // SetNillableRoomID sets the "room_id" field if the given value is not nil.
-func (cmu *ChatMessageUpdate) SetNillableRoomID(s *string) *ChatMessageUpdate {
-	if s != nil {
-		cmu.SetRoomID(*s)
+func (cmu *ChatMessageUpdate) SetNillableRoomID(i *int) *ChatMessageUpdate {
+	if i != nil {
+		cmu.SetRoomID(*i)
 	}
 	return cmu
 }
@@ -65,15 +71,15 @@ func (cmu *ChatMessageUpdate) ClearRoomID() *ChatMessageUpdate {
 }
 
 // SetUserID sets the "user_id" field.
-func (cmu *ChatMessageUpdate) SetUserID(s string) *ChatMessageUpdate {
-	cmu.mutation.SetUserID(s)
+func (cmu *ChatMessageUpdate) SetUserID(i int) *ChatMessageUpdate {
+	cmu.mutation.SetUserID(i)
 	return cmu
 }
 
 // SetNillableUserID sets the "user_id" field if the given value is not nil.
-func (cmu *ChatMessageUpdate) SetNillableUserID(s *string) *ChatMessageUpdate {
-	if s != nil {
-		cmu.SetUserID(*s)
+func (cmu *ChatMessageUpdate) SetNillableUserID(i *int) *ChatMessageUpdate {
+	if i != nil {
+		cmu.SetUserID(*i)
 	}
 	return cmu
 }
@@ -199,7 +205,7 @@ func (cmu *ChatMessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Table:   chatmessage.Table,
 			Columns: chatmessage.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
+				Type:   field.TypeInt,
 				Column: chatmessage.FieldID,
 			},
 		},
@@ -210,6 +216,13 @@ func (cmu *ChatMessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := cmu.mutation.UID(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: chatmessage.FieldUID,
+		})
 	}
 	if value, ok := cmu.mutation.Message(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
@@ -241,7 +254,7 @@ func (cmu *ChatMessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -257,7 +270,7 @@ func (cmu *ChatMessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -276,7 +289,7 @@ func (cmu *ChatMessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: chatroom.FieldID,
 				},
 			},
@@ -292,7 +305,7 @@ func (cmu *ChatMessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: chatroom.FieldID,
 				},
 			},
@@ -321,6 +334,12 @@ type ChatMessageUpdateOne struct {
 	mutation *ChatMessageMutation
 }
 
+// SetUID sets the "uid" field.
+func (cmuo *ChatMessageUpdateOne) SetUID(s string) *ChatMessageUpdateOne {
+	cmuo.mutation.SetUID(s)
+	return cmuo
+}
+
 // SetMessage sets the "message" field.
 func (cmuo *ChatMessageUpdateOne) SetMessage(s string) *ChatMessageUpdateOne {
 	cmuo.mutation.SetMessage(s)
@@ -336,15 +355,15 @@ func (cmuo *ChatMessageUpdateOne) SetNillableMessage(s *string) *ChatMessageUpda
 }
 
 // SetRoomID sets the "room_id" field.
-func (cmuo *ChatMessageUpdateOne) SetRoomID(s string) *ChatMessageUpdateOne {
-	cmuo.mutation.SetRoomID(s)
+func (cmuo *ChatMessageUpdateOne) SetRoomID(i int) *ChatMessageUpdateOne {
+	cmuo.mutation.SetRoomID(i)
 	return cmuo
 }
 
 // SetNillableRoomID sets the "room_id" field if the given value is not nil.
-func (cmuo *ChatMessageUpdateOne) SetNillableRoomID(s *string) *ChatMessageUpdateOne {
-	if s != nil {
-		cmuo.SetRoomID(*s)
+func (cmuo *ChatMessageUpdateOne) SetNillableRoomID(i *int) *ChatMessageUpdateOne {
+	if i != nil {
+		cmuo.SetRoomID(*i)
 	}
 	return cmuo
 }
@@ -356,15 +375,15 @@ func (cmuo *ChatMessageUpdateOne) ClearRoomID() *ChatMessageUpdateOne {
 }
 
 // SetUserID sets the "user_id" field.
-func (cmuo *ChatMessageUpdateOne) SetUserID(s string) *ChatMessageUpdateOne {
-	cmuo.mutation.SetUserID(s)
+func (cmuo *ChatMessageUpdateOne) SetUserID(i int) *ChatMessageUpdateOne {
+	cmuo.mutation.SetUserID(i)
 	return cmuo
 }
 
 // SetNillableUserID sets the "user_id" field if the given value is not nil.
-func (cmuo *ChatMessageUpdateOne) SetNillableUserID(s *string) *ChatMessageUpdateOne {
-	if s != nil {
-		cmuo.SetUserID(*s)
+func (cmuo *ChatMessageUpdateOne) SetNillableUserID(i *int) *ChatMessageUpdateOne {
+	if i != nil {
+		cmuo.SetUserID(*i)
 	}
 	return cmuo
 }
@@ -497,7 +516,7 @@ func (cmuo *ChatMessageUpdateOne) sqlSave(ctx context.Context) (_node *ChatMessa
 			Table:   chatmessage.Table,
 			Columns: chatmessage.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
+				Type:   field.TypeInt,
 				Column: chatmessage.FieldID,
 			},
 		},
@@ -525,6 +544,13 @@ func (cmuo *ChatMessageUpdateOne) sqlSave(ctx context.Context) (_node *ChatMessa
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := cmuo.mutation.UID(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: chatmessage.FieldUID,
+		})
 	}
 	if value, ok := cmuo.mutation.Message(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
@@ -556,7 +582,7 @@ func (cmuo *ChatMessageUpdateOne) sqlSave(ctx context.Context) (_node *ChatMessa
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -572,7 +598,7 @@ func (cmuo *ChatMessageUpdateOne) sqlSave(ctx context.Context) (_node *ChatMessa
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -591,7 +617,7 @@ func (cmuo *ChatMessageUpdateOne) sqlSave(ctx context.Context) (_node *ChatMessa
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: chatroom.FieldID,
 				},
 			},
@@ -607,7 +633,7 @@ func (cmuo *ChatMessageUpdateOne) sqlSave(ctx context.Context) (_node *ChatMessa
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: chatroom.FieldID,
 				},
 			},

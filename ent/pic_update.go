@@ -30,16 +30,22 @@ func (pu *PicUpdate) Where(ps ...predicate.Pic) *PicUpdate {
 	return pu
 }
 
+// SetUID sets the "uid" field.
+func (pu *PicUpdate) SetUID(s string) *PicUpdate {
+	pu.mutation.SetUID(s)
+	return pu
+}
+
 // SetUserID sets the "user_id" field.
-func (pu *PicUpdate) SetUserID(s string) *PicUpdate {
-	pu.mutation.SetUserID(s)
+func (pu *PicUpdate) SetUserID(i int) *PicUpdate {
+	pu.mutation.SetUserID(i)
 	return pu
 }
 
 // SetNillableUserID sets the "user_id" field if the given value is not nil.
-func (pu *PicUpdate) SetNillableUserID(s *string) *PicUpdate {
-	if s != nil {
-		pu.SetUserID(*s)
+func (pu *PicUpdate) SetNillableUserID(i *int) *PicUpdate {
+	if i != nil {
+		pu.SetUserID(*i)
 	}
 	return pu
 }
@@ -51,15 +57,15 @@ func (pu *PicUpdate) ClearUserID() *PicUpdate {
 }
 
 // SetGroupID sets the "group_id" field.
-func (pu *PicUpdate) SetGroupID(s string) *PicUpdate {
-	pu.mutation.SetGroupID(s)
+func (pu *PicUpdate) SetGroupID(i int) *PicUpdate {
+	pu.mutation.SetGroupID(i)
 	return pu
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (pu *PicUpdate) SetNillableGroupID(s *string) *PicUpdate {
-	if s != nil {
-		pu.SetGroupID(*s)
+func (pu *PicUpdate) SetNillableGroupID(i *int) *PicUpdate {
+	if i != nil {
+		pu.SetGroupID(*i)
 	}
 	return pu
 }
@@ -70,9 +76,9 @@ func (pu *PicUpdate) ClearGroupID() *PicUpdate {
 	return pu
 }
 
-// SetAdress sets the "adress" field.
-func (pu *PicUpdate) SetAdress(s string) *PicUpdate {
-	pu.mutation.SetAdress(s)
+// SetURL sets the "url" field.
+func (pu *PicUpdate) SetURL(s string) *PicUpdate {
+	pu.mutation.SetURL(s)
 	return pu
 }
 
@@ -207,9 +213,9 @@ func (pu *PicUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (pu *PicUpdate) check() error {
-	if v, ok := pu.mutation.Adress(); ok {
-		if err := pic.AdressValidator(v); err != nil {
-			return &ValidationError{Name: "adress", err: fmt.Errorf(`ent: validator failed for field "Pic.adress": %w`, err)}
+	if v, ok := pu.mutation.URL(); ok {
+		if err := pic.URLValidator(v); err != nil {
+			return &ValidationError{Name: "url", err: fmt.Errorf(`ent: validator failed for field "Pic.url": %w`, err)}
 		}
 	}
 	return nil
@@ -233,11 +239,18 @@ func (pu *PicUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := pu.mutation.Adress(); ok {
+	if value, ok := pu.mutation.UID(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
-			Column: pic.FieldAdress,
+			Column: pic.FieldUID,
+		})
+	}
+	if value, ok := pu.mutation.URL(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: pic.FieldURL,
 		})
 	}
 	if value, ok := pu.mutation.CreatedAt(); ok {
@@ -270,7 +283,7 @@ func (pu *PicUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -286,7 +299,7 @@ func (pu *PicUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -305,7 +318,7 @@ func (pu *PicUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -321,7 +334,7 @@ func (pu *PicUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -350,16 +363,22 @@ type PicUpdateOne struct {
 	mutation *PicMutation
 }
 
+// SetUID sets the "uid" field.
+func (puo *PicUpdateOne) SetUID(s string) *PicUpdateOne {
+	puo.mutation.SetUID(s)
+	return puo
+}
+
 // SetUserID sets the "user_id" field.
-func (puo *PicUpdateOne) SetUserID(s string) *PicUpdateOne {
-	puo.mutation.SetUserID(s)
+func (puo *PicUpdateOne) SetUserID(i int) *PicUpdateOne {
+	puo.mutation.SetUserID(i)
 	return puo
 }
 
 // SetNillableUserID sets the "user_id" field if the given value is not nil.
-func (puo *PicUpdateOne) SetNillableUserID(s *string) *PicUpdateOne {
-	if s != nil {
-		puo.SetUserID(*s)
+func (puo *PicUpdateOne) SetNillableUserID(i *int) *PicUpdateOne {
+	if i != nil {
+		puo.SetUserID(*i)
 	}
 	return puo
 }
@@ -371,15 +390,15 @@ func (puo *PicUpdateOne) ClearUserID() *PicUpdateOne {
 }
 
 // SetGroupID sets the "group_id" field.
-func (puo *PicUpdateOne) SetGroupID(s string) *PicUpdateOne {
-	puo.mutation.SetGroupID(s)
+func (puo *PicUpdateOne) SetGroupID(i int) *PicUpdateOne {
+	puo.mutation.SetGroupID(i)
 	return puo
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (puo *PicUpdateOne) SetNillableGroupID(s *string) *PicUpdateOne {
-	if s != nil {
-		puo.SetGroupID(*s)
+func (puo *PicUpdateOne) SetNillableGroupID(i *int) *PicUpdateOne {
+	if i != nil {
+		puo.SetGroupID(*i)
 	}
 	return puo
 }
@@ -390,9 +409,9 @@ func (puo *PicUpdateOne) ClearGroupID() *PicUpdateOne {
 	return puo
 }
 
-// SetAdress sets the "adress" field.
-func (puo *PicUpdateOne) SetAdress(s string) *PicUpdateOne {
-	puo.mutation.SetAdress(s)
+// SetURL sets the "url" field.
+func (puo *PicUpdateOne) SetURL(s string) *PicUpdateOne {
+	puo.mutation.SetURL(s)
 	return puo
 }
 
@@ -534,9 +553,9 @@ func (puo *PicUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (puo *PicUpdateOne) check() error {
-	if v, ok := puo.mutation.Adress(); ok {
-		if err := pic.AdressValidator(v); err != nil {
-			return &ValidationError{Name: "adress", err: fmt.Errorf(`ent: validator failed for field "Pic.adress": %w`, err)}
+	if v, ok := puo.mutation.URL(); ok {
+		if err := pic.URLValidator(v); err != nil {
+			return &ValidationError{Name: "url", err: fmt.Errorf(`ent: validator failed for field "Pic.url": %w`, err)}
 		}
 	}
 	return nil
@@ -577,11 +596,18 @@ func (puo *PicUpdateOne) sqlSave(ctx context.Context) (_node *Pic, err error) {
 			}
 		}
 	}
-	if value, ok := puo.mutation.Adress(); ok {
+	if value, ok := puo.mutation.UID(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
-			Column: pic.FieldAdress,
+			Column: pic.FieldUID,
+		})
+	}
+	if value, ok := puo.mutation.URL(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: pic.FieldURL,
 		})
 	}
 	if value, ok := puo.mutation.CreatedAt(); ok {
@@ -614,7 +640,7 @@ func (puo *PicUpdateOne) sqlSave(ctx context.Context) (_node *Pic, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -630,7 +656,7 @@ func (puo *PicUpdateOne) sqlSave(ctx context.Context) (_node *Pic, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -649,7 +675,7 @@ func (puo *PicUpdateOne) sqlSave(ctx context.Context) (_node *Pic, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -665,7 +691,7 @@ func (puo *PicUpdateOne) sqlSave(ctx context.Context) (_node *Pic, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},

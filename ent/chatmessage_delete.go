@@ -72,7 +72,7 @@ func (cmd *ChatMessageDelete) sqlExec(ctx context.Context) (int, error) {
 		Node: &sqlgraph.NodeSpec{
 			Table: chatmessage.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
+				Type:   field.TypeInt,
 				Column: chatmessage.FieldID,
 			},
 		},

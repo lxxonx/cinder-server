@@ -11,6 +11,8 @@ const (
 	Label = "group"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldUID holds the string denoting the uid field in the database.
+	FieldUID = "uid"
 	// FieldGroupname holds the string denoting the groupname field in the database.
 	FieldGroupname = "groupname"
 	// FieldBio holds the string denoting the bio field in the database.
@@ -68,6 +70,7 @@ const (
 // Columns holds all SQL columns for group fields.
 var Columns = []string{
 	FieldID,
+	FieldUID,
 	FieldGroupname,
 	FieldBio,
 	FieldCreatedAt,

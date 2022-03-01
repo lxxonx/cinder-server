@@ -16,7 +16,7 @@ type Group struct {
 // Fields of the Group.
 func (Group) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("id").Unique(),
+		field.String("uid").Unique(),
 		field.String("groupname").Default(""),
 		field.String("bio").Default(""),
 		// field.Strings("pics").Default([]string{""}),

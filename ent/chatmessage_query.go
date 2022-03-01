@@ -133,8 +133,8 @@ func (cmq *ChatMessageQuery) FirstX(ctx context.Context) *ChatMessage {
 
 // FirstID returns the first ChatMessage ID from the query.
 // Returns a *NotFoundError when no ChatMessage ID was found.
-func (cmq *ChatMessageQuery) FirstID(ctx context.Context) (id string, err error) {
-	var ids []string
+func (cmq *ChatMessageQuery) FirstID(ctx context.Context) (id int, err error) {
+	var ids []int
 	if ids, err = cmq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
@@ -146,7 +146,7 @@ func (cmq *ChatMessageQuery) FirstID(ctx context.Context) (id string, err error)
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (cmq *ChatMessageQuery) FirstIDX(ctx context.Context) string {
+func (cmq *ChatMessageQuery) FirstIDX(ctx context.Context) int {
 	id, err := cmq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -184,8 +184,8 @@ func (cmq *ChatMessageQuery) OnlyX(ctx context.Context) *ChatMessage {
 // OnlyID is like Only, but returns the only ChatMessage ID in the query.
 // Returns a *NotSingularError when exactly one ChatMessage ID is not found.
 // Returns a *NotFoundError when no entities are found.
-func (cmq *ChatMessageQuery) OnlyID(ctx context.Context) (id string, err error) {
-	var ids []string
+func (cmq *ChatMessageQuery) OnlyID(ctx context.Context) (id int, err error) {
+	var ids []int
 	if ids, err = cmq.Limit(2).IDs(ctx); err != nil {
 		return
 	}
@@ -201,7 +201,7 @@ func (cmq *ChatMessageQuery) OnlyID(ctx context.Context) (id string, err error) 
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (cmq *ChatMessageQuery) OnlyIDX(ctx context.Context) string {
+func (cmq *ChatMessageQuery) OnlyIDX(ctx context.Context) int {
 	id, err := cmq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -227,8 +227,8 @@ func (cmq *ChatMessageQuery) AllX(ctx context.Context) []*ChatMessage {
 }
 
 // IDs executes the query and returns a list of ChatMessage IDs.
-func (cmq *ChatMessageQuery) IDs(ctx context.Context) ([]string, error) {
-	var ids []string
+func (cmq *ChatMessageQuery) IDs(ctx context.Context) ([]int, error) {
+	var ids []int
 	if err := cmq.Select(chatmessage.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -236,7 +236,7 @@ func (cmq *ChatMessageQuery) IDs(ctx context.Context) ([]string, error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (cmq *ChatMessageQuery) IDsX(ctx context.Context) []string {
+func (cmq *ChatMessageQuery) IDsX(ctx context.Context) []int {
 	ids, err := cmq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -326,12 +326,12 @@ func (cmq *ChatMessageQuery) WithRoom(opts ...func(*ChatRoomQuery)) *ChatMessage
 // Example:
 //
 //	var v []struct {
-//		Message string `json:"message,omitempty"`
+//		UID string `json:"uid,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.ChatMessage.Query().
-//		GroupBy(chatmessage.FieldMessage).
+//		GroupBy(chatmessage.FieldUID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 //
@@ -353,11 +353,11 @@ func (cmq *ChatMessageQuery) GroupBy(field string, fields ...string) *ChatMessag
 // Example:
 //
 //	var v []struct {
-//		Message string `json:"message,omitempty"`
+//		UID string `json:"uid,omitempty"`
 //	}
 //
 //	client.ChatMessage.Query().
-//		Select(chatmessage.FieldMessage).
+//		Select(chatmessage.FieldUID).
 //		Scan(ctx, &v)
 //
 func (cmq *ChatMessageQuery) Select(fields ...string) *ChatMessageSelect {
@@ -411,8 +411,8 @@ func (cmq *ChatMessageQuery) sqlAll(ctx context.Context) ([]*ChatMessage, error)
 	}
 
 	if query := cmq.withUser; query != nil {
-		ids := make([]string, 0, len(nodes))
-		nodeids := make(map[string][]*ChatMessage)
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*ChatMessage)
 		for i := range nodes {
 			fk := nodes[i].UserID
 			if _, ok := nodeids[fk]; !ok {
@@ -437,8 +437,8 @@ func (cmq *ChatMessageQuery) sqlAll(ctx context.Context) ([]*ChatMessage, error)
 	}
 
 	if query := cmq.withRoom; query != nil {
-		ids := make([]string, 0, len(nodes))
-		nodeids := make(map[string][]*ChatMessage)
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*ChatMessage)
 		for i := range nodes {
 			fk := nodes[i].RoomID
 			if _, ok := nodeids[fk]; !ok {
@@ -488,7 +488,7 @@ func (cmq *ChatMessageQuery) querySpec() *sqlgraph.QuerySpec {
 			Table:   chatmessage.Table,
 			Columns: chatmessage.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
+				Type:   field.TypeInt,
 				Column: chatmessage.FieldID,
 			},
 		},

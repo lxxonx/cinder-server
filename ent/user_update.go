@@ -32,6 +32,12 @@ func (uu *UserUpdate) Where(ps ...predicate.User) *UserUpdate {
 	return uu
 }
 
+// SetUID sets the "uid" field.
+func (uu *UserUpdate) SetUID(s string) *UserUpdate {
+	uu.mutation.SetUID(s)
+	return uu
+}
+
 // SetUsername sets the "username" field.
 func (uu *UserUpdate) SetUsername(s string) *UserUpdate {
 	uu.mutation.SetUsername(s)
@@ -77,15 +83,15 @@ func (uu *UserUpdate) ClearBio() *UserUpdate {
 }
 
 // SetGroupID sets the "group_id" field.
-func (uu *UserUpdate) SetGroupID(s string) *UserUpdate {
-	uu.mutation.SetGroupID(s)
+func (uu *UserUpdate) SetGroupID(i int) *UserUpdate {
+	uu.mutation.SetGroupID(i)
 	return uu
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableGroupID(s *string) *UserUpdate {
-	if s != nil {
-		uu.SetGroupID(*s)
+func (uu *UserUpdate) SetNillableGroupID(i *int) *UserUpdate {
+	if i != nil {
+		uu.SetGroupID(*i)
 	}
 	return uu
 }
@@ -139,29 +145,59 @@ func (uu *UserUpdate) SetNillableReadAt(t *time.Time) *UserUpdate {
 }
 
 // AddFriendIDs adds the "friends" edge to the User entity by IDs.
-func (uu *UserUpdate) AddFriendIDs(ids ...string) *UserUpdate {
+func (uu *UserUpdate) AddFriendIDs(ids ...int) *UserUpdate {
 	uu.mutation.AddFriendIDs(ids...)
 	return uu
 }
 
 // AddFriends adds the "friends" edges to the User entity.
 func (uu *UserUpdate) AddFriends(u ...*User) *UserUpdate {
-	ids := make([]string, len(u))
+	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
 	return uu.AddFriendIDs(ids...)
 }
 
+// AddRequestIDs adds the "requests" edge to the User entity by IDs.
+func (uu *UserUpdate) AddRequestIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddRequestIDs(ids...)
+	return uu
+}
+
+// AddRequests adds the "requests" edges to the User entity.
+func (uu *UserUpdate) AddRequests(u ...*User) *UserUpdate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uu.AddRequestIDs(ids...)
+}
+
+// AddFriendsReqIDs adds the "friendsReq" edge to the User entity by IDs.
+func (uu *UserUpdate) AddFriendsReqIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddFriendsReqIDs(ids...)
+	return uu
+}
+
+// AddFriendsReq adds the "friendsReq" edges to the User entity.
+func (uu *UserUpdate) AddFriendsReq(u ...*User) *UserUpdate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uu.AddFriendsReqIDs(ids...)
+}
+
 // AddLikeToIDs adds the "like_to" edge to the Group entity by IDs.
-func (uu *UserUpdate) AddLikeToIDs(ids ...string) *UserUpdate {
+func (uu *UserUpdate) AddLikeToIDs(ids ...int) *UserUpdate {
 	uu.mutation.AddLikeToIDs(ids...)
 	return uu
 }
 
 // AddLikeTo adds the "like_to" edges to the Group entity.
 func (uu *UserUpdate) AddLikeTo(g ...*Group) *UserUpdate {
-	ids := make([]string, len(g))
+	ids := make([]int, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -169,14 +205,14 @@ func (uu *UserUpdate) AddLikeTo(g ...*Group) *UserUpdate {
 }
 
 // AddSaveIDs adds the "save" edge to the Group entity by IDs.
-func (uu *UserUpdate) AddSaveIDs(ids ...string) *UserUpdate {
+func (uu *UserUpdate) AddSaveIDs(ids ...int) *UserUpdate {
 	uu.mutation.AddSaveIDs(ids...)
 	return uu
 }
 
 // AddSave adds the "save" edges to the Group entity.
 func (uu *UserUpdate) AddSave(g ...*Group) *UserUpdate {
-	ids := make([]string, len(g))
+	ids := make([]int, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -189,14 +225,14 @@ func (uu *UserUpdate) SetGroup(g *Group) *UserUpdate {
 }
 
 // AddChatroomIDs adds the "chatroom" edge to the ChatRoom entity by IDs.
-func (uu *UserUpdate) AddChatroomIDs(ids ...string) *UserUpdate {
+func (uu *UserUpdate) AddChatroomIDs(ids ...int) *UserUpdate {
 	uu.mutation.AddChatroomIDs(ids...)
 	return uu
 }
 
 // AddChatroom adds the "chatroom" edges to the ChatRoom entity.
 func (uu *UserUpdate) AddChatroom(c ...*ChatRoom) *UserUpdate {
-	ids := make([]string, len(c))
+	ids := make([]int, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
@@ -204,14 +240,14 @@ func (uu *UserUpdate) AddChatroom(c ...*ChatRoom) *UserUpdate {
 }
 
 // AddMessageIDs adds the "message" edge to the ChatMessage entity by IDs.
-func (uu *UserUpdate) AddMessageIDs(ids ...string) *UserUpdate {
+func (uu *UserUpdate) AddMessageIDs(ids ...int) *UserUpdate {
 	uu.mutation.AddMessageIDs(ids...)
 	return uu
 }
 
 // AddMessage adds the "message" edges to the ChatMessage entity.
 func (uu *UserUpdate) AddMessage(c ...*ChatMessage) *UserUpdate {
-	ids := make([]string, len(c))
+	ids := make([]int, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
@@ -245,18 +281,60 @@ func (uu *UserUpdate) ClearFriends() *UserUpdate {
 }
 
 // RemoveFriendIDs removes the "friends" edge to User entities by IDs.
-func (uu *UserUpdate) RemoveFriendIDs(ids ...string) *UserUpdate {
+func (uu *UserUpdate) RemoveFriendIDs(ids ...int) *UserUpdate {
 	uu.mutation.RemoveFriendIDs(ids...)
 	return uu
 }
 
 // RemoveFriends removes "friends" edges to User entities.
 func (uu *UserUpdate) RemoveFriends(u ...*User) *UserUpdate {
-	ids := make([]string, len(u))
+	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
 	return uu.RemoveFriendIDs(ids...)
+}
+
+// ClearRequests clears all "requests" edges to the User entity.
+func (uu *UserUpdate) ClearRequests() *UserUpdate {
+	uu.mutation.ClearRequests()
+	return uu
+}
+
+// RemoveRequestIDs removes the "requests" edge to User entities by IDs.
+func (uu *UserUpdate) RemoveRequestIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveRequestIDs(ids...)
+	return uu
+}
+
+// RemoveRequests removes "requests" edges to User entities.
+func (uu *UserUpdate) RemoveRequests(u ...*User) *UserUpdate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uu.RemoveRequestIDs(ids...)
+}
+
+// ClearFriendsReq clears all "friendsReq" edges to the User entity.
+func (uu *UserUpdate) ClearFriendsReq() *UserUpdate {
+	uu.mutation.ClearFriendsReq()
+	return uu
+}
+
+// RemoveFriendsReqIDs removes the "friendsReq" edge to User entities by IDs.
+func (uu *UserUpdate) RemoveFriendsReqIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveFriendsReqIDs(ids...)
+	return uu
+}
+
+// RemoveFriendsReq removes "friendsReq" edges to User entities.
+func (uu *UserUpdate) RemoveFriendsReq(u ...*User) *UserUpdate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uu.RemoveFriendsReqIDs(ids...)
 }
 
 // ClearLikeTo clears all "like_to" edges to the Group entity.
@@ -266,14 +344,14 @@ func (uu *UserUpdate) ClearLikeTo() *UserUpdate {
 }
 
 // RemoveLikeToIDs removes the "like_to" edge to Group entities by IDs.
-func (uu *UserUpdate) RemoveLikeToIDs(ids ...string) *UserUpdate {
+func (uu *UserUpdate) RemoveLikeToIDs(ids ...int) *UserUpdate {
 	uu.mutation.RemoveLikeToIDs(ids...)
 	return uu
 }
 
 // RemoveLikeTo removes "like_to" edges to Group entities.
 func (uu *UserUpdate) RemoveLikeTo(g ...*Group) *UserUpdate {
-	ids := make([]string, len(g))
+	ids := make([]int, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -287,14 +365,14 @@ func (uu *UserUpdate) ClearSave() *UserUpdate {
 }
 
 // RemoveSaveIDs removes the "save" edge to Group entities by IDs.
-func (uu *UserUpdate) RemoveSaveIDs(ids ...string) *UserUpdate {
+func (uu *UserUpdate) RemoveSaveIDs(ids ...int) *UserUpdate {
 	uu.mutation.RemoveSaveIDs(ids...)
 	return uu
 }
 
 // RemoveSave removes "save" edges to Group entities.
 func (uu *UserUpdate) RemoveSave(g ...*Group) *UserUpdate {
-	ids := make([]string, len(g))
+	ids := make([]int, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -314,14 +392,14 @@ func (uu *UserUpdate) ClearChatroom() *UserUpdate {
 }
 
 // RemoveChatroomIDs removes the "chatroom" edge to ChatRoom entities by IDs.
-func (uu *UserUpdate) RemoveChatroomIDs(ids ...string) *UserUpdate {
+func (uu *UserUpdate) RemoveChatroomIDs(ids ...int) *UserUpdate {
 	uu.mutation.RemoveChatroomIDs(ids...)
 	return uu
 }
 
 // RemoveChatroom removes "chatroom" edges to ChatRoom entities.
 func (uu *UserUpdate) RemoveChatroom(c ...*ChatRoom) *UserUpdate {
-	ids := make([]string, len(c))
+	ids := make([]int, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
@@ -335,14 +413,14 @@ func (uu *UserUpdate) ClearMessage() *UserUpdate {
 }
 
 // RemoveMessageIDs removes the "message" edge to ChatMessage entities by IDs.
-func (uu *UserUpdate) RemoveMessageIDs(ids ...string) *UserUpdate {
+func (uu *UserUpdate) RemoveMessageIDs(ids ...int) *UserUpdate {
 	uu.mutation.RemoveMessageIDs(ids...)
 	return uu
 }
 
 // RemoveMessage removes "message" edges to ChatMessage entities.
 func (uu *UserUpdate) RemoveMessage(c ...*ChatMessage) *UserUpdate {
-	ids := make([]string, len(c))
+	ids := make([]int, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
@@ -456,7 +534,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Table:   user.Table,
 			Columns: user.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
+				Type:   field.TypeInt,
 				Column: user.FieldID,
 			},
 		},
@@ -467,6 +545,13 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := uu.mutation.UID(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: user.FieldUID,
+		})
 	}
 	if value, ok := uu.mutation.Username(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
@@ -539,7 +624,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    true,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -555,7 +640,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    true,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -574,7 +659,115 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    true,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.RequestsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.RequestsTable,
+			Columns: user.RequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedRequestsIDs(); len(nodes) > 0 && !uu.mutation.RequestsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.RequestsTable,
+			Columns: user.RequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RequestsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.RequestsTable,
+			Columns: user.RequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.FriendsReqCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.FriendsReqTable,
+			Columns: user.FriendsReqPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedFriendsReqIDs(); len(nodes) > 0 && !uu.mutation.FriendsReqCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.FriendsReqTable,
+			Columns: user.FriendsReqPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.FriendsReqIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.FriendsReqTable,
+			Columns: user.FriendsReqPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -593,7 +786,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -609,7 +802,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -628,7 +821,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -647,7 +840,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -663,7 +856,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -682,7 +875,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -701,7 +894,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -717,7 +910,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -736,7 +929,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: chatroom.FieldID,
 				},
 			},
@@ -752,7 +945,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: chatroom.FieldID,
 				},
 			},
@@ -771,7 +964,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: chatroom.FieldID,
 				},
 			},
@@ -790,7 +983,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: chatmessage.FieldID,
 				},
 			},
@@ -806,7 +999,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: chatmessage.FieldID,
 				},
 			},
@@ -825,7 +1018,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: chatmessage.FieldID,
 				},
 			},
@@ -908,6 +1101,12 @@ type UserUpdateOne struct {
 	mutation *UserMutation
 }
 
+// SetUID sets the "uid" field.
+func (uuo *UserUpdateOne) SetUID(s string) *UserUpdateOne {
+	uuo.mutation.SetUID(s)
+	return uuo
+}
+
 // SetUsername sets the "username" field.
 func (uuo *UserUpdateOne) SetUsername(s string) *UserUpdateOne {
 	uuo.mutation.SetUsername(s)
@@ -953,15 +1152,15 @@ func (uuo *UserUpdateOne) ClearBio() *UserUpdateOne {
 }
 
 // SetGroupID sets the "group_id" field.
-func (uuo *UserUpdateOne) SetGroupID(s string) *UserUpdateOne {
-	uuo.mutation.SetGroupID(s)
+func (uuo *UserUpdateOne) SetGroupID(i int) *UserUpdateOne {
+	uuo.mutation.SetGroupID(i)
 	return uuo
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableGroupID(s *string) *UserUpdateOne {
-	if s != nil {
-		uuo.SetGroupID(*s)
+func (uuo *UserUpdateOne) SetNillableGroupID(i *int) *UserUpdateOne {
+	if i != nil {
+		uuo.SetGroupID(*i)
 	}
 	return uuo
 }
@@ -1015,29 +1214,59 @@ func (uuo *UserUpdateOne) SetNillableReadAt(t *time.Time) *UserUpdateOne {
 }
 
 // AddFriendIDs adds the "friends" edge to the User entity by IDs.
-func (uuo *UserUpdateOne) AddFriendIDs(ids ...string) *UserUpdateOne {
+func (uuo *UserUpdateOne) AddFriendIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.AddFriendIDs(ids...)
 	return uuo
 }
 
 // AddFriends adds the "friends" edges to the User entity.
 func (uuo *UserUpdateOne) AddFriends(u ...*User) *UserUpdateOne {
-	ids := make([]string, len(u))
+	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
 	return uuo.AddFriendIDs(ids...)
 }
 
+// AddRequestIDs adds the "requests" edge to the User entity by IDs.
+func (uuo *UserUpdateOne) AddRequestIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddRequestIDs(ids...)
+	return uuo
+}
+
+// AddRequests adds the "requests" edges to the User entity.
+func (uuo *UserUpdateOne) AddRequests(u ...*User) *UserUpdateOne {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uuo.AddRequestIDs(ids...)
+}
+
+// AddFriendsReqIDs adds the "friendsReq" edge to the User entity by IDs.
+func (uuo *UserUpdateOne) AddFriendsReqIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddFriendsReqIDs(ids...)
+	return uuo
+}
+
+// AddFriendsReq adds the "friendsReq" edges to the User entity.
+func (uuo *UserUpdateOne) AddFriendsReq(u ...*User) *UserUpdateOne {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uuo.AddFriendsReqIDs(ids...)
+}
+
 // AddLikeToIDs adds the "like_to" edge to the Group entity by IDs.
-func (uuo *UserUpdateOne) AddLikeToIDs(ids ...string) *UserUpdateOne {
+func (uuo *UserUpdateOne) AddLikeToIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.AddLikeToIDs(ids...)
 	return uuo
 }
 
 // AddLikeTo adds the "like_to" edges to the Group entity.
 func (uuo *UserUpdateOne) AddLikeTo(g ...*Group) *UserUpdateOne {
-	ids := make([]string, len(g))
+	ids := make([]int, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -1045,14 +1274,14 @@ func (uuo *UserUpdateOne) AddLikeTo(g ...*Group) *UserUpdateOne {
 }
 
 // AddSaveIDs adds the "save" edge to the Group entity by IDs.
-func (uuo *UserUpdateOne) AddSaveIDs(ids ...string) *UserUpdateOne {
+func (uuo *UserUpdateOne) AddSaveIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.AddSaveIDs(ids...)
 	return uuo
 }
 
 // AddSave adds the "save" edges to the Group entity.
 func (uuo *UserUpdateOne) AddSave(g ...*Group) *UserUpdateOne {
-	ids := make([]string, len(g))
+	ids := make([]int, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -1065,14 +1294,14 @@ func (uuo *UserUpdateOne) SetGroup(g *Group) *UserUpdateOne {
 }
 
 // AddChatroomIDs adds the "chatroom" edge to the ChatRoom entity by IDs.
-func (uuo *UserUpdateOne) AddChatroomIDs(ids ...string) *UserUpdateOne {
+func (uuo *UserUpdateOne) AddChatroomIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.AddChatroomIDs(ids...)
 	return uuo
 }
 
 // AddChatroom adds the "chatroom" edges to the ChatRoom entity.
 func (uuo *UserUpdateOne) AddChatroom(c ...*ChatRoom) *UserUpdateOne {
-	ids := make([]string, len(c))
+	ids := make([]int, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
@@ -1080,14 +1309,14 @@ func (uuo *UserUpdateOne) AddChatroom(c ...*ChatRoom) *UserUpdateOne {
 }
 
 // AddMessageIDs adds the "message" edge to the ChatMessage entity by IDs.
-func (uuo *UserUpdateOne) AddMessageIDs(ids ...string) *UserUpdateOne {
+func (uuo *UserUpdateOne) AddMessageIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.AddMessageIDs(ids...)
 	return uuo
 }
 
 // AddMessage adds the "message" edges to the ChatMessage entity.
 func (uuo *UserUpdateOne) AddMessage(c ...*ChatMessage) *UserUpdateOne {
-	ids := make([]string, len(c))
+	ids := make([]int, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
@@ -1121,18 +1350,60 @@ func (uuo *UserUpdateOne) ClearFriends() *UserUpdateOne {
 }
 
 // RemoveFriendIDs removes the "friends" edge to User entities by IDs.
-func (uuo *UserUpdateOne) RemoveFriendIDs(ids ...string) *UserUpdateOne {
+func (uuo *UserUpdateOne) RemoveFriendIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.RemoveFriendIDs(ids...)
 	return uuo
 }
 
 // RemoveFriends removes "friends" edges to User entities.
 func (uuo *UserUpdateOne) RemoveFriends(u ...*User) *UserUpdateOne {
-	ids := make([]string, len(u))
+	ids := make([]int, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
 	return uuo.RemoveFriendIDs(ids...)
+}
+
+// ClearRequests clears all "requests" edges to the User entity.
+func (uuo *UserUpdateOne) ClearRequests() *UserUpdateOne {
+	uuo.mutation.ClearRequests()
+	return uuo
+}
+
+// RemoveRequestIDs removes the "requests" edge to User entities by IDs.
+func (uuo *UserUpdateOne) RemoveRequestIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveRequestIDs(ids...)
+	return uuo
+}
+
+// RemoveRequests removes "requests" edges to User entities.
+func (uuo *UserUpdateOne) RemoveRequests(u ...*User) *UserUpdateOne {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uuo.RemoveRequestIDs(ids...)
+}
+
+// ClearFriendsReq clears all "friendsReq" edges to the User entity.
+func (uuo *UserUpdateOne) ClearFriendsReq() *UserUpdateOne {
+	uuo.mutation.ClearFriendsReq()
+	return uuo
+}
+
+// RemoveFriendsReqIDs removes the "friendsReq" edge to User entities by IDs.
+func (uuo *UserUpdateOne) RemoveFriendsReqIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveFriendsReqIDs(ids...)
+	return uuo
+}
+
+// RemoveFriendsReq removes "friendsReq" edges to User entities.
+func (uuo *UserUpdateOne) RemoveFriendsReq(u ...*User) *UserUpdateOne {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uuo.RemoveFriendsReqIDs(ids...)
 }
 
 // ClearLikeTo clears all "like_to" edges to the Group entity.
@@ -1142,14 +1413,14 @@ func (uuo *UserUpdateOne) ClearLikeTo() *UserUpdateOne {
 }
 
 // RemoveLikeToIDs removes the "like_to" edge to Group entities by IDs.
-func (uuo *UserUpdateOne) RemoveLikeToIDs(ids ...string) *UserUpdateOne {
+func (uuo *UserUpdateOne) RemoveLikeToIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.RemoveLikeToIDs(ids...)
 	return uuo
 }
 
 // RemoveLikeTo removes "like_to" edges to Group entities.
 func (uuo *UserUpdateOne) RemoveLikeTo(g ...*Group) *UserUpdateOne {
-	ids := make([]string, len(g))
+	ids := make([]int, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -1163,14 +1434,14 @@ func (uuo *UserUpdateOne) ClearSave() *UserUpdateOne {
 }
 
 // RemoveSaveIDs removes the "save" edge to Group entities by IDs.
-func (uuo *UserUpdateOne) RemoveSaveIDs(ids ...string) *UserUpdateOne {
+func (uuo *UserUpdateOne) RemoveSaveIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.RemoveSaveIDs(ids...)
 	return uuo
 }
 
 // RemoveSave removes "save" edges to Group entities.
 func (uuo *UserUpdateOne) RemoveSave(g ...*Group) *UserUpdateOne {
-	ids := make([]string, len(g))
+	ids := make([]int, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -1190,14 +1461,14 @@ func (uuo *UserUpdateOne) ClearChatroom() *UserUpdateOne {
 }
 
 // RemoveChatroomIDs removes the "chatroom" edge to ChatRoom entities by IDs.
-func (uuo *UserUpdateOne) RemoveChatroomIDs(ids ...string) *UserUpdateOne {
+func (uuo *UserUpdateOne) RemoveChatroomIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.RemoveChatroomIDs(ids...)
 	return uuo
 }
 
 // RemoveChatroom removes "chatroom" edges to ChatRoom entities.
 func (uuo *UserUpdateOne) RemoveChatroom(c ...*ChatRoom) *UserUpdateOne {
-	ids := make([]string, len(c))
+	ids := make([]int, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
@@ -1211,14 +1482,14 @@ func (uuo *UserUpdateOne) ClearMessage() *UserUpdateOne {
 }
 
 // RemoveMessageIDs removes the "message" edge to ChatMessage entities by IDs.
-func (uuo *UserUpdateOne) RemoveMessageIDs(ids ...string) *UserUpdateOne {
+func (uuo *UserUpdateOne) RemoveMessageIDs(ids ...int) *UserUpdateOne {
 	uuo.mutation.RemoveMessageIDs(ids...)
 	return uuo
 }
 
 // RemoveMessage removes "message" edges to ChatMessage entities.
 func (uuo *UserUpdateOne) RemoveMessage(c ...*ChatMessage) *UserUpdateOne {
-	ids := make([]string, len(c))
+	ids := make([]int, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
@@ -1339,7 +1610,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Table:   user.Table,
 			Columns: user.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeString,
+				Type:   field.TypeInt,
 				Column: user.FieldID,
 			},
 		},
@@ -1367,6 +1638,13 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := uuo.mutation.UID(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: user.FieldUID,
+		})
 	}
 	if value, ok := uuo.mutation.Username(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
@@ -1439,7 +1717,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    true,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -1455,7 +1733,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    true,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -1474,7 +1752,115 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    true,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.RequestsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.RequestsTable,
+			Columns: user.RequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedRequestsIDs(); len(nodes) > 0 && !uuo.mutation.RequestsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.RequestsTable,
+			Columns: user.RequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RequestsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.RequestsTable,
+			Columns: user.RequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.FriendsReqCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.FriendsReqTable,
+			Columns: user.FriendsReqPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedFriendsReqIDs(); len(nodes) > 0 && !uuo.mutation.FriendsReqCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.FriendsReqTable,
+			Columns: user.FriendsReqPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.FriendsReqIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   user.FriendsReqTable,
+			Columns: user.FriendsReqPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -1493,7 +1879,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -1509,7 +1895,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -1528,7 +1914,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -1547,7 +1933,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -1563,7 +1949,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -1582,7 +1968,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -1601,7 +1987,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -1617,7 +2003,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},
@@ -1636,7 +2022,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: chatroom.FieldID,
 				},
 			},
@@ -1652,7 +2038,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: chatroom.FieldID,
 				},
 			},
@@ -1671,7 +2057,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: chatroom.FieldID,
 				},
 			},
@@ -1690,7 +2076,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: chatmessage.FieldID,
 				},
 			},
@@ -1706,7 +2092,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: chatmessage.FieldID,
 				},
 			},
@@ -1725,7 +2111,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: chatmessage.FieldID,
 				},
 			},

@@ -11,6 +11,8 @@ const (
 	Label = "chat_message"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldUID holds the string denoting the uid field in the database.
+	FieldUID = "uid"
 	// FieldMessage holds the string denoting the message field in the database.
 	FieldMessage = "message"
 	// FieldRoomID holds the string denoting the room_id field in the database.
@@ -46,6 +48,7 @@ const (
 // Columns holds all SQL columns for chatmessage fields.
 var Columns = []string{
 	FieldID,
+	FieldUID,
 	FieldMessage,
 	FieldRoomID,
 	FieldUserID,

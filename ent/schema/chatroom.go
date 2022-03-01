@@ -16,7 +16,7 @@ type ChatRoom struct {
 // Fields of the ChatRoom.
 func (ChatRoom) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("id").Unique(),
+		field.String("uid").Unique(),
 		field.Time("createdAt").Default(time.Now),
 		field.Time("updatedAt").Default(time.Now),
 		field.Time("readAt").Default(time.Now),

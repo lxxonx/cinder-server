@@ -15,7 +15,9 @@ import (
 type Group struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID string `json:"id,omitempty"`
+	ID int `json:"id,omitempty"`
+	// UID holds the value of the "uid" field.
+	UID string `json:"uid,omitempty"`
 	// Groupname holds the value of the "groupname" field.
 	Groupname string `json:"groupname,omitempty"`
 	// Bio holds the value of the "bio" field.
@@ -109,7 +111,9 @@ func (*Group) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case group.FieldID, group.FieldGroupname, group.FieldBio:
+		case group.FieldID:
+			values[i] = new(sql.NullInt64)
+		case group.FieldUID, group.FieldGroupname, group.FieldBio:
 			values[i] = new(sql.NullString)
 		case group.FieldCreatedAt, group.FieldUpdatedAt, group.FieldReadAt:
 			values[i] = new(sql.NullTime)
@@ -129,10 +133,16 @@ func (gr *Group) assignValues(columns []string, values []interface{}) error {
 	for i := range columns {
 		switch columns[i] {
 		case group.FieldID:
+			value, ok := values[i].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
+			}
+			gr.ID = int(value.Int64)
+		case group.FieldUID:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field id", values[i])
+				return fmt.Errorf("unexpected type %T for field uid", values[i])
 			} else if value.Valid {
-				gr.ID = value.String
+				gr.UID = value.String
 			}
 		case group.FieldGroupname:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -222,6 +232,8 @@ func (gr *Group) String() string {
 	var builder strings.Builder
 	builder.WriteString("Group(")
 	builder.WriteString(fmt.Sprintf("id=%v", gr.ID))
+	builder.WriteString(", uid=")
+	builder.WriteString(gr.UID)
 	builder.WriteString(", groupname=")
 	builder.WriteString(gr.Groupname)
 	builder.WriteString(", bio=")

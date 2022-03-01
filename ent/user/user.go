@@ -11,6 +11,8 @@ const (
 	Label = "user"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldUID holds the string denoting the uid field in the database.
+	FieldUID = "uid"
 	// FieldUsername holds the string denoting the username field in the database.
 	FieldUsername = "username"
 	// FieldPassword holds the string denoting the password field in the database.
@@ -31,6 +33,10 @@ const (
 	FieldReadAt = "read_at"
 	// EdgeFriends holds the string denoting the friends edge name in mutations.
 	EdgeFriends = "friends"
+	// EdgeRequests holds the string denoting the requests edge name in mutations.
+	EdgeRequests = "requests"
+	// EdgeFriendsReq holds the string denoting the friendsreq edge name in mutations.
+	EdgeFriendsReq = "friendsReq"
 	// EdgeLikeTo holds the string denoting the like_to edge name in mutations.
 	EdgeLikeTo = "like_to"
 	// EdgeSave holds the string denoting the save edge name in mutations.
@@ -47,6 +53,10 @@ const (
 	Table = "users"
 	// FriendsTable is the table that holds the friends relation/edge. The primary key declared below.
 	FriendsTable = "user_friends"
+	// RequestsTable is the table that holds the requests relation/edge. The primary key declared below.
+	RequestsTable = "user_friendsReq"
+	// FriendsReqTable is the table that holds the friendsReq relation/edge. The primary key declared below.
+	FriendsReqTable = "user_friendsReq"
 	// LikeToTable is the table that holds the like_to relation/edge. The primary key declared below.
 	LikeToTable = "user_like_to"
 	// LikeToInverseTable is the table name for the Group entity.
@@ -88,6 +98,7 @@ const (
 // Columns holds all SQL columns for user fields.
 var Columns = []string{
 	FieldID,
+	FieldUID,
 	FieldUsername,
 	FieldPassword,
 	FieldUni,
@@ -103,6 +114,12 @@ var (
 	// FriendsPrimaryKey and FriendsColumn2 are the table columns denoting the
 	// primary key for the friends relation (M2M).
 	FriendsPrimaryKey = []string{"user_id", "friend_id"}
+	// RequestsPrimaryKey and RequestsColumn2 are the table columns denoting the
+	// primary key for the requests relation (M2M).
+	RequestsPrimaryKey = []string{"user_id", "request_id"}
+	// FriendsReqPrimaryKey and FriendsReqColumn2 are the table columns denoting the
+	// primary key for the friendsReq relation (M2M).
+	FriendsReqPrimaryKey = []string{"user_id", "request_id"}
 	// LikeToPrimaryKey and LikeToColumn2 are the table columns denoting the
 	// primary key for the like_to relation (M2M).
 	LikeToPrimaryKey = []string{"user_id", "group_id"}

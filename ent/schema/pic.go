@@ -16,9 +16,10 @@ type Pic struct {
 // Fields of the Pic.
 func (Pic) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("user_id").Optional(),
-		field.String("group_id").Optional(),
-		field.String("adress").NotEmpty(),
+		field.String("uid").Unique(),
+		field.Int("user_id").Optional(),
+		field.Int("group_id").Optional(),
+		field.String("url").NotEmpty(),
 		field.Time("createdAt").Default(time.Now),
 		field.Time("updatedAt").Default(time.Now),
 		field.Time("readAt").Default(time.Now),

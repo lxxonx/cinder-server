@@ -15,7 +15,9 @@ import (
 type ChatRoom struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID string `json:"id,omitempty"`
+	ID int `json:"id,omitempty"`
+	// UID holds the value of the "uid" field.
+	UID string `json:"uid,omitempty"`
 	// CreatedAt holds the value of the "createdAt" field.
 	CreatedAt time.Time `json:"createdAt,omitempty"`
 	// UpdatedAt holds the value of the "updatedAt" field.
@@ -62,6 +64,8 @@ func (*ChatRoom) scanValues(columns []string) ([]interface{}, error) {
 	for i := range columns {
 		switch columns[i] {
 		case chatroom.FieldID:
+			values[i] = new(sql.NullInt64)
+		case chatroom.FieldUID:
 			values[i] = new(sql.NullString)
 		case chatroom.FieldCreatedAt, chatroom.FieldUpdatedAt, chatroom.FieldReadAt:
 			values[i] = new(sql.NullTime)
@@ -81,10 +85,16 @@ func (cr *ChatRoom) assignValues(columns []string, values []interface{}) error {
 	for i := range columns {
 		switch columns[i] {
 		case chatroom.FieldID:
+			value, ok := values[i].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
+			}
+			cr.ID = int(value.Int64)
+		case chatroom.FieldUID:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field id", values[i])
+				return fmt.Errorf("unexpected type %T for field uid", values[i])
 			} else if value.Valid {
-				cr.ID = value.String
+				cr.UID = value.String
 			}
 		case chatroom.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -142,6 +152,8 @@ func (cr *ChatRoom) String() string {
 	var builder strings.Builder
 	builder.WriteString("ChatRoom(")
 	builder.WriteString(fmt.Sprintf("id=%v", cr.ID))
+	builder.WriteString(", uid=")
+	builder.WriteString(cr.UID)
 	builder.WriteString(", createdAt=")
 	builder.WriteString(cr.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", updatedAt=")

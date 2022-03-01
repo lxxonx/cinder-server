@@ -11,6 +11,8 @@ const (
 	Label = "chat_room"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldUID holds the string denoting the uid field in the database.
+	FieldUID = "uid"
 	// FieldCreatedAt holds the string denoting the createdat field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updatedat field in the database.
@@ -40,6 +42,7 @@ const (
 // Columns holds all SQL columns for chatroom fields.
 var Columns = []string{
 	FieldID,
+	FieldUID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldReadAt,

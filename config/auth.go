@@ -1,19 +1,19 @@
 package config
 
 import (
-	"context"
 	"os"
 	"strings"
 
 	firebase "firebase.google.com/go/v4"
 	"github.com/gofiber/fiber/v2"
+	"github.com/lxxonx/cinder-server/ent/user"
 )
 
 func AuthMiddleware(c *fiber.Ctx) error {
 	env := os.Getenv("ENV")
 
 	if env == "dev" {
-		c.Locals("uid", "Zjx9cgDlESMb9Nq4WcuDwNe4gSu1")
+		c.Locals("userId", 1)
 		return c.Next()
 	}
 
@@ -21,7 +21,7 @@ func AuthMiddleware(c *fiber.Ctx) error {
 	jwt := strings.Split(headers["Authorization"], " ")[1]
 	firebaseApp := c.Locals("firebase").(*firebase.App)
 
-	auth, err := firebaseApp.Auth(context.Background())
+	auth, err := firebaseApp.Auth(c.Context())
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"ok":      false,
@@ -29,7 +29,7 @@ func AuthMiddleware(c *fiber.Ctx) error {
 		})
 	}
 
-	token, err := auth.VerifyIDToken(context.Background(), jwt)
+	token, err := auth.VerifyIDToken(c.Context(), jwt)
 	if err != nil {
 		return c.Status(401).JSON(fiber.Map{
 			"ok":      false,
@@ -43,7 +43,9 @@ func AuthMiddleware(c *fiber.Ctx) error {
 			"message": "Invalid token",
 		})
 	}
-	c.Locals("uid", token.UID)
 
+	userId := DB.User.Query().Where(user.UID(token.UID)).OnlyIDX(c.Context())
+
+	c.Locals("userId", userId)
 	return c.Next()
 }

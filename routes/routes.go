@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/lxxonx/cinder-server/config"
 	"github.com/lxxonx/cinder-server/controllers"
 )
 
@@ -11,14 +12,16 @@ func SetupRoutes(app *fiber.App) {
 
 	users := api.Group("/users")
 	users.Get("/current", controllers.GetCurrentUser)
+	users.Get("/", controllers.GetAllUsers)
 	users.Post("/signup", controllers.SignUpUser)
 	users.Post("/profile/upload", controllers.UploadProfile)
 
-	friends := users.Group("/friends")
-	friends.Post("/req", controllers.RequestFriend)
-	friends.Post("/act", controllers.AcceptFriendRequest)
+	friends := api.Group("/friends")
+	friends.Get("/req", config.AuthMiddleware, controllers.GetFriendsRequest)
+	friends.Post("/req", config.AuthMiddleware, controllers.RequestFriend)
+	friends.Post("/act", config.AuthMiddleware, controllers.AcceptFriendRequest)
 
 	groups := api.Group("/groups")
-	groups.Get("/", controllers.GetGroups)
-	groups.Post("/create", controllers.CreateGroup)
+	groups.Get("/", config.AuthMiddleware, controllers.GetGroups)
+	groups.Post("/join", config.AuthMiddleware, controllers.JoinGroup)
 }

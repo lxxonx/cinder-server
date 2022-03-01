@@ -93,24 +93,31 @@ func IDLTE(id int) predicate.Pic {
 	})
 }
 
+// UID applies equality check predicate on the "uid" field. It's identical to UIDEQ.
+func UID(v string) predicate.Pic {
+	return predicate.Pic(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldUID), v))
+	})
+}
+
 // UserID applies equality check predicate on the "user_id" field. It's identical to UserIDEQ.
-func UserID(v string) predicate.Pic {
+func UserID(v int) predicate.Pic {
 	return predicate.Pic(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldUserID), v))
 	})
 }
 
 // GroupID applies equality check predicate on the "group_id" field. It's identical to GroupIDEQ.
-func GroupID(v string) predicate.Pic {
+func GroupID(v int) predicate.Pic {
 	return predicate.Pic(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldGroupID), v))
 	})
 }
 
-// Adress applies equality check predicate on the "adress" field. It's identical to AdressEQ.
-func Adress(v string) predicate.Pic {
+// URL applies equality check predicate on the "url" field. It's identical to URLEQ.
+func URL(v string) predicate.Pic {
 	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldAdress), v))
+		s.Where(sql.EQ(s.C(FieldURL), v))
 	})
 }
 
@@ -135,22 +142,133 @@ func ReadAt(v time.Time) predicate.Pic {
 	})
 }
 
+// UIDEQ applies the EQ predicate on the "uid" field.
+func UIDEQ(v string) predicate.Pic {
+	return predicate.Pic(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldUID), v))
+	})
+}
+
+// UIDNEQ applies the NEQ predicate on the "uid" field.
+func UIDNEQ(v string) predicate.Pic {
+	return predicate.Pic(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldUID), v))
+	})
+}
+
+// UIDIn applies the In predicate on the "uid" field.
+func UIDIn(vs ...string) predicate.Pic {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Pic(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldUID), v...))
+	})
+}
+
+// UIDNotIn applies the NotIn predicate on the "uid" field.
+func UIDNotIn(vs ...string) predicate.Pic {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Pic(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldUID), v...))
+	})
+}
+
+// UIDGT applies the GT predicate on the "uid" field.
+func UIDGT(v string) predicate.Pic {
+	return predicate.Pic(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldUID), v))
+	})
+}
+
+// UIDGTE applies the GTE predicate on the "uid" field.
+func UIDGTE(v string) predicate.Pic {
+	return predicate.Pic(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldUID), v))
+	})
+}
+
+// UIDLT applies the LT predicate on the "uid" field.
+func UIDLT(v string) predicate.Pic {
+	return predicate.Pic(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldUID), v))
+	})
+}
+
+// UIDLTE applies the LTE predicate on the "uid" field.
+func UIDLTE(v string) predicate.Pic {
+	return predicate.Pic(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldUID), v))
+	})
+}
+
+// UIDContains applies the Contains predicate on the "uid" field.
+func UIDContains(v string) predicate.Pic {
+	return predicate.Pic(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldUID), v))
+	})
+}
+
+// UIDHasPrefix applies the HasPrefix predicate on the "uid" field.
+func UIDHasPrefix(v string) predicate.Pic {
+	return predicate.Pic(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldUID), v))
+	})
+}
+
+// UIDHasSuffix applies the HasSuffix predicate on the "uid" field.
+func UIDHasSuffix(v string) predicate.Pic {
+	return predicate.Pic(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldUID), v))
+	})
+}
+
+// UIDEqualFold applies the EqualFold predicate on the "uid" field.
+func UIDEqualFold(v string) predicate.Pic {
+	return predicate.Pic(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldUID), v))
+	})
+}
+
+// UIDContainsFold applies the ContainsFold predicate on the "uid" field.
+func UIDContainsFold(v string) predicate.Pic {
+	return predicate.Pic(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldUID), v))
+	})
+}
+
 // UserIDEQ applies the EQ predicate on the "user_id" field.
-func UserIDEQ(v string) predicate.Pic {
+func UserIDEQ(v int) predicate.Pic {
 	return predicate.Pic(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldUserID), v))
 	})
 }
 
 // UserIDNEQ applies the NEQ predicate on the "user_id" field.
-func UserIDNEQ(v string) predicate.Pic {
+func UserIDNEQ(v int) predicate.Pic {
 	return predicate.Pic(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldUserID), v))
 	})
 }
 
 // UserIDIn applies the In predicate on the "user_id" field.
-func UserIDIn(vs ...string) predicate.Pic {
+func UserIDIn(vs ...int) predicate.Pic {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -167,7 +285,7 @@ func UserIDIn(vs ...string) predicate.Pic {
 }
 
 // UserIDNotIn applies the NotIn predicate on the "user_id" field.
-func UserIDNotIn(vs ...string) predicate.Pic {
+func UserIDNotIn(vs ...int) predicate.Pic {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -180,55 +298,6 @@ func UserIDNotIn(vs ...string) predicate.Pic {
 			return
 		}
 		s.Where(sql.NotIn(s.C(FieldUserID), v...))
-	})
-}
-
-// UserIDGT applies the GT predicate on the "user_id" field.
-func UserIDGT(v string) predicate.Pic {
-	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldUserID), v))
-	})
-}
-
-// UserIDGTE applies the GTE predicate on the "user_id" field.
-func UserIDGTE(v string) predicate.Pic {
-	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldUserID), v))
-	})
-}
-
-// UserIDLT applies the LT predicate on the "user_id" field.
-func UserIDLT(v string) predicate.Pic {
-	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldUserID), v))
-	})
-}
-
-// UserIDLTE applies the LTE predicate on the "user_id" field.
-func UserIDLTE(v string) predicate.Pic {
-	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldUserID), v))
-	})
-}
-
-// UserIDContains applies the Contains predicate on the "user_id" field.
-func UserIDContains(v string) predicate.Pic {
-	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldUserID), v))
-	})
-}
-
-// UserIDHasPrefix applies the HasPrefix predicate on the "user_id" field.
-func UserIDHasPrefix(v string) predicate.Pic {
-	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldUserID), v))
-	})
-}
-
-// UserIDHasSuffix applies the HasSuffix predicate on the "user_id" field.
-func UserIDHasSuffix(v string) predicate.Pic {
-	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldUserID), v))
 	})
 }
 
@@ -246,36 +315,22 @@ func UserIDNotNil() predicate.Pic {
 	})
 }
 
-// UserIDEqualFold applies the EqualFold predicate on the "user_id" field.
-func UserIDEqualFold(v string) predicate.Pic {
-	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldUserID), v))
-	})
-}
-
-// UserIDContainsFold applies the ContainsFold predicate on the "user_id" field.
-func UserIDContainsFold(v string) predicate.Pic {
-	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldUserID), v))
-	})
-}
-
 // GroupIDEQ applies the EQ predicate on the "group_id" field.
-func GroupIDEQ(v string) predicate.Pic {
+func GroupIDEQ(v int) predicate.Pic {
 	return predicate.Pic(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldGroupID), v))
 	})
 }
 
 // GroupIDNEQ applies the NEQ predicate on the "group_id" field.
-func GroupIDNEQ(v string) predicate.Pic {
+func GroupIDNEQ(v int) predicate.Pic {
 	return predicate.Pic(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldGroupID), v))
 	})
 }
 
 // GroupIDIn applies the In predicate on the "group_id" field.
-func GroupIDIn(vs ...string) predicate.Pic {
+func GroupIDIn(vs ...int) predicate.Pic {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -292,7 +347,7 @@ func GroupIDIn(vs ...string) predicate.Pic {
 }
 
 // GroupIDNotIn applies the NotIn predicate on the "group_id" field.
-func GroupIDNotIn(vs ...string) predicate.Pic {
+func GroupIDNotIn(vs ...int) predicate.Pic {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -305,55 +360,6 @@ func GroupIDNotIn(vs ...string) predicate.Pic {
 			return
 		}
 		s.Where(sql.NotIn(s.C(FieldGroupID), v...))
-	})
-}
-
-// GroupIDGT applies the GT predicate on the "group_id" field.
-func GroupIDGT(v string) predicate.Pic {
-	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldGroupID), v))
-	})
-}
-
-// GroupIDGTE applies the GTE predicate on the "group_id" field.
-func GroupIDGTE(v string) predicate.Pic {
-	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldGroupID), v))
-	})
-}
-
-// GroupIDLT applies the LT predicate on the "group_id" field.
-func GroupIDLT(v string) predicate.Pic {
-	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldGroupID), v))
-	})
-}
-
-// GroupIDLTE applies the LTE predicate on the "group_id" field.
-func GroupIDLTE(v string) predicate.Pic {
-	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldGroupID), v))
-	})
-}
-
-// GroupIDContains applies the Contains predicate on the "group_id" field.
-func GroupIDContains(v string) predicate.Pic {
-	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldGroupID), v))
-	})
-}
-
-// GroupIDHasPrefix applies the HasPrefix predicate on the "group_id" field.
-func GroupIDHasPrefix(v string) predicate.Pic {
-	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldGroupID), v))
-	})
-}
-
-// GroupIDHasSuffix applies the HasSuffix predicate on the "group_id" field.
-func GroupIDHasSuffix(v string) predicate.Pic {
-	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldGroupID), v))
 	})
 }
 
@@ -371,36 +377,22 @@ func GroupIDNotNil() predicate.Pic {
 	})
 }
 
-// GroupIDEqualFold applies the EqualFold predicate on the "group_id" field.
-func GroupIDEqualFold(v string) predicate.Pic {
+// URLEQ applies the EQ predicate on the "url" field.
+func URLEQ(v string) predicate.Pic {
 	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldGroupID), v))
+		s.Where(sql.EQ(s.C(FieldURL), v))
 	})
 }
 
-// GroupIDContainsFold applies the ContainsFold predicate on the "group_id" field.
-func GroupIDContainsFold(v string) predicate.Pic {
+// URLNEQ applies the NEQ predicate on the "url" field.
+func URLNEQ(v string) predicate.Pic {
 	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldGroupID), v))
+		s.Where(sql.NEQ(s.C(FieldURL), v))
 	})
 }
 
-// AdressEQ applies the EQ predicate on the "adress" field.
-func AdressEQ(v string) predicate.Pic {
-	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldAdress), v))
-	})
-}
-
-// AdressNEQ applies the NEQ predicate on the "adress" field.
-func AdressNEQ(v string) predicate.Pic {
-	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldAdress), v))
-	})
-}
-
-// AdressIn applies the In predicate on the "adress" field.
-func AdressIn(vs ...string) predicate.Pic {
+// URLIn applies the In predicate on the "url" field.
+func URLIn(vs ...string) predicate.Pic {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -412,12 +404,12 @@ func AdressIn(vs ...string) predicate.Pic {
 			s.Where(sql.False())
 			return
 		}
-		s.Where(sql.In(s.C(FieldAdress), v...))
+		s.Where(sql.In(s.C(FieldURL), v...))
 	})
 }
 
-// AdressNotIn applies the NotIn predicate on the "adress" field.
-func AdressNotIn(vs ...string) predicate.Pic {
+// URLNotIn applies the NotIn predicate on the "url" field.
+func URLNotIn(vs ...string) predicate.Pic {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -429,70 +421,70 @@ func AdressNotIn(vs ...string) predicate.Pic {
 			s.Where(sql.False())
 			return
 		}
-		s.Where(sql.NotIn(s.C(FieldAdress), v...))
+		s.Where(sql.NotIn(s.C(FieldURL), v...))
 	})
 }
 
-// AdressGT applies the GT predicate on the "adress" field.
-func AdressGT(v string) predicate.Pic {
+// URLGT applies the GT predicate on the "url" field.
+func URLGT(v string) predicate.Pic {
 	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldAdress), v))
+		s.Where(sql.GT(s.C(FieldURL), v))
 	})
 }
 
-// AdressGTE applies the GTE predicate on the "adress" field.
-func AdressGTE(v string) predicate.Pic {
+// URLGTE applies the GTE predicate on the "url" field.
+func URLGTE(v string) predicate.Pic {
 	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldAdress), v))
+		s.Where(sql.GTE(s.C(FieldURL), v))
 	})
 }
 
-// AdressLT applies the LT predicate on the "adress" field.
-func AdressLT(v string) predicate.Pic {
+// URLLT applies the LT predicate on the "url" field.
+func URLLT(v string) predicate.Pic {
 	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldAdress), v))
+		s.Where(sql.LT(s.C(FieldURL), v))
 	})
 }
 
-// AdressLTE applies the LTE predicate on the "adress" field.
-func AdressLTE(v string) predicate.Pic {
+// URLLTE applies the LTE predicate on the "url" field.
+func URLLTE(v string) predicate.Pic {
 	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldAdress), v))
+		s.Where(sql.LTE(s.C(FieldURL), v))
 	})
 }
 
-// AdressContains applies the Contains predicate on the "adress" field.
-func AdressContains(v string) predicate.Pic {
+// URLContains applies the Contains predicate on the "url" field.
+func URLContains(v string) predicate.Pic {
 	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldAdress), v))
+		s.Where(sql.Contains(s.C(FieldURL), v))
 	})
 }
 
-// AdressHasPrefix applies the HasPrefix predicate on the "adress" field.
-func AdressHasPrefix(v string) predicate.Pic {
+// URLHasPrefix applies the HasPrefix predicate on the "url" field.
+func URLHasPrefix(v string) predicate.Pic {
 	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldAdress), v))
+		s.Where(sql.HasPrefix(s.C(FieldURL), v))
 	})
 }
 
-// AdressHasSuffix applies the HasSuffix predicate on the "adress" field.
-func AdressHasSuffix(v string) predicate.Pic {
+// URLHasSuffix applies the HasSuffix predicate on the "url" field.
+func URLHasSuffix(v string) predicate.Pic {
 	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldAdress), v))
+		s.Where(sql.HasSuffix(s.C(FieldURL), v))
 	})
 }
 
-// AdressEqualFold applies the EqualFold predicate on the "adress" field.
-func AdressEqualFold(v string) predicate.Pic {
+// URLEqualFold applies the EqualFold predicate on the "url" field.
+func URLEqualFold(v string) predicate.Pic {
 	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldAdress), v))
+		s.Where(sql.EqualFold(s.C(FieldURL), v))
 	})
 }
 
-// AdressContainsFold applies the ContainsFold predicate on the "adress" field.
-func AdressContainsFold(v string) predicate.Pic {
+// URLContainsFold applies the ContainsFold predicate on the "url" field.
+func URLContainsFold(v string) predicate.Pic {
 	return predicate.Pic(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldAdress), v))
+		s.Where(sql.ContainsFold(s.C(FieldURL), v))
 	})
 }
 

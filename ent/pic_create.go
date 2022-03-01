@@ -22,37 +22,43 @@ type PicCreate struct {
 	hooks    []Hook
 }
 
+// SetUID sets the "uid" field.
+func (pc *PicCreate) SetUID(s string) *PicCreate {
+	pc.mutation.SetUID(s)
+	return pc
+}
+
 // SetUserID sets the "user_id" field.
-func (pc *PicCreate) SetUserID(s string) *PicCreate {
-	pc.mutation.SetUserID(s)
+func (pc *PicCreate) SetUserID(i int) *PicCreate {
+	pc.mutation.SetUserID(i)
 	return pc
 }
 
 // SetNillableUserID sets the "user_id" field if the given value is not nil.
-func (pc *PicCreate) SetNillableUserID(s *string) *PicCreate {
-	if s != nil {
-		pc.SetUserID(*s)
+func (pc *PicCreate) SetNillableUserID(i *int) *PicCreate {
+	if i != nil {
+		pc.SetUserID(*i)
 	}
 	return pc
 }
 
 // SetGroupID sets the "group_id" field.
-func (pc *PicCreate) SetGroupID(s string) *PicCreate {
-	pc.mutation.SetGroupID(s)
+func (pc *PicCreate) SetGroupID(i int) *PicCreate {
+	pc.mutation.SetGroupID(i)
 	return pc
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (pc *PicCreate) SetNillableGroupID(s *string) *PicCreate {
-	if s != nil {
-		pc.SetGroupID(*s)
+func (pc *PicCreate) SetNillableGroupID(i *int) *PicCreate {
+	if i != nil {
+		pc.SetGroupID(*i)
 	}
 	return pc
 }
 
-// SetAdress sets the "adress" field.
-func (pc *PicCreate) SetAdress(s string) *PicCreate {
-	pc.mutation.SetAdress(s)
+// SetURL sets the "url" field.
+func (pc *PicCreate) SetURL(s string) *PicCreate {
+	pc.mutation.SetURL(s)
 	return pc
 }
 
@@ -195,12 +201,15 @@ func (pc *PicCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (pc *PicCreate) check() error {
-	if _, ok := pc.mutation.Adress(); !ok {
-		return &ValidationError{Name: "adress", err: errors.New(`ent: missing required field "Pic.adress"`)}
+	if _, ok := pc.mutation.UID(); !ok {
+		return &ValidationError{Name: "uid", err: errors.New(`ent: missing required field "Pic.uid"`)}
 	}
-	if v, ok := pc.mutation.Adress(); ok {
-		if err := pic.AdressValidator(v); err != nil {
-			return &ValidationError{Name: "adress", err: fmt.Errorf(`ent: validator failed for field "Pic.adress": %w`, err)}
+	if _, ok := pc.mutation.URL(); !ok {
+		return &ValidationError{Name: "url", err: errors.New(`ent: missing required field "Pic.url"`)}
+	}
+	if v, ok := pc.mutation.URL(); ok {
+		if err := pic.URLValidator(v); err != nil {
+			return &ValidationError{Name: "url", err: fmt.Errorf(`ent: validator failed for field "Pic.url": %w`, err)}
 		}
 	}
 	if _, ok := pc.mutation.CreatedAt(); !ok {
@@ -239,13 +248,21 @@ func (pc *PicCreate) createSpec() (*Pic, *sqlgraph.CreateSpec) {
 			},
 		}
 	)
-	if value, ok := pc.mutation.Adress(); ok {
+	if value, ok := pc.mutation.UID(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
-			Column: pic.FieldAdress,
+			Column: pic.FieldUID,
 		})
-		_node.Adress = value
+		_node.UID = value
+	}
+	if value, ok := pc.mutation.URL(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: pic.FieldURL,
+		})
+		_node.URL = value
 	}
 	if value, ok := pc.mutation.CreatedAt(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
@@ -280,7 +297,7 @@ func (pc *PicCreate) createSpec() (*Pic, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: user.FieldID,
 				},
 			},
@@ -300,7 +317,7 @@ func (pc *PicCreate) createSpec() (*Pic, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeString,
+					Type:   field.TypeInt,
 					Column: group.FieldID,
 				},
 			},

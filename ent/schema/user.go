@@ -16,13 +16,13 @@ type User struct {
 // Fields of the User.
 func (User) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("id").Unique(),
+		field.String("uid").Unique(),
 		field.String("username").NotEmpty(),
 		field.Bytes("password").Sensitive(),
 		field.String("uni").NotEmpty(),
 		field.String("dep").NotEmpty(),
 		field.String("bio").Optional(),
-		field.String("group_id").Optional(),
+		field.Int("group_id").Optional(),
 		field.Time("createdAt").Default(time.Now),
 		field.Time("updatedAt").Default(time.Now),
 		field.Time("readAt").Default(time.Now),
@@ -38,6 +38,8 @@ func (User) Fields() []ent.Field {
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("friends", User.Type),
+		edge.To("friendsReq", User.Type).
+			From("requests"),
 		edge.To("like_to", Group.Type),
 		edge.To("save", Group.Type),
 		edge.From("group", Group.Type).

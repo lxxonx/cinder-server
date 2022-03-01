@@ -18,6 +18,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/lxxonx/cinder-server/config"
 	"github.com/lxxonx/cinder-server/dto"
+	"github.com/lxxonx/cinder-server/ent/user"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -39,8 +40,8 @@ func SignUpUser(c *fiber.Ctx) error {
 	}
 
 	_, err = config.DB.User. // UserClient.
-					Create(). // User create builder.
-					SetID(input.Id).
+					Create().          // User create builder.
+					SetUID(input.Uid). // Set uid.
 					SetUsername(input.Username).
 					SetPassword(password).
 					SetBio("").
@@ -51,9 +52,10 @@ func SignUpUser(c *fiber.Ctx) error {
 		fmt.Println(err.Error())
 		return c.Status(500).JSON(fiber.Map{
 			"ok":      false,
-			"message": "unable to create user",
+			"message": err.Error(),
 		})
 	}
+
 	return c.Status(200).JSON(fiber.Map{
 		"ok":      true,
 		"message": "success",
@@ -81,16 +83,32 @@ func LoginUser(c *fiber.Ctx) error {
 }
 
 func GetCurrentUser(c *fiber.Ctx) error {
-	uid := c.Locals("user")
-	if uid == nil {
+	userId := c.Locals("userId")
+	if userId == nil {
 		return c.Status(401).JSON(fiber.Map{
 			"ok":      false,
 			"message": "Not logged in",
 		})
 	}
+
+	me := config.DB.User.Query().Where(user.IDEQ(userId.(int))).OnlyX(c.Context())
+
 	return c.Status(200).JSON(fiber.Map{
-		"ok":   true,
-		"data": uid,
+		"ok": true,
+		"data": fiber.Map{
+			"me": me,
+		},
+	})
+}
+func GetAllUsers(c *fiber.Ctx) error {
+
+	users := config.DB.User.Query().AllX(c.Context())
+
+	return c.Status(200).JSON(fiber.Map{
+		"ok": true,
+		"data": fiber.Map{
+			"users": users,
+		},
 	})
 }
 
