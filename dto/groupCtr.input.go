@@ -8,7 +8,6 @@ type GetGroupsInput struct {
 type CreateGroupInput struct {
 	GroupName string   `json:"groupName"`
 	Friends   []string `json:"friends"`
-	Pics      []string `json:"pics"`
 	Bio       string   `json:"bio"`
 }
 

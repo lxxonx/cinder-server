@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/lxxonx/cinder-server/ent/chatmessage"
 	"github.com/lxxonx/cinder-server/ent/chatroom"
 	"github.com/lxxonx/cinder-server/ent/predicate"
@@ -30,47 +31,19 @@ func (cru *ChatRoomUpdate) Where(ps ...predicate.ChatRoom) *ChatRoomUpdate {
 	return cru
 }
 
-// SetUID sets the "uid" field.
-func (cru *ChatRoomUpdate) SetUID(s string) *ChatRoomUpdate {
-	cru.mutation.SetUID(s)
-	return cru
-}
-
-// SetCreatedAt sets the "createdAt" field.
-func (cru *ChatRoomUpdate) SetCreatedAt(t time.Time) *ChatRoomUpdate {
-	cru.mutation.SetCreatedAt(t)
-	return cru
-}
-
-// SetNillableCreatedAt sets the "createdAt" field if the given value is not nil.
-func (cru *ChatRoomUpdate) SetNillableCreatedAt(t *time.Time) *ChatRoomUpdate {
-	if t != nil {
-		cru.SetCreatedAt(*t)
-	}
-	return cru
-}
-
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (cru *ChatRoomUpdate) SetUpdatedAt(t time.Time) *ChatRoomUpdate {
 	cru.mutation.SetUpdatedAt(t)
 	return cru
 }
 
-// SetNillableUpdatedAt sets the "updatedAt" field if the given value is not nil.
-func (cru *ChatRoomUpdate) SetNillableUpdatedAt(t *time.Time) *ChatRoomUpdate {
-	if t != nil {
-		cru.SetUpdatedAt(*t)
-	}
-	return cru
-}
-
-// SetReadAt sets the "readAt" field.
+// SetReadAt sets the "read_at" field.
 func (cru *ChatRoomUpdate) SetReadAt(t time.Time) *ChatRoomUpdate {
 	cru.mutation.SetReadAt(t)
 	return cru
 }
 
-// SetNillableReadAt sets the "readAt" field if the given value is not nil.
+// SetNillableReadAt sets the "read_at" field if the given value is not nil.
 func (cru *ChatRoomUpdate) SetNillableReadAt(t *time.Time) *ChatRoomUpdate {
 	if t != nil {
 		cru.SetReadAt(*t)
@@ -79,14 +52,14 @@ func (cru *ChatRoomUpdate) SetNillableReadAt(t *time.Time) *ChatRoomUpdate {
 }
 
 // AddParticipantIDs adds the "participants" edge to the User entity by IDs.
-func (cru *ChatRoomUpdate) AddParticipantIDs(ids ...int) *ChatRoomUpdate {
+func (cru *ChatRoomUpdate) AddParticipantIDs(ids ...string) *ChatRoomUpdate {
 	cru.mutation.AddParticipantIDs(ids...)
 	return cru
 }
 
 // AddParticipants adds the "participants" edges to the User entity.
 func (cru *ChatRoomUpdate) AddParticipants(u ...*User) *ChatRoomUpdate {
-	ids := make([]int, len(u))
+	ids := make([]string, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -94,14 +67,14 @@ func (cru *ChatRoomUpdate) AddParticipants(u ...*User) *ChatRoomUpdate {
 }
 
 // AddMessageIDs adds the "messages" edge to the ChatMessage entity by IDs.
-func (cru *ChatRoomUpdate) AddMessageIDs(ids ...int) *ChatRoomUpdate {
+func (cru *ChatRoomUpdate) AddMessageIDs(ids ...uuid.UUID) *ChatRoomUpdate {
 	cru.mutation.AddMessageIDs(ids...)
 	return cru
 }
 
 // AddMessages adds the "messages" edges to the ChatMessage entity.
 func (cru *ChatRoomUpdate) AddMessages(c ...*ChatMessage) *ChatRoomUpdate {
-	ids := make([]int, len(c))
+	ids := make([]uuid.UUID, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
@@ -120,14 +93,14 @@ func (cru *ChatRoomUpdate) ClearParticipants() *ChatRoomUpdate {
 }
 
 // RemoveParticipantIDs removes the "participants" edge to User entities by IDs.
-func (cru *ChatRoomUpdate) RemoveParticipantIDs(ids ...int) *ChatRoomUpdate {
+func (cru *ChatRoomUpdate) RemoveParticipantIDs(ids ...string) *ChatRoomUpdate {
 	cru.mutation.RemoveParticipantIDs(ids...)
 	return cru
 }
 
 // RemoveParticipants removes "participants" edges to User entities.
 func (cru *ChatRoomUpdate) RemoveParticipants(u ...*User) *ChatRoomUpdate {
-	ids := make([]int, len(u))
+	ids := make([]string, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -141,14 +114,14 @@ func (cru *ChatRoomUpdate) ClearMessages() *ChatRoomUpdate {
 }
 
 // RemoveMessageIDs removes the "messages" edge to ChatMessage entities by IDs.
-func (cru *ChatRoomUpdate) RemoveMessageIDs(ids ...int) *ChatRoomUpdate {
+func (cru *ChatRoomUpdate) RemoveMessageIDs(ids ...uuid.UUID) *ChatRoomUpdate {
 	cru.mutation.RemoveMessageIDs(ids...)
 	return cru
 }
 
 // RemoveMessages removes "messages" edges to ChatMessage entities.
 func (cru *ChatRoomUpdate) RemoveMessages(c ...*ChatMessage) *ChatRoomUpdate {
-	ids := make([]int, len(c))
+	ids := make([]uuid.UUID, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
@@ -161,6 +134,7 @@ func (cru *ChatRoomUpdate) Save(ctx context.Context) (int, error) {
 		err      error
 		affected int
 	)
+	cru.defaults()
 	if len(cru.hooks) == 0 {
 		affected, err = cru.sqlSave(ctx)
 	} else {
@@ -209,13 +183,21 @@ func (cru *ChatRoomUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (cru *ChatRoomUpdate) defaults() {
+	if _, ok := cru.mutation.UpdatedAt(); !ok {
+		v := chatroom.UpdateDefaultUpdatedAt()
+		cru.mutation.SetUpdatedAt(v)
+	}
+}
+
 func (cru *ChatRoomUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   chatroom.Table,
 			Columns: chatroom.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeUUID,
 				Column: chatroom.FieldID,
 			},
 		},
@@ -226,20 +208,6 @@ func (cru *ChatRoomUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := cru.mutation.UID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: chatroom.FieldUID,
-		})
-	}
-	if value, ok := cru.mutation.CreatedAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: chatroom.FieldCreatedAt,
-		})
 	}
 	if value, ok := cru.mutation.UpdatedAt(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
@@ -264,7 +232,7 @@ func (cru *ChatRoomUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -280,7 +248,7 @@ func (cru *ChatRoomUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -299,7 +267,7 @@ func (cru *ChatRoomUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -318,7 +286,7 @@ func (cru *ChatRoomUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUUID,
 					Column: chatmessage.FieldID,
 				},
 			},
@@ -334,7 +302,7 @@ func (cru *ChatRoomUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUUID,
 					Column: chatmessage.FieldID,
 				},
 			},
@@ -353,7 +321,7 @@ func (cru *ChatRoomUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUUID,
 					Column: chatmessage.FieldID,
 				},
 			},
@@ -382,47 +350,19 @@ type ChatRoomUpdateOne struct {
 	mutation *ChatRoomMutation
 }
 
-// SetUID sets the "uid" field.
-func (cruo *ChatRoomUpdateOne) SetUID(s string) *ChatRoomUpdateOne {
-	cruo.mutation.SetUID(s)
-	return cruo
-}
-
-// SetCreatedAt sets the "createdAt" field.
-func (cruo *ChatRoomUpdateOne) SetCreatedAt(t time.Time) *ChatRoomUpdateOne {
-	cruo.mutation.SetCreatedAt(t)
-	return cruo
-}
-
-// SetNillableCreatedAt sets the "createdAt" field if the given value is not nil.
-func (cruo *ChatRoomUpdateOne) SetNillableCreatedAt(t *time.Time) *ChatRoomUpdateOne {
-	if t != nil {
-		cruo.SetCreatedAt(*t)
-	}
-	return cruo
-}
-
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (cruo *ChatRoomUpdateOne) SetUpdatedAt(t time.Time) *ChatRoomUpdateOne {
 	cruo.mutation.SetUpdatedAt(t)
 	return cruo
 }
 
-// SetNillableUpdatedAt sets the "updatedAt" field if the given value is not nil.
-func (cruo *ChatRoomUpdateOne) SetNillableUpdatedAt(t *time.Time) *ChatRoomUpdateOne {
-	if t != nil {
-		cruo.SetUpdatedAt(*t)
-	}
-	return cruo
-}
-
-// SetReadAt sets the "readAt" field.
+// SetReadAt sets the "read_at" field.
 func (cruo *ChatRoomUpdateOne) SetReadAt(t time.Time) *ChatRoomUpdateOne {
 	cruo.mutation.SetReadAt(t)
 	return cruo
 }
 
-// SetNillableReadAt sets the "readAt" field if the given value is not nil.
+// SetNillableReadAt sets the "read_at" field if the given value is not nil.
 func (cruo *ChatRoomUpdateOne) SetNillableReadAt(t *time.Time) *ChatRoomUpdateOne {
 	if t != nil {
 		cruo.SetReadAt(*t)
@@ -431,14 +371,14 @@ func (cruo *ChatRoomUpdateOne) SetNillableReadAt(t *time.Time) *ChatRoomUpdateOn
 }
 
 // AddParticipantIDs adds the "participants" edge to the User entity by IDs.
-func (cruo *ChatRoomUpdateOne) AddParticipantIDs(ids ...int) *ChatRoomUpdateOne {
+func (cruo *ChatRoomUpdateOne) AddParticipantIDs(ids ...string) *ChatRoomUpdateOne {
 	cruo.mutation.AddParticipantIDs(ids...)
 	return cruo
 }
 
 // AddParticipants adds the "participants" edges to the User entity.
 func (cruo *ChatRoomUpdateOne) AddParticipants(u ...*User) *ChatRoomUpdateOne {
-	ids := make([]int, len(u))
+	ids := make([]string, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -446,14 +386,14 @@ func (cruo *ChatRoomUpdateOne) AddParticipants(u ...*User) *ChatRoomUpdateOne {
 }
 
 // AddMessageIDs adds the "messages" edge to the ChatMessage entity by IDs.
-func (cruo *ChatRoomUpdateOne) AddMessageIDs(ids ...int) *ChatRoomUpdateOne {
+func (cruo *ChatRoomUpdateOne) AddMessageIDs(ids ...uuid.UUID) *ChatRoomUpdateOne {
 	cruo.mutation.AddMessageIDs(ids...)
 	return cruo
 }
 
 // AddMessages adds the "messages" edges to the ChatMessage entity.
 func (cruo *ChatRoomUpdateOne) AddMessages(c ...*ChatMessage) *ChatRoomUpdateOne {
-	ids := make([]int, len(c))
+	ids := make([]uuid.UUID, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
@@ -472,14 +412,14 @@ func (cruo *ChatRoomUpdateOne) ClearParticipants() *ChatRoomUpdateOne {
 }
 
 // RemoveParticipantIDs removes the "participants" edge to User entities by IDs.
-func (cruo *ChatRoomUpdateOne) RemoveParticipantIDs(ids ...int) *ChatRoomUpdateOne {
+func (cruo *ChatRoomUpdateOne) RemoveParticipantIDs(ids ...string) *ChatRoomUpdateOne {
 	cruo.mutation.RemoveParticipantIDs(ids...)
 	return cruo
 }
 
 // RemoveParticipants removes "participants" edges to User entities.
 func (cruo *ChatRoomUpdateOne) RemoveParticipants(u ...*User) *ChatRoomUpdateOne {
-	ids := make([]int, len(u))
+	ids := make([]string, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -493,14 +433,14 @@ func (cruo *ChatRoomUpdateOne) ClearMessages() *ChatRoomUpdateOne {
 }
 
 // RemoveMessageIDs removes the "messages" edge to ChatMessage entities by IDs.
-func (cruo *ChatRoomUpdateOne) RemoveMessageIDs(ids ...int) *ChatRoomUpdateOne {
+func (cruo *ChatRoomUpdateOne) RemoveMessageIDs(ids ...uuid.UUID) *ChatRoomUpdateOne {
 	cruo.mutation.RemoveMessageIDs(ids...)
 	return cruo
 }
 
 // RemoveMessages removes "messages" edges to ChatMessage entities.
 func (cruo *ChatRoomUpdateOne) RemoveMessages(c ...*ChatMessage) *ChatRoomUpdateOne {
-	ids := make([]int, len(c))
+	ids := make([]uuid.UUID, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
@@ -520,6 +460,7 @@ func (cruo *ChatRoomUpdateOne) Save(ctx context.Context) (*ChatRoom, error) {
 		err  error
 		node *ChatRoom
 	)
+	cruo.defaults()
 	if len(cruo.hooks) == 0 {
 		node, err = cruo.sqlSave(ctx)
 	} else {
@@ -568,13 +509,21 @@ func (cruo *ChatRoomUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (cruo *ChatRoomUpdateOne) defaults() {
+	if _, ok := cruo.mutation.UpdatedAt(); !ok {
+		v := chatroom.UpdateDefaultUpdatedAt()
+		cruo.mutation.SetUpdatedAt(v)
+	}
+}
+
 func (cruo *ChatRoomUpdateOne) sqlSave(ctx context.Context) (_node *ChatRoom, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   chatroom.Table,
 			Columns: chatroom.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeUUID,
 				Column: chatroom.FieldID,
 			},
 		},
@@ -603,20 +552,6 @@ func (cruo *ChatRoomUpdateOne) sqlSave(ctx context.Context) (_node *ChatRoom, er
 			}
 		}
 	}
-	if value, ok := cruo.mutation.UID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: chatroom.FieldUID,
-		})
-	}
-	if value, ok := cruo.mutation.CreatedAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: chatroom.FieldCreatedAt,
-		})
-	}
 	if value, ok := cruo.mutation.UpdatedAt(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
@@ -640,7 +575,7 @@ func (cruo *ChatRoomUpdateOne) sqlSave(ctx context.Context) (_node *ChatRoom, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -656,7 +591,7 @@ func (cruo *ChatRoomUpdateOne) sqlSave(ctx context.Context) (_node *ChatRoom, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -675,7 +610,7 @@ func (cruo *ChatRoomUpdateOne) sqlSave(ctx context.Context) (_node *ChatRoom, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -694,7 +629,7 @@ func (cruo *ChatRoomUpdateOne) sqlSave(ctx context.Context) (_node *ChatRoom, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUUID,
 					Column: chatmessage.FieldID,
 				},
 			},
@@ -710,7 +645,7 @@ func (cruo *ChatRoomUpdateOne) sqlSave(ctx context.Context) (_node *ChatRoom, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUUID,
 					Column: chatmessage.FieldID,
 				},
 			},
@@ -729,7 +664,7 @@ func (cruo *ChatRoomUpdateOne) sqlSave(ctx context.Context) (_node *ChatRoom, er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUUID,
 					Column: chatmessage.FieldID,
 				},
 			},

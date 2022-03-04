@@ -10,11 +10,13 @@ const (
 	// Label holds the string label denoting the user type in the database.
 	Label = "user"
 	// FieldID holds the string denoting the id field in the database.
-	FieldID = "id"
-	// FieldUID holds the string denoting the uid field in the database.
-	FieldUID = "uid"
+	FieldID = "uid"
+	// FieldActualName holds the string denoting the actual_name field in the database.
+	FieldActualName = "actual_name"
 	// FieldUsername holds the string denoting the username field in the database.
 	FieldUsername = "username"
+	// FieldGender holds the string denoting the gender field in the database.
+	FieldGender = "gender"
 	// FieldPassword holds the string denoting the password field in the database.
 	FieldPassword = "password"
 	// FieldUni holds the string denoting the uni field in the database.
@@ -23,20 +25,26 @@ const (
 	FieldDep = "dep"
 	// FieldBio holds the string denoting the bio field in the database.
 	FieldBio = "bio"
-	// FieldGroupID holds the string denoting the group_id field in the database.
-	FieldGroupID = "group_id"
-	// FieldCreatedAt holds the string denoting the createdat field in the database.
+	// FieldBirthYear holds the string denoting the birth_year field in the database.
+	FieldBirthYear = "birth_year"
+	// FieldIsVerified holds the string denoting the is_verified field in the database.
+	FieldIsVerified = "is_verified"
+	// FieldMaxGroup holds the string denoting the max_group field in the database.
+	FieldMaxGroup = "max_group"
+	// FieldAvatar holds the string denoting the avatar field in the database.
+	FieldAvatar = "avatar"
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
-	// FieldUpdatedAt holds the string denoting the updatedat field in the database.
+	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
-	// FieldReadAt holds the string denoting the readat field in the database.
+	// FieldReadAt holds the string denoting the read_at field in the database.
 	FieldReadAt = "read_at"
 	// EdgeFriends holds the string denoting the friends edge name in mutations.
 	EdgeFriends = "friends"
 	// EdgeRequests holds the string denoting the requests edge name in mutations.
 	EdgeRequests = "requests"
-	// EdgeFriendsReq holds the string denoting the friendsreq edge name in mutations.
-	EdgeFriendsReq = "friendsReq"
+	// EdgeFriendsReq holds the string denoting the friends_req edge name in mutations.
+	EdgeFriendsReq = "friends_req"
 	// EdgeLikeTo holds the string denoting the like_to edge name in mutations.
 	EdgeLikeTo = "like_to"
 	// EdgeSave holds the string denoting the save edge name in mutations.
@@ -54,9 +62,9 @@ const (
 	// FriendsTable is the table that holds the friends relation/edge. The primary key declared below.
 	FriendsTable = "user_friends"
 	// RequestsTable is the table that holds the requests relation/edge. The primary key declared below.
-	RequestsTable = "user_friendsReq"
-	// FriendsReqTable is the table that holds the friendsReq relation/edge. The primary key declared below.
-	FriendsReqTable = "user_friendsReq"
+	RequestsTable = "user_friends_req"
+	// FriendsReqTable is the table that holds the friends_req relation/edge. The primary key declared below.
+	FriendsReqTable = "user_friends_req"
 	// LikeToTable is the table that holds the like_to relation/edge. The primary key declared below.
 	LikeToTable = "user_like_to"
 	// LikeToInverseTable is the table name for the Group entity.
@@ -67,13 +75,11 @@ const (
 	// SaveInverseTable is the table name for the Group entity.
 	// It exists in this package in order to avoid circular dependency with the "group" package.
 	SaveInverseTable = "groups"
-	// GroupTable is the table that holds the group relation/edge.
-	GroupTable = "users"
+	// GroupTable is the table that holds the group relation/edge. The primary key declared below.
+	GroupTable = "group_members"
 	// GroupInverseTable is the table name for the Group entity.
 	// It exists in this package in order to avoid circular dependency with the "group" package.
 	GroupInverseTable = "groups"
-	// GroupColumn is the table column denoting the group relation/edge.
-	GroupColumn = "group_id"
 	// ChatroomTable is the table that holds the chatroom relation/edge. The primary key declared below.
 	ChatroomTable = "chat_room_participants"
 	// ChatroomInverseTable is the table name for the ChatRoom entity.
@@ -98,13 +104,17 @@ const (
 // Columns holds all SQL columns for user fields.
 var Columns = []string{
 	FieldID,
-	FieldUID,
+	FieldActualName,
 	FieldUsername,
+	FieldGender,
 	FieldPassword,
 	FieldUni,
 	FieldDep,
 	FieldBio,
-	FieldGroupID,
+	FieldBirthYear,
+	FieldIsVerified,
+	FieldMaxGroup,
+	FieldAvatar,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldReadAt,
@@ -118,7 +128,7 @@ var (
 	// primary key for the requests relation (M2M).
 	RequestsPrimaryKey = []string{"user_id", "request_id"}
 	// FriendsReqPrimaryKey and FriendsReqColumn2 are the table columns denoting the
-	// primary key for the friendsReq relation (M2M).
+	// primary key for the friends_req relation (M2M).
 	FriendsReqPrimaryKey = []string{"user_id", "request_id"}
 	// LikeToPrimaryKey and LikeToColumn2 are the table columns denoting the
 	// primary key for the like_to relation (M2M).
@@ -126,6 +136,9 @@ var (
 	// SavePrimaryKey and SaveColumn2 are the table columns denoting the
 	// primary key for the save relation (M2M).
 	SavePrimaryKey = []string{"user_id", "group_id"}
+	// GroupPrimaryKey and GroupColumn2 are the table columns denoting the
+	// primary key for the group relation (M2M).
+	GroupPrimaryKey = []string{"group_id", "user_id"}
 	// ChatroomPrimaryKey and ChatroomColumn2 are the table columns denoting the
 	// primary key for the chatroom relation (M2M).
 	ChatroomPrimaryKey = []string{"chat_room_id", "user_id"}
@@ -142,16 +155,26 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// ActualNameValidator is a validator for the "actual_name" field. It is called by the builders before save.
+	ActualNameValidator func(string) error
 	// UsernameValidator is a validator for the "username" field. It is called by the builders before save.
 	UsernameValidator func(string) error
 	// UniValidator is a validator for the "uni" field. It is called by the builders before save.
 	UniValidator func(string) error
 	// DepValidator is a validator for the "dep" field. It is called by the builders before save.
 	DepValidator func(string) error
-	// DefaultCreatedAt holds the default value on creation for the "createdAt" field.
+	// BirthYearValidator is a validator for the "birth_year" field. It is called by the builders before save.
+	BirthYearValidator func(int) error
+	// DefaultIsVerified holds the default value on creation for the "is_verified" field.
+	DefaultIsVerified bool
+	// DefaultMaxGroup holds the default value on creation for the "max_group" field.
+	DefaultMaxGroup int
+	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
-	// DefaultUpdatedAt holds the default value on creation for the "updatedAt" field.
+	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
 	DefaultUpdatedAt func() time.Time
-	// DefaultReadAt holds the default value on creation for the "readAt" field.
+	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
+	UpdateDefaultUpdatedAt func() time.Time
+	// DefaultReadAt holds the default value on creation for the "read_at" field.
 	DefaultReadAt func() time.Time
 )

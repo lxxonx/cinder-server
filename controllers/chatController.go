@@ -9,7 +9,7 @@ import (
 
 func GetChats(c *fiber.Ctx) error {
 
-	userId := c.Locals("userId").(int)
+	userId := c.Locals("userId").(string)
 
 	input := new(dto.GetChatsInput)
 	if err := c.BodyParser(input); err != nil {

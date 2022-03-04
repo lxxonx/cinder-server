@@ -19,6 +19,7 @@ func main() {
 	}
 
 	config.DBConnect()
+	config.SetupFirebase()
 
 	defer config.DB.Close()
 

@@ -7,6 +7,7 @@ import (
 	"image"
 	"image/jpeg"
 	"image/png"
+	"os"
 	"strings"
 
 	"io"
@@ -40,9 +41,12 @@ func SignUpUser(c *fiber.Ctx) error {
 	}
 
 	_, err = config.DB.User. // UserClient.
-					Create().          // User create builder.
-					SetUID(input.Uid). // Set uid.
+					Create().         // User create builder.
+					SetID(input.Uid). // Set uid.
 					SetUsername(input.Username).
+					SetActualName(input.ActualName).
+					SetBirthYear(input.BirthYear).
+					SetGender(input.Gender).
 					SetPassword(password).
 					SetBio("").
 					SetUni(input.Uni).
@@ -91,7 +95,7 @@ func GetCurrentUser(c *fiber.Ctx) error {
 		})
 	}
 
-	me := config.DB.User.Query().Where(user.IDEQ(userId.(int))).OnlyX(c.Context())
+	me := config.DB.User.Query().Where(user.IDEQ(userId.(string))).OnlyX(c.Context())
 
 	return c.Status(200).JSON(fiber.Map{
 		"ok": true,
@@ -102,18 +106,34 @@ func GetCurrentUser(c *fiber.Ctx) error {
 }
 func GetAllUsers(c *fiber.Ctx) error {
 
-	users := config.DB.User.Query().AllX(c.Context())
+	u, err := config.DB.User.Query().
+		Select(
+			user.FieldUsername,
+			user.FieldID,
+			user.FieldBio,
+			user.FieldUni,
+			user.FieldDep,
+		).
+		WithPics().All(c.Context())
+
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"ok":      false,
+			"message": err.Error(),
+		})
+	}
 
 	return c.Status(200).JSON(fiber.Map{
 		"ok": true,
 		"data": fiber.Map{
-			"users": users,
+			"users": u,
 		},
 	})
 }
 
 func UploadProfile(c *fiber.Ctx) error {
-	firebaseApp := c.Locals("firebase").(*firebase.App)
+	userId := c.Locals("userId").(string)
+	firebaseApp := config.FBA
 
 	handler, err := c.FormFile("photo")
 	if err != nil {
@@ -179,12 +199,23 @@ func UploadProfile(c *fiber.Ctx) error {
 				"message": "Can't get file",
 			})
 		}
-
 	}
+	storage_address := os.Getenv("FIREBASE_BUCKET_ADDRESS")
+	url := fmt.Sprintf("https://storage.cloud.google.com/%s/%s", storage_address, userId+"/p0")
 
+	_, err = config.DB.Pic.Create().SetUserID(userId).SetURL(url).SetID(id).Save(c.Context())
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"ok":      false,
+			"message": "can't save pic",
+		})
+	}
 	return c.JSON(fiber.Map{
 		"ok":      true,
 		"message": "File uploaded successfully",
+		"data": fiber.Map{
+			"url": url,
+		},
 	})
 
 }

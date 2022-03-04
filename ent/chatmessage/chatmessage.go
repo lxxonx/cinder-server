@@ -4,24 +4,26 @@ package chatmessage
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const (
 	// Label holds the string label denoting the chatmessage type in the database.
 	Label = "chat_message"
 	// FieldID holds the string denoting the id field in the database.
-	FieldID = "id"
-	// FieldUID holds the string denoting the uid field in the database.
-	FieldUID = "uid"
+	FieldID = "uid"
 	// FieldMessage holds the string denoting the message field in the database.
 	FieldMessage = "message"
 	// FieldRoomID holds the string denoting the room_id field in the database.
 	FieldRoomID = "room_id"
 	// FieldUserID holds the string denoting the user_id field in the database.
 	FieldUserID = "user_id"
-	// FieldCreatedAt holds the string denoting the createdat field in the database.
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
-	// FieldReadAt holds the string denoting the readat field in the database.
+	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
+	FieldUpdatedAt = "updated_at"
+	// FieldReadAt holds the string denoting the read_at field in the database.
 	FieldReadAt = "read_at"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
@@ -48,11 +50,11 @@ const (
 // Columns holds all SQL columns for chatmessage fields.
 var Columns = []string{
 	FieldID,
-	FieldUID,
 	FieldMessage,
 	FieldRoomID,
 	FieldUserID,
 	FieldCreatedAt,
+	FieldUpdatedAt,
 	FieldReadAt,
 }
 
@@ -69,8 +71,14 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultMessage holds the default value on creation for the "message" field.
 	DefaultMessage string
-	// DefaultCreatedAt holds the default value on creation for the "createdAt" field.
+	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
-	// DefaultReadAt holds the default value on creation for the "readAt" field.
+	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
+	DefaultUpdatedAt func() time.Time
+	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
+	UpdateDefaultUpdatedAt func() time.Time
+	// DefaultReadAt holds the default value on creation for the "read_at" field.
 	DefaultReadAt func() time.Time
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() uuid.UUID
 )

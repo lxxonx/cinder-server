@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"github.com/google/uuid"
 	"github.com/lxxonx/cinder-server/ent/group"
 	"github.com/lxxonx/cinder-server/ent/pic"
 	"github.com/lxxonx/cinder-server/ent/user"
@@ -17,21 +18,19 @@ import (
 type Pic struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
-	// UID holds the value of the "uid" field.
-	UID string `json:"uid,omitempty"`
+	ID uuid.UUID `json:"id,omitempty"`
 	// UserID holds the value of the "user_id" field.
-	UserID int `json:"user_id,omitempty"`
+	UserID string `json:"user_id,omitempty"`
 	// GroupID holds the value of the "group_id" field.
-	GroupID int `json:"group_id,omitempty"`
+	GroupID uuid.UUID `json:"group_id,omitempty"`
 	// URL holds the value of the "url" field.
 	URL string `json:"url,omitempty"`
-	// CreatedAt holds the value of the "createdAt" field.
-	CreatedAt time.Time `json:"createdAt,omitempty"`
-	// UpdatedAt holds the value of the "updatedAt" field.
-	UpdatedAt time.Time `json:"updatedAt,omitempty"`
-	// ReadAt holds the value of the "readAt" field.
-	ReadAt time.Time `json:"readAt,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// ReadAt holds the value of the "read_at" field.
+	ReadAt time.Time `json:"read_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the PicQuery when eager-loading is set.
 	Edges PicEdges `json:"edges"`
@@ -81,12 +80,12 @@ func (*Pic) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case pic.FieldID, pic.FieldUserID, pic.FieldGroupID:
-			values[i] = new(sql.NullInt64)
-		case pic.FieldUID, pic.FieldURL:
+		case pic.FieldUserID, pic.FieldURL:
 			values[i] = new(sql.NullString)
 		case pic.FieldCreatedAt, pic.FieldUpdatedAt, pic.FieldReadAt:
 			values[i] = new(sql.NullTime)
+		case pic.FieldID, pic.FieldGroupID:
+			values[i] = new(uuid.UUID)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Pic", columns[i])
 		}
@@ -103,28 +102,22 @@ func (pi *Pic) assignValues(columns []string, values []interface{}) error {
 	for i := range columns {
 		switch columns[i] {
 		case pic.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
-			}
-			pi.ID = int(value.Int64)
-		case pic.FieldUID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field uid", values[i])
-			} else if value.Valid {
-				pi.UID = value.String
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value != nil {
+				pi.ID = *value
 			}
 		case pic.FieldUserID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
+			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field user_id", values[i])
 			} else if value.Valid {
-				pi.UserID = int(value.Int64)
+				pi.UserID = value.String
 			}
 		case pic.FieldGroupID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
+			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field group_id", values[i])
-			} else if value.Valid {
-				pi.GroupID = int(value.Int64)
+			} else if value != nil {
+				pi.GroupID = *value
 			}
 		case pic.FieldURL:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -134,19 +127,19 @@ func (pi *Pic) assignValues(columns []string, values []interface{}) error {
 			}
 		case pic.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field createdAt", values[i])
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				pi.CreatedAt = value.Time
 			}
 		case pic.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field updatedAt", values[i])
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				pi.UpdatedAt = value.Time
 			}
 		case pic.FieldReadAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field readAt", values[i])
+				return fmt.Errorf("unexpected type %T for field read_at", values[i])
 			} else if value.Valid {
 				pi.ReadAt = value.Time
 			}
@@ -188,19 +181,17 @@ func (pi *Pic) String() string {
 	var builder strings.Builder
 	builder.WriteString("Pic(")
 	builder.WriteString(fmt.Sprintf("id=%v", pi.ID))
-	builder.WriteString(", uid=")
-	builder.WriteString(pi.UID)
 	builder.WriteString(", user_id=")
-	builder.WriteString(fmt.Sprintf("%v", pi.UserID))
+	builder.WriteString(pi.UserID)
 	builder.WriteString(", group_id=")
 	builder.WriteString(fmt.Sprintf("%v", pi.GroupID))
 	builder.WriteString(", url=")
 	builder.WriteString(pi.URL)
-	builder.WriteString(", createdAt=")
+	builder.WriteString(", created_at=")
 	builder.WriteString(pi.CreatedAt.Format(time.ANSIC))
-	builder.WriteString(", updatedAt=")
+	builder.WriteString(", updated_at=")
 	builder.WriteString(pi.UpdatedAt.Format(time.ANSIC))
-	builder.WriteString(", readAt=")
+	builder.WriteString(", read_at=")
 	builder.WriteString(pi.ReadAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()

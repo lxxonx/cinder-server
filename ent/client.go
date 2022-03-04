@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/google/uuid"
 	"github.com/lxxonx/cinder-server/ent/migrate"
 
 	"github.com/lxxonx/cinder-server/ent/chatmessage"
@@ -191,7 +192,7 @@ func (c *ChatMessageClient) UpdateOne(cm *ChatMessage) *ChatMessageUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *ChatMessageClient) UpdateOneID(id int) *ChatMessageUpdateOne {
+func (c *ChatMessageClient) UpdateOneID(id uuid.UUID) *ChatMessageUpdateOne {
 	mutation := newChatMessageMutation(c.config, OpUpdateOne, withChatMessageID(id))
 	return &ChatMessageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -208,7 +209,7 @@ func (c *ChatMessageClient) DeleteOne(cm *ChatMessage) *ChatMessageDeleteOne {
 }
 
 // DeleteOneID returns a delete builder for the given id.
-func (c *ChatMessageClient) DeleteOneID(id int) *ChatMessageDeleteOne {
+func (c *ChatMessageClient) DeleteOneID(id uuid.UUID) *ChatMessageDeleteOne {
 	builder := c.Delete().Where(chatmessage.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -223,12 +224,12 @@ func (c *ChatMessageClient) Query() *ChatMessageQuery {
 }
 
 // Get returns a ChatMessage entity by its id.
-func (c *ChatMessageClient) Get(ctx context.Context, id int) (*ChatMessage, error) {
+func (c *ChatMessageClient) Get(ctx context.Context, id uuid.UUID) (*ChatMessage, error) {
 	return c.Query().Where(chatmessage.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *ChatMessageClient) GetX(ctx context.Context, id int) *ChatMessage {
+func (c *ChatMessageClient) GetX(ctx context.Context, id uuid.UUID) *ChatMessage {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -313,7 +314,7 @@ func (c *ChatRoomClient) UpdateOne(cr *ChatRoom) *ChatRoomUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *ChatRoomClient) UpdateOneID(id int) *ChatRoomUpdateOne {
+func (c *ChatRoomClient) UpdateOneID(id uuid.UUID) *ChatRoomUpdateOne {
 	mutation := newChatRoomMutation(c.config, OpUpdateOne, withChatRoomID(id))
 	return &ChatRoomUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -330,7 +331,7 @@ func (c *ChatRoomClient) DeleteOne(cr *ChatRoom) *ChatRoomDeleteOne {
 }
 
 // DeleteOneID returns a delete builder for the given id.
-func (c *ChatRoomClient) DeleteOneID(id int) *ChatRoomDeleteOne {
+func (c *ChatRoomClient) DeleteOneID(id uuid.UUID) *ChatRoomDeleteOne {
 	builder := c.Delete().Where(chatroom.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -345,12 +346,12 @@ func (c *ChatRoomClient) Query() *ChatRoomQuery {
 }
 
 // Get returns a ChatRoom entity by its id.
-func (c *ChatRoomClient) Get(ctx context.Context, id int) (*ChatRoom, error) {
+func (c *ChatRoomClient) Get(ctx context.Context, id uuid.UUID) (*ChatRoom, error) {
 	return c.Query().Where(chatroom.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *ChatRoomClient) GetX(ctx context.Context, id int) *ChatRoom {
+func (c *ChatRoomClient) GetX(ctx context.Context, id uuid.UUID) *ChatRoom {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -435,7 +436,7 @@ func (c *GroupClient) UpdateOne(gr *Group) *GroupUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *GroupClient) UpdateOneID(id int) *GroupUpdateOne {
+func (c *GroupClient) UpdateOneID(id uuid.UUID) *GroupUpdateOne {
 	mutation := newGroupMutation(c.config, OpUpdateOne, withGroupID(id))
 	return &GroupUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -452,7 +453,7 @@ func (c *GroupClient) DeleteOne(gr *Group) *GroupDeleteOne {
 }
 
 // DeleteOneID returns a delete builder for the given id.
-func (c *GroupClient) DeleteOneID(id int) *GroupDeleteOne {
+func (c *GroupClient) DeleteOneID(id uuid.UUID) *GroupDeleteOne {
 	builder := c.Delete().Where(group.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -467,12 +468,12 @@ func (c *GroupClient) Query() *GroupQuery {
 }
 
 // Get returns a Group entity by its id.
-func (c *GroupClient) Get(ctx context.Context, id int) (*Group, error) {
+func (c *GroupClient) Get(ctx context.Context, id uuid.UUID) (*Group, error) {
 	return c.Query().Where(group.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *GroupClient) GetX(ctx context.Context, id int) *Group {
+func (c *GroupClient) GetX(ctx context.Context, id uuid.UUID) *Group {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -488,7 +489,7 @@ func (c *GroupClient) QueryMembers(gr *Group) *UserQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(group.Table, group.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, group.MembersTable, group.MembersColumn),
+			sqlgraph.Edge(sqlgraph.M2M, false, group.MembersTable, group.MembersPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(gr.driver.Dialect(), step)
 		return fromV, nil
@@ -621,7 +622,7 @@ func (c *PicClient) UpdateOne(pi *Pic) *PicUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *PicClient) UpdateOneID(id int) *PicUpdateOne {
+func (c *PicClient) UpdateOneID(id uuid.UUID) *PicUpdateOne {
 	mutation := newPicMutation(c.config, OpUpdateOne, withPicID(id))
 	return &PicUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -638,7 +639,7 @@ func (c *PicClient) DeleteOne(pi *Pic) *PicDeleteOne {
 }
 
 // DeleteOneID returns a delete builder for the given id.
-func (c *PicClient) DeleteOneID(id int) *PicDeleteOne {
+func (c *PicClient) DeleteOneID(id uuid.UUID) *PicDeleteOne {
 	builder := c.Delete().Where(pic.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -653,12 +654,12 @@ func (c *PicClient) Query() *PicQuery {
 }
 
 // Get returns a Pic entity by its id.
-func (c *PicClient) Get(ctx context.Context, id int) (*Pic, error) {
+func (c *PicClient) Get(ctx context.Context, id uuid.UUID) (*Pic, error) {
 	return c.Query().Where(pic.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *PicClient) GetX(ctx context.Context, id int) *Pic {
+func (c *PicClient) GetX(ctx context.Context, id uuid.UUID) *Pic {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -743,7 +744,7 @@ func (c *UserClient) UpdateOne(u *User) *UserUpdateOne {
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *UserClient) UpdateOneID(id int) *UserUpdateOne {
+func (c *UserClient) UpdateOneID(id string) *UserUpdateOne {
 	mutation := newUserMutation(c.config, OpUpdateOne, withUserID(id))
 	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -760,7 +761,7 @@ func (c *UserClient) DeleteOne(u *User) *UserDeleteOne {
 }
 
 // DeleteOneID returns a delete builder for the given id.
-func (c *UserClient) DeleteOneID(id int) *UserDeleteOne {
+func (c *UserClient) DeleteOneID(id string) *UserDeleteOne {
 	builder := c.Delete().Where(user.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -775,12 +776,12 @@ func (c *UserClient) Query() *UserQuery {
 }
 
 // Get returns a User entity by its id.
-func (c *UserClient) Get(ctx context.Context, id int) (*User, error) {
+func (c *UserClient) Get(ctx context.Context, id string) (*User, error) {
 	return c.Query().Where(user.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *UserClient) GetX(ctx context.Context, id int) *User {
+func (c *UserClient) GetX(ctx context.Context, id string) *User {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -820,7 +821,7 @@ func (c *UserClient) QueryRequests(u *User) *UserQuery {
 	return query
 }
 
-// QueryFriendsReq queries the friendsReq edge of a User.
+// QueryFriendsReq queries the friends_req edge of a User.
 func (c *UserClient) QueryFriendsReq(u *User) *UserQuery {
 	query := &UserQuery{config: c.config}
 	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
@@ -876,7 +877,7 @@ func (c *UserClient) QueryGroup(u *User) *GroupQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(group.Table, group.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, user.GroupTable, user.GroupColumn),
+			sqlgraph.Edge(sqlgraph.M2M, true, user.GroupTable, user.GroupPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
 		return fromV, nil

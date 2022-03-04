@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/lxxonx/cinder-server/ent/chatmessage"
 	"github.com/lxxonx/cinder-server/ent/chatroom"
 	"github.com/lxxonx/cinder-server/ent/user"
@@ -22,19 +23,13 @@ type ChatRoomCreate struct {
 	hooks    []Hook
 }
 
-// SetUID sets the "uid" field.
-func (crc *ChatRoomCreate) SetUID(s string) *ChatRoomCreate {
-	crc.mutation.SetUID(s)
-	return crc
-}
-
-// SetCreatedAt sets the "createdAt" field.
+// SetCreatedAt sets the "created_at" field.
 func (crc *ChatRoomCreate) SetCreatedAt(t time.Time) *ChatRoomCreate {
 	crc.mutation.SetCreatedAt(t)
 	return crc
 }
 
-// SetNillableCreatedAt sets the "createdAt" field if the given value is not nil.
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
 func (crc *ChatRoomCreate) SetNillableCreatedAt(t *time.Time) *ChatRoomCreate {
 	if t != nil {
 		crc.SetCreatedAt(*t)
@@ -42,13 +37,13 @@ func (crc *ChatRoomCreate) SetNillableCreatedAt(t *time.Time) *ChatRoomCreate {
 	return crc
 }
 
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (crc *ChatRoomCreate) SetUpdatedAt(t time.Time) *ChatRoomCreate {
 	crc.mutation.SetUpdatedAt(t)
 	return crc
 }
 
-// SetNillableUpdatedAt sets the "updatedAt" field if the given value is not nil.
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
 func (crc *ChatRoomCreate) SetNillableUpdatedAt(t *time.Time) *ChatRoomCreate {
 	if t != nil {
 		crc.SetUpdatedAt(*t)
@@ -56,13 +51,13 @@ func (crc *ChatRoomCreate) SetNillableUpdatedAt(t *time.Time) *ChatRoomCreate {
 	return crc
 }
 
-// SetReadAt sets the "readAt" field.
+// SetReadAt sets the "read_at" field.
 func (crc *ChatRoomCreate) SetReadAt(t time.Time) *ChatRoomCreate {
 	crc.mutation.SetReadAt(t)
 	return crc
 }
 
-// SetNillableReadAt sets the "readAt" field if the given value is not nil.
+// SetNillableReadAt sets the "read_at" field if the given value is not nil.
 func (crc *ChatRoomCreate) SetNillableReadAt(t *time.Time) *ChatRoomCreate {
 	if t != nil {
 		crc.SetReadAt(*t)
@@ -70,15 +65,29 @@ func (crc *ChatRoomCreate) SetNillableReadAt(t *time.Time) *ChatRoomCreate {
 	return crc
 }
 
+// SetID sets the "id" field.
+func (crc *ChatRoomCreate) SetID(u uuid.UUID) *ChatRoomCreate {
+	crc.mutation.SetID(u)
+	return crc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (crc *ChatRoomCreate) SetNillableID(u *uuid.UUID) *ChatRoomCreate {
+	if u != nil {
+		crc.SetID(*u)
+	}
+	return crc
+}
+
 // AddParticipantIDs adds the "participants" edge to the User entity by IDs.
-func (crc *ChatRoomCreate) AddParticipantIDs(ids ...int) *ChatRoomCreate {
+func (crc *ChatRoomCreate) AddParticipantIDs(ids ...string) *ChatRoomCreate {
 	crc.mutation.AddParticipantIDs(ids...)
 	return crc
 }
 
 // AddParticipants adds the "participants" edges to the User entity.
 func (crc *ChatRoomCreate) AddParticipants(u ...*User) *ChatRoomCreate {
-	ids := make([]int, len(u))
+	ids := make([]string, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -86,14 +95,14 @@ func (crc *ChatRoomCreate) AddParticipants(u ...*User) *ChatRoomCreate {
 }
 
 // AddMessageIDs adds the "messages" edge to the ChatMessage entity by IDs.
-func (crc *ChatRoomCreate) AddMessageIDs(ids ...int) *ChatRoomCreate {
+func (crc *ChatRoomCreate) AddMessageIDs(ids ...uuid.UUID) *ChatRoomCreate {
 	crc.mutation.AddMessageIDs(ids...)
 	return crc
 }
 
 // AddMessages adds the "messages" edges to the ChatMessage entity.
 func (crc *ChatRoomCreate) AddMessages(c ...*ChatMessage) *ChatRoomCreate {
-	ids := make([]int, len(c))
+	ids := make([]uuid.UUID, len(c))
 	for i := range c {
 		ids[i] = c[i].ID
 	}
@@ -183,21 +192,22 @@ func (crc *ChatRoomCreate) defaults() {
 		v := chatroom.DefaultReadAt()
 		crc.mutation.SetReadAt(v)
 	}
+	if _, ok := crc.mutation.ID(); !ok {
+		v := chatroom.DefaultID()
+		crc.mutation.SetID(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (crc *ChatRoomCreate) check() error {
-	if _, ok := crc.mutation.UID(); !ok {
-		return &ValidationError{Name: "uid", err: errors.New(`ent: missing required field "ChatRoom.uid"`)}
-	}
 	if _, ok := crc.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "createdAt", err: errors.New(`ent: missing required field "ChatRoom.createdAt"`)}
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "ChatRoom.created_at"`)}
 	}
 	if _, ok := crc.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updatedAt", err: errors.New(`ent: missing required field "ChatRoom.updatedAt"`)}
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "ChatRoom.updated_at"`)}
 	}
 	if _, ok := crc.mutation.ReadAt(); !ok {
-		return &ValidationError{Name: "readAt", err: errors.New(`ent: missing required field "ChatRoom.readAt"`)}
+		return &ValidationError{Name: "read_at", err: errors.New(`ent: missing required field "ChatRoom.read_at"`)}
 	}
 	return nil
 }
@@ -210,8 +220,13 @@ func (crc *ChatRoomCreate) sqlSave(ctx context.Context) (*ChatRoom, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*uuid.UUID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	return _node, nil
 }
 
@@ -221,18 +236,14 @@ func (crc *ChatRoomCreate) createSpec() (*ChatRoom, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: chatroom.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeUUID,
 				Column: chatroom.FieldID,
 			},
 		}
 	)
-	if value, ok := crc.mutation.UID(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: chatroom.FieldUID,
-		})
-		_node.UID = value
+	if id, ok := crc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
 	}
 	if value, ok := crc.mutation.CreatedAt(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
@@ -267,7 +278,7 @@ func (crc *ChatRoomCreate) createSpec() (*ChatRoom, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -286,7 +297,7 @@ func (crc *ChatRoomCreate) createSpec() (*ChatRoom, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUUID,
 					Column: chatmessage.FieldID,
 				},
 			},
@@ -341,10 +352,6 @@ func (crcb *ChatRoomCreateBulk) Save(ctx context.Context) ([]*ChatRoom, error) {
 				}
 				mutation.id = &nodes[i].ID
 				mutation.done = true
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				return nodes[i], nil
 			})
 			for i := len(builder.hooks) - 1; i >= 0; i-- {

@@ -72,7 +72,7 @@ func (crd *ChatRoomDelete) sqlExec(ctx context.Context) (int, error) {
 		Node: &sqlgraph.NodeSpec{
 			Table: chatroom.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeUUID,
 				Column: chatroom.FieldID,
 			},
 		},

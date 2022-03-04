@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/lxxonx/cinder-server/ent/group"
 	"github.com/lxxonx/cinder-server/ent/pic"
 	"github.com/lxxonx/cinder-server/ent/predicate"
@@ -133,8 +134,8 @@ func (pq *PicQuery) FirstX(ctx context.Context) *Pic {
 
 // FirstID returns the first Pic ID from the query.
 // Returns a *NotFoundError when no Pic ID was found.
-func (pq *PicQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (pq *PicQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+	var ids []uuid.UUID
 	if ids, err = pq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
@@ -146,7 +147,7 @@ func (pq *PicQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (pq *PicQuery) FirstIDX(ctx context.Context) int {
+func (pq *PicQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := pq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -184,8 +185,8 @@ func (pq *PicQuery) OnlyX(ctx context.Context) *Pic {
 // OnlyID is like Only, but returns the only Pic ID in the query.
 // Returns a *NotSingularError when exactly one Pic ID is not found.
 // Returns a *NotFoundError when no entities are found.
-func (pq *PicQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (pq *PicQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+	var ids []uuid.UUID
 	if ids, err = pq.Limit(2).IDs(ctx); err != nil {
 		return
 	}
@@ -201,7 +202,7 @@ func (pq *PicQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (pq *PicQuery) OnlyIDX(ctx context.Context) int {
+func (pq *PicQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := pq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -227,8 +228,8 @@ func (pq *PicQuery) AllX(ctx context.Context) []*Pic {
 }
 
 // IDs executes the query and returns a list of Pic IDs.
-func (pq *PicQuery) IDs(ctx context.Context) ([]int, error) {
-	var ids []int
+func (pq *PicQuery) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	var ids []uuid.UUID
 	if err := pq.Select(pic.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -236,7 +237,7 @@ func (pq *PicQuery) IDs(ctx context.Context) ([]int, error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (pq *PicQuery) IDsX(ctx context.Context) []int {
+func (pq *PicQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := pq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -326,12 +327,12 @@ func (pq *PicQuery) WithGroup(opts ...func(*GroupQuery)) *PicQuery {
 // Example:
 //
 //	var v []struct {
-//		UID string `json:"uid,omitempty"`
+//		UserID string `json:"user_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Pic.Query().
-//		GroupBy(pic.FieldUID).
+//		GroupBy(pic.FieldUserID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 //
@@ -353,11 +354,11 @@ func (pq *PicQuery) GroupBy(field string, fields ...string) *PicGroupBy {
 // Example:
 //
 //	var v []struct {
-//		UID string `json:"uid,omitempty"`
+//		UserID string `json:"user_id,omitempty"`
 //	}
 //
 //	client.Pic.Query().
-//		Select(pic.FieldUID).
+//		Select(pic.FieldUserID).
 //		Scan(ctx, &v)
 //
 func (pq *PicQuery) Select(fields ...string) *PicSelect {
@@ -411,8 +412,8 @@ func (pq *PicQuery) sqlAll(ctx context.Context) ([]*Pic, error) {
 	}
 
 	if query := pq.withUser; query != nil {
-		ids := make([]int, 0, len(nodes))
-		nodeids := make(map[int][]*Pic)
+		ids := make([]string, 0, len(nodes))
+		nodeids := make(map[string][]*Pic)
 		for i := range nodes {
 			fk := nodes[i].UserID
 			if _, ok := nodeids[fk]; !ok {
@@ -437,8 +438,8 @@ func (pq *PicQuery) sqlAll(ctx context.Context) ([]*Pic, error) {
 	}
 
 	if query := pq.withGroup; query != nil {
-		ids := make([]int, 0, len(nodes))
-		nodeids := make(map[int][]*Pic)
+		ids := make([]uuid.UUID, 0, len(nodes))
+		nodeids := make(map[uuid.UUID][]*Pic)
 		for i := range nodes {
 			fk := nodes[i].GroupID
 			if _, ok := nodeids[fk]; !ok {
@@ -488,7 +489,7 @@ func (pq *PicQuery) querySpec() *sqlgraph.QuerySpec {
 			Table:   pic.Table,
 			Columns: pic.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeUUID,
 				Column: pic.FieldID,
 			},
 		},

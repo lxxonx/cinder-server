@@ -10,13 +10,13 @@ import (
 var (
 	// ChatMessagesColumns holds the columns for the "chat_messages" table.
 	ChatMessagesColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "uid", Type: field.TypeString, Unique: true},
+		{Name: "uid", Type: field.TypeUUID, Unique: true},
 		{Name: "message", Type: field.TypeString, Default: ""},
 		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "read_at", Type: field.TypeTime},
-		{Name: "room_id", Type: field.TypeInt, Nullable: true},
-		{Name: "user_id", Type: field.TypeInt, Nullable: true},
+		{Name: "room_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "user_id", Type: field.TypeString, Nullable: true},
 	}
 	// ChatMessagesTable holds the schema information for the "chat_messages" table.
 	ChatMessagesTable = &schema.Table{
@@ -40,8 +40,7 @@ var (
 	}
 	// ChatRoomsColumns holds the columns for the "chat_rooms" table.
 	ChatRoomsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "uid", Type: field.TypeString, Unique: true},
+		{Name: "uid", Type: field.TypeUUID, Unique: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "read_at", Type: field.TypeTime},
@@ -54,8 +53,7 @@ var (
 	}
 	// GroupsColumns holds the columns for the "groups" table.
 	GroupsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "uid", Type: field.TypeString, Unique: true},
+		{Name: "uid", Type: field.TypeUUID, Unique: true},
 		{Name: "groupname", Type: field.TypeString, Default: ""},
 		{Name: "bio", Type: field.TypeString, Default: ""},
 		{Name: "created_at", Type: field.TypeTime},
@@ -70,14 +68,13 @@ var (
 	}
 	// PicsColumns holds the columns for the "pics" table.
 	PicsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "uid", Type: field.TypeString, Unique: true},
+		{Name: "uid", Type: field.TypeUUID, Unique: true},
 		{Name: "url", Type: field.TypeString},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "read_at", Type: field.TypeTime},
-		{Name: "group_id", Type: field.TypeInt, Nullable: true},
-		{Name: "user_id", Type: field.TypeInt, Nullable: true},
+		{Name: "group_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "user_id", Type: field.TypeString, Nullable: true},
 	}
 	// PicsTable holds the schema information for the "pics" table.
 	PicsTable = &schema.Table{
@@ -87,13 +84,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "pics_groups_pics",
-				Columns:    []*schema.Column{PicsColumns[6]},
+				Columns:    []*schema.Column{PicsColumns[5]},
 				RefColumns: []*schema.Column{GroupsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "pics_users_pics",
-				Columns:    []*schema.Column{PicsColumns[7]},
+				Columns:    []*schema.Column{PicsColumns[6]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -101,36 +98,32 @@ var (
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "uid", Type: field.TypeString, Unique: true},
-		{Name: "username", Type: field.TypeString},
+		{Name: "actual_name", Type: field.TypeString},
+		{Name: "username", Type: field.TypeString, Unique: true},
+		{Name: "gender", Type: field.TypeString},
 		{Name: "password", Type: field.TypeBytes},
 		{Name: "uni", Type: field.TypeString},
 		{Name: "dep", Type: field.TypeString},
 		{Name: "bio", Type: field.TypeString, Nullable: true},
+		{Name: "birth_year", Type: field.TypeInt},
+		{Name: "is_verified", Type: field.TypeBool, Default: false},
+		{Name: "max_group", Type: field.TypeInt, Default: 3},
+		{Name: "avatar", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "read_at", Type: field.TypeTime},
-		{Name: "group_id", Type: field.TypeInt, Nullable: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
 		Name:       "users",
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "users_groups_members",
-				Columns:    []*schema.Column{UsersColumns[10]},
-				RefColumns: []*schema.Column{GroupsColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-		},
 	}
 	// ChatRoomParticipantsColumns holds the columns for the "chat_room_participants" table.
 	ChatRoomParticipantsColumns = []*schema.Column{
-		{Name: "chat_room_id", Type: field.TypeInt},
-		{Name: "user_id", Type: field.TypeInt},
+		{Name: "chat_room_id", Type: field.TypeUUID},
+		{Name: "user_id", Type: field.TypeString},
 	}
 	// ChatRoomParticipantsTable holds the schema information for the "chat_room_participants" table.
 	ChatRoomParticipantsTable = &schema.Table{
@@ -152,10 +145,35 @@ var (
 			},
 		},
 	}
+	// GroupMembersColumns holds the columns for the "group_members" table.
+	GroupMembersColumns = []*schema.Column{
+		{Name: "group_id", Type: field.TypeUUID},
+		{Name: "user_id", Type: field.TypeString},
+	}
+	// GroupMembersTable holds the schema information for the "group_members" table.
+	GroupMembersTable = &schema.Table{
+		Name:       "group_members",
+		Columns:    GroupMembersColumns,
+		PrimaryKey: []*schema.Column{GroupMembersColumns[0], GroupMembersColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "group_members_group_id",
+				Columns:    []*schema.Column{GroupMembersColumns[0]},
+				RefColumns: []*schema.Column{GroupsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "group_members_user_id",
+				Columns:    []*schema.Column{GroupMembersColumns[1]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// GroupLikeToColumns holds the columns for the "group_like_to" table.
 	GroupLikeToColumns = []*schema.Column{
-		{Name: "group_id", Type: field.TypeInt},
-		{Name: "like_from_group_id", Type: field.TypeInt},
+		{Name: "group_id", Type: field.TypeUUID},
+		{Name: "like_from_group_id", Type: field.TypeUUID},
 	}
 	// GroupLikeToTable holds the schema information for the "group_like_to" table.
 	GroupLikeToTable = &schema.Table{
@@ -179,8 +197,8 @@ var (
 	}
 	// UserFriendsColumns holds the columns for the "user_friends" table.
 	UserFriendsColumns = []*schema.Column{
-		{Name: "user_id", Type: field.TypeInt},
-		{Name: "friend_id", Type: field.TypeInt},
+		{Name: "user_id", Type: field.TypeString},
+		{Name: "friend_id", Type: field.TypeString},
 	}
 	// UserFriendsTable holds the schema information for the "user_friends" table.
 	UserFriendsTable = &schema.Table{
@@ -202,25 +220,25 @@ var (
 			},
 		},
 	}
-	// UserFriendsReqColumns holds the columns for the "user_friendsReq" table.
+	// UserFriendsReqColumns holds the columns for the "user_friends_req" table.
 	UserFriendsReqColumns = []*schema.Column{
-		{Name: "user_id", Type: field.TypeInt},
-		{Name: "request_id", Type: field.TypeInt},
+		{Name: "user_id", Type: field.TypeString},
+		{Name: "request_id", Type: field.TypeString},
 	}
-	// UserFriendsReqTable holds the schema information for the "user_friendsReq" table.
+	// UserFriendsReqTable holds the schema information for the "user_friends_req" table.
 	UserFriendsReqTable = &schema.Table{
-		Name:       "user_friendsReq",
+		Name:       "user_friends_req",
 		Columns:    UserFriendsReqColumns,
 		PrimaryKey: []*schema.Column{UserFriendsReqColumns[0], UserFriendsReqColumns[1]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "user_friendsReq_user_id",
+				Symbol:     "user_friends_req_user_id",
 				Columns:    []*schema.Column{UserFriendsReqColumns[0]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
-				Symbol:     "user_friendsReq_request_id",
+				Symbol:     "user_friends_req_request_id",
 				Columns:    []*schema.Column{UserFriendsReqColumns[1]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.Cascade,
@@ -229,8 +247,8 @@ var (
 	}
 	// UserLikeToColumns holds the columns for the "user_like_to" table.
 	UserLikeToColumns = []*schema.Column{
-		{Name: "user_id", Type: field.TypeInt},
-		{Name: "group_id", Type: field.TypeInt},
+		{Name: "user_id", Type: field.TypeString},
+		{Name: "group_id", Type: field.TypeUUID},
 	}
 	// UserLikeToTable holds the schema information for the "user_like_to" table.
 	UserLikeToTable = &schema.Table{
@@ -254,8 +272,8 @@ var (
 	}
 	// UserSaveColumns holds the columns for the "user_save" table.
 	UserSaveColumns = []*schema.Column{
-		{Name: "user_id", Type: field.TypeInt},
-		{Name: "group_id", Type: field.TypeInt},
+		{Name: "user_id", Type: field.TypeString},
+		{Name: "group_id", Type: field.TypeUUID},
 	}
 	// UserSaveTable holds the schema information for the "user_save" table.
 	UserSaveTable = &schema.Table{
@@ -285,6 +303,7 @@ var (
 		PicsTable,
 		UsersTable,
 		ChatRoomParticipantsTable,
+		GroupMembersTable,
 		GroupLikeToTable,
 		UserFriendsTable,
 		UserFriendsReqTable,
@@ -298,9 +317,10 @@ func init() {
 	ChatMessagesTable.ForeignKeys[1].RefTable = UsersTable
 	PicsTable.ForeignKeys[0].RefTable = GroupsTable
 	PicsTable.ForeignKeys[1].RefTable = UsersTable
-	UsersTable.ForeignKeys[0].RefTable = GroupsTable
 	ChatRoomParticipantsTable.ForeignKeys[0].RefTable = ChatRoomsTable
 	ChatRoomParticipantsTable.ForeignKeys[1].RefTable = UsersTable
+	GroupMembersTable.ForeignKeys[0].RefTable = GroupsTable
+	GroupMembersTable.ForeignKeys[1].RefTable = UsersTable
 	GroupLikeToTable.ForeignKeys[0].RefTable = GroupsTable
 	GroupLikeToTable.ForeignKeys[1].RefTable = GroupsTable
 	UserFriendsTable.ForeignKeys[0].RefTable = UsersTable

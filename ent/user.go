@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
-	"github.com/lxxonx/cinder-server/ent/group"
 	"github.com/lxxonx/cinder-server/ent/user"
 )
 
@@ -16,27 +15,39 @@ import (
 type User struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
-	// UID holds the value of the "uid" field.
-	UID string `json:"uid,omitempty"`
+	ID string `json:"id,omitempty"`
+	// ActualName holds the value of the "actual_name" field.
+	// 본명
+	ActualName string `json:"actual_name,omitempty"`
 	// Username holds the value of the "username" field.
+	// 아이디
 	Username string `json:"username,omitempty"`
+	// Gender holds the value of the "gender" field.
+	Gender string `json:"gender,omitempty"`
 	// Password holds the value of the "password" field.
 	Password []byte `json:"-"`
 	// Uni holds the value of the "uni" field.
+	// 대학교
 	Uni string `json:"uni,omitempty"`
 	// Dep holds the value of the "dep" field.
+	// 단과대
 	Dep string `json:"dep,omitempty"`
 	// Bio holds the value of the "bio" field.
 	Bio string `json:"bio,omitempty"`
-	// GroupID holds the value of the "group_id" field.
-	GroupID int `json:"group_id,omitempty"`
-	// CreatedAt holds the value of the "createdAt" field.
-	CreatedAt time.Time `json:"createdAt,omitempty"`
-	// UpdatedAt holds the value of the "updatedAt" field.
-	UpdatedAt time.Time `json:"updatedAt,omitempty"`
-	// ReadAt holds the value of the "readAt" field.
-	ReadAt time.Time `json:"readAt,omitempty"`
+	// BirthYear holds the value of the "birth_year" field.
+	BirthYear int `json:"birth_year,omitempty"`
+	// IsVerified holds the value of the "is_verified" field.
+	IsVerified bool `json:"is_verified,omitempty"`
+	// MaxGroup holds the value of the "max_group" field.
+	MaxGroup int `json:"max_group,omitempty"`
+	// Avatar holds the value of the "avatar" field.
+	Avatar string `json:"avatar,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// ReadAt holds the value of the "read_at" field.
+	ReadAt time.Time `json:"read_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
 	Edges UserEdges `json:"edges"`
@@ -48,14 +59,14 @@ type UserEdges struct {
 	Friends []*User `json:"friends,omitempty"`
 	// Requests holds the value of the requests edge.
 	Requests []*User `json:"requests,omitempty"`
-	// FriendsReq holds the value of the friendsReq edge.
-	FriendsReq []*User `json:"friendsReq,omitempty"`
+	// FriendsReq holds the value of the friends_req edge.
+	FriendsReq []*User `json:"friends_req,omitempty"`
 	// LikeTo holds the value of the like_to edge.
 	LikeTo []*Group `json:"like_to,omitempty"`
 	// Save holds the value of the save edge.
 	Save []*Group `json:"save,omitempty"`
 	// Group holds the value of the group edge.
-	Group *Group `json:"group,omitempty"`
+	Group []*Group `json:"group,omitempty"`
 	// Chatroom holds the value of the chatroom edge.
 	Chatroom []*ChatRoom `json:"chatroom,omitempty"`
 	// Message holds the value of the message edge.
@@ -91,7 +102,7 @@ func (e UserEdges) FriendsReqOrErr() ([]*User, error) {
 	if e.loadedTypes[2] {
 		return e.FriendsReq, nil
 	}
-	return nil, &NotLoadedError{edge: "friendsReq"}
+	return nil, &NotLoadedError{edge: "friends_req"}
 }
 
 // LikeToOrErr returns the LikeTo value or an error if the edge
@@ -113,14 +124,9 @@ func (e UserEdges) SaveOrErr() ([]*Group, error) {
 }
 
 // GroupOrErr returns the Group value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e UserEdges) GroupOrErr() (*Group, error) {
+// was not loaded in eager-loading.
+func (e UserEdges) GroupOrErr() ([]*Group, error) {
 	if e.loadedTypes[5] {
-		if e.Group == nil {
-			// The edge group was loaded in eager-loading,
-			// but was not found.
-			return nil, &NotFoundError{label: group.Label}
-		}
 		return e.Group, nil
 	}
 	return nil, &NotLoadedError{edge: "group"}
@@ -160,9 +166,11 @@ func (*User) scanValues(columns []string) ([]interface{}, error) {
 		switch columns[i] {
 		case user.FieldPassword:
 			values[i] = new([]byte)
-		case user.FieldID, user.FieldGroupID:
+		case user.FieldIsVerified:
+			values[i] = new(sql.NullBool)
+		case user.FieldBirthYear, user.FieldMaxGroup:
 			values[i] = new(sql.NullInt64)
-		case user.FieldUID, user.FieldUsername, user.FieldUni, user.FieldDep, user.FieldBio:
+		case user.FieldID, user.FieldActualName, user.FieldUsername, user.FieldGender, user.FieldUni, user.FieldDep, user.FieldBio, user.FieldAvatar:
 			values[i] = new(sql.NullString)
 		case user.FieldCreatedAt, user.FieldUpdatedAt, user.FieldReadAt:
 			values[i] = new(sql.NullTime)
@@ -182,22 +190,28 @@ func (u *User) assignValues(columns []string, values []interface{}) error {
 	for i := range columns {
 		switch columns[i] {
 		case user.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
-			}
-			u.ID = int(value.Int64)
-		case user.FieldUID:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field uid", values[i])
+				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value.Valid {
-				u.UID = value.String
+				u.ID = value.String
+			}
+		case user.FieldActualName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field actual_name", values[i])
+			} else if value.Valid {
+				u.ActualName = value.String
 			}
 		case user.FieldUsername:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field username", values[i])
 			} else if value.Valid {
 				u.Username = value.String
+			}
+		case user.FieldGender:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field gender", values[i])
+			} else if value.Valid {
+				u.Gender = value.String
 			}
 		case user.FieldPassword:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -223,27 +237,45 @@ func (u *User) assignValues(columns []string, values []interface{}) error {
 			} else if value.Valid {
 				u.Bio = value.String
 			}
-		case user.FieldGroupID:
+		case user.FieldBirthYear:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field group_id", values[i])
+				return fmt.Errorf("unexpected type %T for field birth_year", values[i])
 			} else if value.Valid {
-				u.GroupID = int(value.Int64)
+				u.BirthYear = int(value.Int64)
+			}
+		case user.FieldIsVerified:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_verified", values[i])
+			} else if value.Valid {
+				u.IsVerified = value.Bool
+			}
+		case user.FieldMaxGroup:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field max_group", values[i])
+			} else if value.Valid {
+				u.MaxGroup = int(value.Int64)
+			}
+		case user.FieldAvatar:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field avatar", values[i])
+			} else if value.Valid {
+				u.Avatar = value.String
 			}
 		case user.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field createdAt", values[i])
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				u.CreatedAt = value.Time
 			}
 		case user.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field updatedAt", values[i])
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				u.UpdatedAt = value.Time
 			}
 		case user.FieldReadAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field readAt", values[i])
+				return fmt.Errorf("unexpected type %T for field read_at", values[i])
 			} else if value.Valid {
 				u.ReadAt = value.Time
 			}
@@ -262,7 +294,7 @@ func (u *User) QueryRequests() *UserQuery {
 	return (&UserClient{config: u.config}).QueryRequests(u)
 }
 
-// QueryFriendsReq queries the "friendsReq" edge of the User entity.
+// QueryFriendsReq queries the "friends_req" edge of the User entity.
 func (u *User) QueryFriendsReq() *UserQuery {
 	return (&UserClient{config: u.config}).QueryFriendsReq(u)
 }
@@ -320,10 +352,12 @@ func (u *User) String() string {
 	var builder strings.Builder
 	builder.WriteString("User(")
 	builder.WriteString(fmt.Sprintf("id=%v", u.ID))
-	builder.WriteString(", uid=")
-	builder.WriteString(u.UID)
+	builder.WriteString(", actual_name=")
+	builder.WriteString(u.ActualName)
 	builder.WriteString(", username=")
 	builder.WriteString(u.Username)
+	builder.WriteString(", gender=")
+	builder.WriteString(u.Gender)
 	builder.WriteString(", password=<sensitive>")
 	builder.WriteString(", uni=")
 	builder.WriteString(u.Uni)
@@ -331,13 +365,19 @@ func (u *User) String() string {
 	builder.WriteString(u.Dep)
 	builder.WriteString(", bio=")
 	builder.WriteString(u.Bio)
-	builder.WriteString(", group_id=")
-	builder.WriteString(fmt.Sprintf("%v", u.GroupID))
-	builder.WriteString(", createdAt=")
+	builder.WriteString(", birth_year=")
+	builder.WriteString(fmt.Sprintf("%v", u.BirthYear))
+	builder.WriteString(", is_verified=")
+	builder.WriteString(fmt.Sprintf("%v", u.IsVerified))
+	builder.WriteString(", max_group=")
+	builder.WriteString(fmt.Sprintf("%v", u.MaxGroup))
+	builder.WriteString(", avatar=")
+	builder.WriteString(u.Avatar)
+	builder.WriteString(", created_at=")
 	builder.WriteString(u.CreatedAt.Format(time.ANSIC))
-	builder.WriteString(", updatedAt=")
+	builder.WriteString(", updated_at=")
 	builder.WriteString(u.UpdatedAt.Format(time.ANSIC))
-	builder.WriteString(", readAt=")
+	builder.WriteString(", read_at=")
 	builder.WriteString(u.ReadAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()

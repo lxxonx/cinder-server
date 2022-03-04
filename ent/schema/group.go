@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 )
 
 // Group holds the schema definition for the Group entity.
@@ -16,13 +17,13 @@ type Group struct {
 // Fields of the Group.
 func (Group) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("uid").Unique(),
-		field.String("groupname").Default(""),
+		field.UUID("id", uuid.UUID{}).Default(func() uuid.UUID { return uuid.New() }).Immutable().Unique().StorageKey("uid"),
+		field.String("groupname").Default("").MaxLen(10).Unique(),
 		field.String("bio").Default(""),
 		// field.Strings("pics").Default([]string{""}),
-		field.Time("createdAt").Default(time.Now),
-		field.Time("updatedAt").Default(time.Now),
-		field.Time("readAt").Default(time.Now),
+		field.Time("created_at").Default(time.Now).Immutable(),
+		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now),
+		field.Time("read_at").Default(time.Now),
 	} // Uid        string        `json:"uid"`
 	// GroupName  string        `json:"groupName"`
 	// Pics       []interface{} `json:"pics"`

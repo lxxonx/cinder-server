@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/lxxonx/cinder-server/ent/chatmessage"
 	"github.com/lxxonx/cinder-server/ent/chatroom"
 	"github.com/lxxonx/cinder-server/ent/predicate"
@@ -30,12 +31,6 @@ func (cmu *ChatMessageUpdate) Where(ps ...predicate.ChatMessage) *ChatMessageUpd
 	return cmu
 }
 
-// SetUID sets the "uid" field.
-func (cmu *ChatMessageUpdate) SetUID(s string) *ChatMessageUpdate {
-	cmu.mutation.SetUID(s)
-	return cmu
-}
-
 // SetMessage sets the "message" field.
 func (cmu *ChatMessageUpdate) SetMessage(s string) *ChatMessageUpdate {
 	cmu.mutation.SetMessage(s)
@@ -51,15 +46,15 @@ func (cmu *ChatMessageUpdate) SetNillableMessage(s *string) *ChatMessageUpdate {
 }
 
 // SetRoomID sets the "room_id" field.
-func (cmu *ChatMessageUpdate) SetRoomID(i int) *ChatMessageUpdate {
-	cmu.mutation.SetRoomID(i)
+func (cmu *ChatMessageUpdate) SetRoomID(u uuid.UUID) *ChatMessageUpdate {
+	cmu.mutation.SetRoomID(u)
 	return cmu
 }
 
 // SetNillableRoomID sets the "room_id" field if the given value is not nil.
-func (cmu *ChatMessageUpdate) SetNillableRoomID(i *int) *ChatMessageUpdate {
-	if i != nil {
-		cmu.SetRoomID(*i)
+func (cmu *ChatMessageUpdate) SetNillableRoomID(u *uuid.UUID) *ChatMessageUpdate {
+	if u != nil {
+		cmu.SetRoomID(*u)
 	}
 	return cmu
 }
@@ -71,15 +66,15 @@ func (cmu *ChatMessageUpdate) ClearRoomID() *ChatMessageUpdate {
 }
 
 // SetUserID sets the "user_id" field.
-func (cmu *ChatMessageUpdate) SetUserID(i int) *ChatMessageUpdate {
-	cmu.mutation.SetUserID(i)
+func (cmu *ChatMessageUpdate) SetUserID(s string) *ChatMessageUpdate {
+	cmu.mutation.SetUserID(s)
 	return cmu
 }
 
 // SetNillableUserID sets the "user_id" field if the given value is not nil.
-func (cmu *ChatMessageUpdate) SetNillableUserID(i *int) *ChatMessageUpdate {
-	if i != nil {
-		cmu.SetUserID(*i)
+func (cmu *ChatMessageUpdate) SetNillableUserID(s *string) *ChatMessageUpdate {
+	if s != nil {
+		cmu.SetUserID(*s)
 	}
 	return cmu
 }
@@ -90,27 +85,19 @@ func (cmu *ChatMessageUpdate) ClearUserID() *ChatMessageUpdate {
 	return cmu
 }
 
-// SetCreatedAt sets the "createdAt" field.
-func (cmu *ChatMessageUpdate) SetCreatedAt(t time.Time) *ChatMessageUpdate {
-	cmu.mutation.SetCreatedAt(t)
+// SetUpdatedAt sets the "updated_at" field.
+func (cmu *ChatMessageUpdate) SetUpdatedAt(t time.Time) *ChatMessageUpdate {
+	cmu.mutation.SetUpdatedAt(t)
 	return cmu
 }
 
-// SetNillableCreatedAt sets the "createdAt" field if the given value is not nil.
-func (cmu *ChatMessageUpdate) SetNillableCreatedAt(t *time.Time) *ChatMessageUpdate {
-	if t != nil {
-		cmu.SetCreatedAt(*t)
-	}
-	return cmu
-}
-
-// SetReadAt sets the "readAt" field.
+// SetReadAt sets the "read_at" field.
 func (cmu *ChatMessageUpdate) SetReadAt(t time.Time) *ChatMessageUpdate {
 	cmu.mutation.SetReadAt(t)
 	return cmu
 }
 
-// SetNillableReadAt sets the "readAt" field if the given value is not nil.
+// SetNillableReadAt sets the "read_at" field if the given value is not nil.
 func (cmu *ChatMessageUpdate) SetNillableReadAt(t *time.Time) *ChatMessageUpdate {
 	if t != nil {
 		cmu.SetReadAt(*t)
@@ -151,6 +138,7 @@ func (cmu *ChatMessageUpdate) Save(ctx context.Context) (int, error) {
 		err      error
 		affected int
 	)
+	cmu.defaults()
 	if len(cmu.hooks) == 0 {
 		affected, err = cmu.sqlSave(ctx)
 	} else {
@@ -199,13 +187,21 @@ func (cmu *ChatMessageUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (cmu *ChatMessageUpdate) defaults() {
+	if _, ok := cmu.mutation.UpdatedAt(); !ok {
+		v := chatmessage.UpdateDefaultUpdatedAt()
+		cmu.mutation.SetUpdatedAt(v)
+	}
+}
+
 func (cmu *ChatMessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   chatmessage.Table,
 			Columns: chatmessage.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeUUID,
 				Column: chatmessage.FieldID,
 			},
 		},
@@ -217,13 +213,6 @@ func (cmu *ChatMessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := cmu.mutation.UID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: chatmessage.FieldUID,
-		})
-	}
 	if value, ok := cmu.mutation.Message(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -231,11 +220,11 @@ func (cmu *ChatMessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: chatmessage.FieldMessage,
 		})
 	}
-	if value, ok := cmu.mutation.CreatedAt(); ok {
+	if value, ok := cmu.mutation.UpdatedAt(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  value,
-			Column: chatmessage.FieldCreatedAt,
+			Column: chatmessage.FieldUpdatedAt,
 		})
 	}
 	if value, ok := cmu.mutation.ReadAt(); ok {
@@ -254,7 +243,7 @@ func (cmu *ChatMessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -270,7 +259,7 @@ func (cmu *ChatMessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -289,7 +278,7 @@ func (cmu *ChatMessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUUID,
 					Column: chatroom.FieldID,
 				},
 			},
@@ -305,7 +294,7 @@ func (cmu *ChatMessageUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUUID,
 					Column: chatroom.FieldID,
 				},
 			},
@@ -334,12 +323,6 @@ type ChatMessageUpdateOne struct {
 	mutation *ChatMessageMutation
 }
 
-// SetUID sets the "uid" field.
-func (cmuo *ChatMessageUpdateOne) SetUID(s string) *ChatMessageUpdateOne {
-	cmuo.mutation.SetUID(s)
-	return cmuo
-}
-
 // SetMessage sets the "message" field.
 func (cmuo *ChatMessageUpdateOne) SetMessage(s string) *ChatMessageUpdateOne {
 	cmuo.mutation.SetMessage(s)
@@ -355,15 +338,15 @@ func (cmuo *ChatMessageUpdateOne) SetNillableMessage(s *string) *ChatMessageUpda
 }
 
 // SetRoomID sets the "room_id" field.
-func (cmuo *ChatMessageUpdateOne) SetRoomID(i int) *ChatMessageUpdateOne {
-	cmuo.mutation.SetRoomID(i)
+func (cmuo *ChatMessageUpdateOne) SetRoomID(u uuid.UUID) *ChatMessageUpdateOne {
+	cmuo.mutation.SetRoomID(u)
 	return cmuo
 }
 
 // SetNillableRoomID sets the "room_id" field if the given value is not nil.
-func (cmuo *ChatMessageUpdateOne) SetNillableRoomID(i *int) *ChatMessageUpdateOne {
-	if i != nil {
-		cmuo.SetRoomID(*i)
+func (cmuo *ChatMessageUpdateOne) SetNillableRoomID(u *uuid.UUID) *ChatMessageUpdateOne {
+	if u != nil {
+		cmuo.SetRoomID(*u)
 	}
 	return cmuo
 }
@@ -375,15 +358,15 @@ func (cmuo *ChatMessageUpdateOne) ClearRoomID() *ChatMessageUpdateOne {
 }
 
 // SetUserID sets the "user_id" field.
-func (cmuo *ChatMessageUpdateOne) SetUserID(i int) *ChatMessageUpdateOne {
-	cmuo.mutation.SetUserID(i)
+func (cmuo *ChatMessageUpdateOne) SetUserID(s string) *ChatMessageUpdateOne {
+	cmuo.mutation.SetUserID(s)
 	return cmuo
 }
 
 // SetNillableUserID sets the "user_id" field if the given value is not nil.
-func (cmuo *ChatMessageUpdateOne) SetNillableUserID(i *int) *ChatMessageUpdateOne {
-	if i != nil {
-		cmuo.SetUserID(*i)
+func (cmuo *ChatMessageUpdateOne) SetNillableUserID(s *string) *ChatMessageUpdateOne {
+	if s != nil {
+		cmuo.SetUserID(*s)
 	}
 	return cmuo
 }
@@ -394,27 +377,19 @@ func (cmuo *ChatMessageUpdateOne) ClearUserID() *ChatMessageUpdateOne {
 	return cmuo
 }
 
-// SetCreatedAt sets the "createdAt" field.
-func (cmuo *ChatMessageUpdateOne) SetCreatedAt(t time.Time) *ChatMessageUpdateOne {
-	cmuo.mutation.SetCreatedAt(t)
+// SetUpdatedAt sets the "updated_at" field.
+func (cmuo *ChatMessageUpdateOne) SetUpdatedAt(t time.Time) *ChatMessageUpdateOne {
+	cmuo.mutation.SetUpdatedAt(t)
 	return cmuo
 }
 
-// SetNillableCreatedAt sets the "createdAt" field if the given value is not nil.
-func (cmuo *ChatMessageUpdateOne) SetNillableCreatedAt(t *time.Time) *ChatMessageUpdateOne {
-	if t != nil {
-		cmuo.SetCreatedAt(*t)
-	}
-	return cmuo
-}
-
-// SetReadAt sets the "readAt" field.
+// SetReadAt sets the "read_at" field.
 func (cmuo *ChatMessageUpdateOne) SetReadAt(t time.Time) *ChatMessageUpdateOne {
 	cmuo.mutation.SetReadAt(t)
 	return cmuo
 }
 
-// SetNillableReadAt sets the "readAt" field if the given value is not nil.
+// SetNillableReadAt sets the "read_at" field if the given value is not nil.
 func (cmuo *ChatMessageUpdateOne) SetNillableReadAt(t *time.Time) *ChatMessageUpdateOne {
 	if t != nil {
 		cmuo.SetReadAt(*t)
@@ -462,6 +437,7 @@ func (cmuo *ChatMessageUpdateOne) Save(ctx context.Context) (*ChatMessage, error
 		err  error
 		node *ChatMessage
 	)
+	cmuo.defaults()
 	if len(cmuo.hooks) == 0 {
 		node, err = cmuo.sqlSave(ctx)
 	} else {
@@ -510,13 +486,21 @@ func (cmuo *ChatMessageUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (cmuo *ChatMessageUpdateOne) defaults() {
+	if _, ok := cmuo.mutation.UpdatedAt(); !ok {
+		v := chatmessage.UpdateDefaultUpdatedAt()
+		cmuo.mutation.SetUpdatedAt(v)
+	}
+}
+
 func (cmuo *ChatMessageUpdateOne) sqlSave(ctx context.Context) (_node *ChatMessage, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   chatmessage.Table,
 			Columns: chatmessage.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeUUID,
 				Column: chatmessage.FieldID,
 			},
 		},
@@ -545,13 +529,6 @@ func (cmuo *ChatMessageUpdateOne) sqlSave(ctx context.Context) (_node *ChatMessa
 			}
 		}
 	}
-	if value, ok := cmuo.mutation.UID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: chatmessage.FieldUID,
-		})
-	}
 	if value, ok := cmuo.mutation.Message(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -559,11 +536,11 @@ func (cmuo *ChatMessageUpdateOne) sqlSave(ctx context.Context) (_node *ChatMessa
 			Column: chatmessage.FieldMessage,
 		})
 	}
-	if value, ok := cmuo.mutation.CreatedAt(); ok {
+	if value, ok := cmuo.mutation.UpdatedAt(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  value,
-			Column: chatmessage.FieldCreatedAt,
+			Column: chatmessage.FieldUpdatedAt,
 		})
 	}
 	if value, ok := cmuo.mutation.ReadAt(); ok {
@@ -582,7 +559,7 @@ func (cmuo *ChatMessageUpdateOne) sqlSave(ctx context.Context) (_node *ChatMessa
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -598,7 +575,7 @@ func (cmuo *ChatMessageUpdateOne) sqlSave(ctx context.Context) (_node *ChatMessa
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -617,7 +594,7 @@ func (cmuo *ChatMessageUpdateOne) sqlSave(ctx context.Context) (_node *ChatMessa
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUUID,
 					Column: chatroom.FieldID,
 				},
 			},
@@ -633,7 +610,7 @@ func (cmuo *ChatMessageUpdateOne) sqlSave(ctx context.Context) (_node *ChatMessa
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUUID,
 					Column: chatroom.FieldID,
 				},
 			},

@@ -6,9 +6,12 @@ type AuthInput struct {
 }
 
 type SignUpInput struct {
-	Uid      string `json:"uid"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Uni      string `json:"uni"`
-	Dep      string `json:"dep"`
+	Uid        string `json:"uid"`
+	Username   string `json:"username"`
+	ActualName string `json:"actual_name"`
+	Password   string `json:"password"`
+	Uni        string `json:"uni"`
+	Dep        string `json:"dep"`
+	BirthYear  int    `json:"birth_year"`
+	Gender     string `json:"gender"`
 }

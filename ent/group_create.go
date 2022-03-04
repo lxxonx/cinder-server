@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/lxxonx/cinder-server/ent/group"
 	"github.com/lxxonx/cinder-server/ent/pic"
 	"github.com/lxxonx/cinder-server/ent/user"
@@ -20,12 +21,6 @@ type GroupCreate struct {
 	config
 	mutation *GroupMutation
 	hooks    []Hook
-}
-
-// SetUID sets the "uid" field.
-func (gc *GroupCreate) SetUID(s string) *GroupCreate {
-	gc.mutation.SetUID(s)
-	return gc
 }
 
 // SetGroupname sets the "groupname" field.
@@ -56,13 +51,13 @@ func (gc *GroupCreate) SetNillableBio(s *string) *GroupCreate {
 	return gc
 }
 
-// SetCreatedAt sets the "createdAt" field.
+// SetCreatedAt sets the "created_at" field.
 func (gc *GroupCreate) SetCreatedAt(t time.Time) *GroupCreate {
 	gc.mutation.SetCreatedAt(t)
 	return gc
 }
 
-// SetNillableCreatedAt sets the "createdAt" field if the given value is not nil.
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
 func (gc *GroupCreate) SetNillableCreatedAt(t *time.Time) *GroupCreate {
 	if t != nil {
 		gc.SetCreatedAt(*t)
@@ -70,13 +65,13 @@ func (gc *GroupCreate) SetNillableCreatedAt(t *time.Time) *GroupCreate {
 	return gc
 }
 
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (gc *GroupCreate) SetUpdatedAt(t time.Time) *GroupCreate {
 	gc.mutation.SetUpdatedAt(t)
 	return gc
 }
 
-// SetNillableUpdatedAt sets the "updatedAt" field if the given value is not nil.
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
 func (gc *GroupCreate) SetNillableUpdatedAt(t *time.Time) *GroupCreate {
 	if t != nil {
 		gc.SetUpdatedAt(*t)
@@ -84,13 +79,13 @@ func (gc *GroupCreate) SetNillableUpdatedAt(t *time.Time) *GroupCreate {
 	return gc
 }
 
-// SetReadAt sets the "readAt" field.
+// SetReadAt sets the "read_at" field.
 func (gc *GroupCreate) SetReadAt(t time.Time) *GroupCreate {
 	gc.mutation.SetReadAt(t)
 	return gc
 }
 
-// SetNillableReadAt sets the "readAt" field if the given value is not nil.
+// SetNillableReadAt sets the "read_at" field if the given value is not nil.
 func (gc *GroupCreate) SetNillableReadAt(t *time.Time) *GroupCreate {
 	if t != nil {
 		gc.SetReadAt(*t)
@@ -98,15 +93,29 @@ func (gc *GroupCreate) SetNillableReadAt(t *time.Time) *GroupCreate {
 	return gc
 }
 
+// SetID sets the "id" field.
+func (gc *GroupCreate) SetID(u uuid.UUID) *GroupCreate {
+	gc.mutation.SetID(u)
+	return gc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (gc *GroupCreate) SetNillableID(u *uuid.UUID) *GroupCreate {
+	if u != nil {
+		gc.SetID(*u)
+	}
+	return gc
+}
+
 // AddMemberIDs adds the "members" edge to the User entity by IDs.
-func (gc *GroupCreate) AddMemberIDs(ids ...int) *GroupCreate {
+func (gc *GroupCreate) AddMemberIDs(ids ...string) *GroupCreate {
 	gc.mutation.AddMemberIDs(ids...)
 	return gc
 }
 
 // AddMembers adds the "members" edges to the User entity.
 func (gc *GroupCreate) AddMembers(u ...*User) *GroupCreate {
-	ids := make([]int, len(u))
+	ids := make([]string, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -114,14 +123,14 @@ func (gc *GroupCreate) AddMembers(u ...*User) *GroupCreate {
 }
 
 // AddLikeFromUserIDs adds the "like_from_user" edge to the User entity by IDs.
-func (gc *GroupCreate) AddLikeFromUserIDs(ids ...int) *GroupCreate {
+func (gc *GroupCreate) AddLikeFromUserIDs(ids ...string) *GroupCreate {
 	gc.mutation.AddLikeFromUserIDs(ids...)
 	return gc
 }
 
 // AddLikeFromUser adds the "like_from_user" edges to the User entity.
 func (gc *GroupCreate) AddLikeFromUser(u ...*User) *GroupCreate {
-	ids := make([]int, len(u))
+	ids := make([]string, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -129,14 +138,14 @@ func (gc *GroupCreate) AddLikeFromUser(u ...*User) *GroupCreate {
 }
 
 // AddSavedIDs adds the "saved" edge to the User entity by IDs.
-func (gc *GroupCreate) AddSavedIDs(ids ...int) *GroupCreate {
+func (gc *GroupCreate) AddSavedIDs(ids ...string) *GroupCreate {
 	gc.mutation.AddSavedIDs(ids...)
 	return gc
 }
 
 // AddSaved adds the "saved" edges to the User entity.
 func (gc *GroupCreate) AddSaved(u ...*User) *GroupCreate {
-	ids := make([]int, len(u))
+	ids := make([]string, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -144,14 +153,14 @@ func (gc *GroupCreate) AddSaved(u ...*User) *GroupCreate {
 }
 
 // AddLikeFromGroupIDs adds the "like_from_group" edge to the Group entity by IDs.
-func (gc *GroupCreate) AddLikeFromGroupIDs(ids ...int) *GroupCreate {
+func (gc *GroupCreate) AddLikeFromGroupIDs(ids ...uuid.UUID) *GroupCreate {
 	gc.mutation.AddLikeFromGroupIDs(ids...)
 	return gc
 }
 
 // AddLikeFromGroup adds the "like_from_group" edges to the Group entity.
 func (gc *GroupCreate) AddLikeFromGroup(g ...*Group) *GroupCreate {
-	ids := make([]int, len(g))
+	ids := make([]uuid.UUID, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -159,14 +168,14 @@ func (gc *GroupCreate) AddLikeFromGroup(g ...*Group) *GroupCreate {
 }
 
 // AddLikeToIDs adds the "like_to" edge to the Group entity by IDs.
-func (gc *GroupCreate) AddLikeToIDs(ids ...int) *GroupCreate {
+func (gc *GroupCreate) AddLikeToIDs(ids ...uuid.UUID) *GroupCreate {
 	gc.mutation.AddLikeToIDs(ids...)
 	return gc
 }
 
 // AddLikeTo adds the "like_to" edges to the Group entity.
 func (gc *GroupCreate) AddLikeTo(g ...*Group) *GroupCreate {
-	ids := make([]int, len(g))
+	ids := make([]uuid.UUID, len(g))
 	for i := range g {
 		ids[i] = g[i].ID
 	}
@@ -174,14 +183,14 @@ func (gc *GroupCreate) AddLikeTo(g ...*Group) *GroupCreate {
 }
 
 // AddPicIDs adds the "pics" edge to the Pic entity by IDs.
-func (gc *GroupCreate) AddPicIDs(ids ...int) *GroupCreate {
+func (gc *GroupCreate) AddPicIDs(ids ...uuid.UUID) *GroupCreate {
 	gc.mutation.AddPicIDs(ids...)
 	return gc
 }
 
 // AddPics adds the "pics" edges to the Pic entity.
 func (gc *GroupCreate) AddPics(p ...*Pic) *GroupCreate {
-	ids := make([]int, len(p))
+	ids := make([]uuid.UUID, len(p))
 	for i := range p {
 		ids[i] = p[i].ID
 	}
@@ -279,13 +288,14 @@ func (gc *GroupCreate) defaults() {
 		v := group.DefaultReadAt()
 		gc.mutation.SetReadAt(v)
 	}
+	if _, ok := gc.mutation.ID(); !ok {
+		v := group.DefaultID()
+		gc.mutation.SetID(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (gc *GroupCreate) check() error {
-	if _, ok := gc.mutation.UID(); !ok {
-		return &ValidationError{Name: "uid", err: errors.New(`ent: missing required field "Group.uid"`)}
-	}
 	if _, ok := gc.mutation.Groupname(); !ok {
 		return &ValidationError{Name: "groupname", err: errors.New(`ent: missing required field "Group.groupname"`)}
 	}
@@ -293,13 +303,13 @@ func (gc *GroupCreate) check() error {
 		return &ValidationError{Name: "bio", err: errors.New(`ent: missing required field "Group.bio"`)}
 	}
 	if _, ok := gc.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "createdAt", err: errors.New(`ent: missing required field "Group.createdAt"`)}
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Group.created_at"`)}
 	}
 	if _, ok := gc.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updatedAt", err: errors.New(`ent: missing required field "Group.updatedAt"`)}
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Group.updated_at"`)}
 	}
 	if _, ok := gc.mutation.ReadAt(); !ok {
-		return &ValidationError{Name: "readAt", err: errors.New(`ent: missing required field "Group.readAt"`)}
+		return &ValidationError{Name: "read_at", err: errors.New(`ent: missing required field "Group.read_at"`)}
 	}
 	return nil
 }
@@ -312,8 +322,13 @@ func (gc *GroupCreate) sqlSave(ctx context.Context) (*Group, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*uuid.UUID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	return _node, nil
 }
 
@@ -323,18 +338,14 @@ func (gc *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: group.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeUUID,
 				Column: group.FieldID,
 			},
 		}
 	)
-	if value, ok := gc.mutation.UID(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: group.FieldUID,
-		})
-		_node.UID = value
+	if id, ok := gc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
 	}
 	if value, ok := gc.mutation.Groupname(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
@@ -378,14 +389,14 @@ func (gc *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 	}
 	if nodes := gc.mutation.MembersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   group.MembersTable,
-			Columns: []string{group.MembersColumn},
+			Columns: group.MembersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -404,7 +415,7 @@ func (gc *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -423,7 +434,7 @@ func (gc *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -442,7 +453,7 @@ func (gc *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUUID,
 					Column: group.FieldID,
 				},
 			},
@@ -461,7 +472,7 @@ func (gc *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUUID,
 					Column: group.FieldID,
 				},
 			},
@@ -480,7 +491,7 @@ func (gc *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUUID,
 					Column: pic.FieldID,
 				},
 			},
@@ -535,10 +546,6 @@ func (gcb *GroupCreateBulk) Save(ctx context.Context) ([]*Group, error) {
 				}
 				mutation.id = &nodes[i].ID
 				mutation.done = true
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				return nodes[i], nil
 			})
 			for i := len(builder.hooks) - 1; i >= 0; i-- {

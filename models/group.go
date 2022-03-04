@@ -5,10 +5,10 @@ import (
 )
 
 type Group struct {
-	Uid        string        `json:"uid"`
-	GroupName  string        `json:"groupName"`
-	Pics       []interface{} `json:"pics"`
-	CreateTime time.Time     `json:"createTime"`
-	Bio        string        `json:"bio"`
-	Members    []User        `json:"members"`
+	Uid       string        `json:"uid"`
+	Groupname string        `json:"groupname"`
+	Pics      []interface{} `json:"pics"`
+	CreatedAt time.Time     `json:"createdAt"`
+	Bio       string        `json:"bio"`
+	Members   []User        `json:"members"`
 }

@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/lxxonx/cinder-server/ent"
+	"github.com/lxxonx/cinder-server/ent/migrate"
 )
 
 var DB *ent.Client
@@ -20,7 +21,11 @@ func DBConnect() {
 		log.Fatal(err)
 	}
 
-	if err := client.Schema.Create(context.Background()); err != nil {
+	if err := client.Debug().Schema.Create(
+		context.Background(),
+		migrate.WithDropIndex(true),
+		migrate.WithDropColumn(true),
+	); err != nil {
 		log.Fatalf("failed creating schema resources: %v", err)
 	}
 	DB = client

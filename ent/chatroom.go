@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"github.com/google/uuid"
 	"github.com/lxxonx/cinder-server/ent/chatroom"
 )
 
@@ -15,15 +16,13 @@ import (
 type ChatRoom struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
-	// UID holds the value of the "uid" field.
-	UID string `json:"uid,omitempty"`
-	// CreatedAt holds the value of the "createdAt" field.
-	CreatedAt time.Time `json:"createdAt,omitempty"`
-	// UpdatedAt holds the value of the "updatedAt" field.
-	UpdatedAt time.Time `json:"updatedAt,omitempty"`
-	// ReadAt holds the value of the "readAt" field.
-	ReadAt time.Time `json:"readAt,omitempty"`
+	ID uuid.UUID `json:"id,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// ReadAt holds the value of the "read_at" field.
+	ReadAt time.Time `json:"read_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ChatRoomQuery when eager-loading is set.
 	Edges ChatRoomEdges `json:"edges"`
@@ -63,12 +62,10 @@ func (*ChatRoom) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case chatroom.FieldID:
-			values[i] = new(sql.NullInt64)
-		case chatroom.FieldUID:
-			values[i] = new(sql.NullString)
 		case chatroom.FieldCreatedAt, chatroom.FieldUpdatedAt, chatroom.FieldReadAt:
 			values[i] = new(sql.NullTime)
+		case chatroom.FieldID:
+			values[i] = new(uuid.UUID)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type ChatRoom", columns[i])
 		}
@@ -85,32 +82,26 @@ func (cr *ChatRoom) assignValues(columns []string, values []interface{}) error {
 	for i := range columns {
 		switch columns[i] {
 		case chatroom.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
-			}
-			cr.ID = int(value.Int64)
-		case chatroom.FieldUID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field uid", values[i])
-			} else if value.Valid {
-				cr.UID = value.String
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value != nil {
+				cr.ID = *value
 			}
 		case chatroom.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field createdAt", values[i])
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				cr.CreatedAt = value.Time
 			}
 		case chatroom.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field updatedAt", values[i])
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				cr.UpdatedAt = value.Time
 			}
 		case chatroom.FieldReadAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field readAt", values[i])
+				return fmt.Errorf("unexpected type %T for field read_at", values[i])
 			} else if value.Valid {
 				cr.ReadAt = value.Time
 			}
@@ -152,13 +143,11 @@ func (cr *ChatRoom) String() string {
 	var builder strings.Builder
 	builder.WriteString("ChatRoom(")
 	builder.WriteString(fmt.Sprintf("id=%v", cr.ID))
-	builder.WriteString(", uid=")
-	builder.WriteString(cr.UID)
-	builder.WriteString(", createdAt=")
+	builder.WriteString(", created_at=")
 	builder.WriteString(cr.CreatedAt.Format(time.ANSIC))
-	builder.WriteString(", updatedAt=")
+	builder.WriteString(", updated_at=")
 	builder.WriteString(cr.UpdatedAt.Format(time.ANSIC))
-	builder.WriteString(", readAt=")
+	builder.WriteString(", read_at=")
 	builder.WriteString(cr.ReadAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()

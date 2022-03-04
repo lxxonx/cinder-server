@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/lxxonx/cinder-server/ent/chatmessage"
 	"github.com/lxxonx/cinder-server/ent/chatroom"
 	"github.com/lxxonx/cinder-server/ent/predicate"
@@ -134,8 +135,8 @@ func (crq *ChatRoomQuery) FirstX(ctx context.Context) *ChatRoom {
 
 // FirstID returns the first ChatRoom ID from the query.
 // Returns a *NotFoundError when no ChatRoom ID was found.
-func (crq *ChatRoomQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (crq *ChatRoomQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+	var ids []uuid.UUID
 	if ids, err = crq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
@@ -147,7 +148,7 @@ func (crq *ChatRoomQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (crq *ChatRoomQuery) FirstIDX(ctx context.Context) int {
+func (crq *ChatRoomQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := crq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -185,8 +186,8 @@ func (crq *ChatRoomQuery) OnlyX(ctx context.Context) *ChatRoom {
 // OnlyID is like Only, but returns the only ChatRoom ID in the query.
 // Returns a *NotSingularError when exactly one ChatRoom ID is not found.
 // Returns a *NotFoundError when no entities are found.
-func (crq *ChatRoomQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (crq *ChatRoomQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+	var ids []uuid.UUID
 	if ids, err = crq.Limit(2).IDs(ctx); err != nil {
 		return
 	}
@@ -202,7 +203,7 @@ func (crq *ChatRoomQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (crq *ChatRoomQuery) OnlyIDX(ctx context.Context) int {
+func (crq *ChatRoomQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := crq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -228,8 +229,8 @@ func (crq *ChatRoomQuery) AllX(ctx context.Context) []*ChatRoom {
 }
 
 // IDs executes the query and returns a list of ChatRoom IDs.
-func (crq *ChatRoomQuery) IDs(ctx context.Context) ([]int, error) {
-	var ids []int
+func (crq *ChatRoomQuery) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	var ids []uuid.UUID
 	if err := crq.Select(chatroom.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -237,7 +238,7 @@ func (crq *ChatRoomQuery) IDs(ctx context.Context) ([]int, error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (crq *ChatRoomQuery) IDsX(ctx context.Context) []int {
+func (crq *ChatRoomQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := crq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -327,12 +328,12 @@ func (crq *ChatRoomQuery) WithMessages(opts ...func(*ChatMessageQuery)) *ChatRoo
 // Example:
 //
 //	var v []struct {
-//		UID string `json:"uid,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.ChatRoom.Query().
-//		GroupBy(chatroom.FieldUID).
+//		GroupBy(chatroom.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 //
@@ -354,11 +355,11 @@ func (crq *ChatRoomQuery) GroupBy(field string, fields ...string) *ChatRoomGroup
 // Example:
 //
 //	var v []struct {
-//		UID string `json:"uid,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
 //	client.ChatRoom.Query().
-//		Select(chatroom.FieldUID).
+//		Select(chatroom.FieldCreatedAt).
 //		Scan(ctx, &v)
 //
 func (crq *ChatRoomQuery) Select(fields ...string) *ChatRoomSelect {
@@ -413,15 +414,15 @@ func (crq *ChatRoomQuery) sqlAll(ctx context.Context) ([]*ChatRoom, error) {
 
 	if query := crq.withParticipants; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
-		ids := make(map[int]*ChatRoom, len(nodes))
+		ids := make(map[uuid.UUID]*ChatRoom, len(nodes))
 		for _, node := range nodes {
 			ids[node.ID] = node
 			fks = append(fks, node.ID)
 			node.Edges.Participants = []*User{}
 		}
 		var (
-			edgeids []int
-			edges   = make(map[int][]*ChatRoom)
+			edgeids []string
+			edges   = make(map[string][]*ChatRoom)
 		)
 		_spec := &sqlgraph.EdgeQuerySpec{
 			Edge: &sqlgraph.EdgeSpec{
@@ -433,19 +434,19 @@ func (crq *ChatRoomQuery) sqlAll(ctx context.Context) ([]*ChatRoom, error) {
 				s.Where(sql.InValues(chatroom.ParticipantsPrimaryKey[0], fks...))
 			},
 			ScanValues: func() [2]interface{} {
-				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
+				return [2]interface{}{new(uuid.UUID), new(sql.NullString)}
 			},
 			Assign: func(out, in interface{}) error {
-				eout, ok := out.(*sql.NullInt64)
+				eout, ok := out.(*uuid.UUID)
 				if !ok || eout == nil {
 					return fmt.Errorf("unexpected id value for edge-out")
 				}
-				ein, ok := in.(*sql.NullInt64)
+				ein, ok := in.(*sql.NullString)
 				if !ok || ein == nil {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
-				outValue := int(eout.Int64)
-				inValue := int(ein.Int64)
+				outValue := *eout
+				inValue := ein.String
 				node, ok := ids[outValue]
 				if !ok {
 					return fmt.Errorf("unexpected node id in edges: %v", outValue)
@@ -478,7 +479,7 @@ func (crq *ChatRoomQuery) sqlAll(ctx context.Context) ([]*ChatRoom, error) {
 
 	if query := crq.withMessages; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
-		nodeids := make(map[int]*ChatRoom)
+		nodeids := make(map[uuid.UUID]*ChatRoom)
 		for i := range nodes {
 			fks = append(fks, nodes[i].ID)
 			nodeids[nodes[i].ID] = nodes[i]
@@ -527,7 +528,7 @@ func (crq *ChatRoomQuery) querySpec() *sqlgraph.QuerySpec {
 			Table:   chatroom.Table,
 			Columns: chatroom.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeUUID,
 				Column: chatroom.FieldID,
 			},
 		},

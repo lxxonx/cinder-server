@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"github.com/google/uuid"
 	"github.com/lxxonx/cinder-server/ent/group"
 )
 
@@ -15,19 +16,17 @@ import (
 type Group struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
-	// UID holds the value of the "uid" field.
-	UID string `json:"uid,omitempty"`
+	ID uuid.UUID `json:"id,omitempty"`
 	// Groupname holds the value of the "groupname" field.
 	Groupname string `json:"groupname,omitempty"`
 	// Bio holds the value of the "bio" field.
 	Bio string `json:"bio,omitempty"`
-	// CreatedAt holds the value of the "createdAt" field.
-	CreatedAt time.Time `json:"createdAt,omitempty"`
-	// UpdatedAt holds the value of the "updatedAt" field.
-	UpdatedAt time.Time `json:"updatedAt,omitempty"`
-	// ReadAt holds the value of the "readAt" field.
-	ReadAt time.Time `json:"readAt,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// ReadAt holds the value of the "read_at" field.
+	ReadAt time.Time `json:"read_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the GroupQuery when eager-loading is set.
 	Edges GroupEdges `json:"edges"`
@@ -111,12 +110,12 @@ func (*Group) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case group.FieldID:
-			values[i] = new(sql.NullInt64)
-		case group.FieldUID, group.FieldGroupname, group.FieldBio:
+		case group.FieldGroupname, group.FieldBio:
 			values[i] = new(sql.NullString)
 		case group.FieldCreatedAt, group.FieldUpdatedAt, group.FieldReadAt:
 			values[i] = new(sql.NullTime)
+		case group.FieldID:
+			values[i] = new(uuid.UUID)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Group", columns[i])
 		}
@@ -133,16 +132,10 @@ func (gr *Group) assignValues(columns []string, values []interface{}) error {
 	for i := range columns {
 		switch columns[i] {
 		case group.FieldID:
-			value, ok := values[i].(*sql.NullInt64)
-			if !ok {
-				return fmt.Errorf("unexpected type %T for field id", value)
-			}
-			gr.ID = int(value.Int64)
-		case group.FieldUID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field uid", values[i])
-			} else if value.Valid {
-				gr.UID = value.String
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field id", values[i])
+			} else if value != nil {
+				gr.ID = *value
 			}
 		case group.FieldGroupname:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -158,19 +151,19 @@ func (gr *Group) assignValues(columns []string, values []interface{}) error {
 			}
 		case group.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field createdAt", values[i])
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				gr.CreatedAt = value.Time
 			}
 		case group.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field updatedAt", values[i])
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				gr.UpdatedAt = value.Time
 			}
 		case group.FieldReadAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field readAt", values[i])
+				return fmt.Errorf("unexpected type %T for field read_at", values[i])
 			} else if value.Valid {
 				gr.ReadAt = value.Time
 			}
@@ -232,17 +225,15 @@ func (gr *Group) String() string {
 	var builder strings.Builder
 	builder.WriteString("Group(")
 	builder.WriteString(fmt.Sprintf("id=%v", gr.ID))
-	builder.WriteString(", uid=")
-	builder.WriteString(gr.UID)
 	builder.WriteString(", groupname=")
 	builder.WriteString(gr.Groupname)
 	builder.WriteString(", bio=")
 	builder.WriteString(gr.Bio)
-	builder.WriteString(", createdAt=")
+	builder.WriteString(", created_at=")
 	builder.WriteString(gr.CreatedAt.Format(time.ANSIC))
-	builder.WriteString(", updatedAt=")
+	builder.WriteString(", updated_at=")
 	builder.WriteString(gr.UpdatedAt.Format(time.ANSIC))
-	builder.WriteString(", readAt=")
+	builder.WriteString(", read_at=")
 	builder.WriteString(gr.ReadAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()

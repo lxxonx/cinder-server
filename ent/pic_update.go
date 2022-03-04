@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/lxxonx/cinder-server/ent/group"
 	"github.com/lxxonx/cinder-server/ent/pic"
 	"github.com/lxxonx/cinder-server/ent/predicate"
@@ -30,22 +31,16 @@ func (pu *PicUpdate) Where(ps ...predicate.Pic) *PicUpdate {
 	return pu
 }
 
-// SetUID sets the "uid" field.
-func (pu *PicUpdate) SetUID(s string) *PicUpdate {
-	pu.mutation.SetUID(s)
-	return pu
-}
-
 // SetUserID sets the "user_id" field.
-func (pu *PicUpdate) SetUserID(i int) *PicUpdate {
-	pu.mutation.SetUserID(i)
+func (pu *PicUpdate) SetUserID(s string) *PicUpdate {
+	pu.mutation.SetUserID(s)
 	return pu
 }
 
 // SetNillableUserID sets the "user_id" field if the given value is not nil.
-func (pu *PicUpdate) SetNillableUserID(i *int) *PicUpdate {
-	if i != nil {
-		pu.SetUserID(*i)
+func (pu *PicUpdate) SetNillableUserID(s *string) *PicUpdate {
+	if s != nil {
+		pu.SetUserID(*s)
 	}
 	return pu
 }
@@ -57,15 +52,15 @@ func (pu *PicUpdate) ClearUserID() *PicUpdate {
 }
 
 // SetGroupID sets the "group_id" field.
-func (pu *PicUpdate) SetGroupID(i int) *PicUpdate {
-	pu.mutation.SetGroupID(i)
+func (pu *PicUpdate) SetGroupID(u uuid.UUID) *PicUpdate {
+	pu.mutation.SetGroupID(u)
 	return pu
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (pu *PicUpdate) SetNillableGroupID(i *int) *PicUpdate {
-	if i != nil {
-		pu.SetGroupID(*i)
+func (pu *PicUpdate) SetNillableGroupID(u *uuid.UUID) *PicUpdate {
+	if u != nil {
+		pu.SetGroupID(*u)
 	}
 	return pu
 }
@@ -82,41 +77,19 @@ func (pu *PicUpdate) SetURL(s string) *PicUpdate {
 	return pu
 }
 
-// SetCreatedAt sets the "createdAt" field.
-func (pu *PicUpdate) SetCreatedAt(t time.Time) *PicUpdate {
-	pu.mutation.SetCreatedAt(t)
-	return pu
-}
-
-// SetNillableCreatedAt sets the "createdAt" field if the given value is not nil.
-func (pu *PicUpdate) SetNillableCreatedAt(t *time.Time) *PicUpdate {
-	if t != nil {
-		pu.SetCreatedAt(*t)
-	}
-	return pu
-}
-
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (pu *PicUpdate) SetUpdatedAt(t time.Time) *PicUpdate {
 	pu.mutation.SetUpdatedAt(t)
 	return pu
 }
 
-// SetNillableUpdatedAt sets the "updatedAt" field if the given value is not nil.
-func (pu *PicUpdate) SetNillableUpdatedAt(t *time.Time) *PicUpdate {
-	if t != nil {
-		pu.SetUpdatedAt(*t)
-	}
-	return pu
-}
-
-// SetReadAt sets the "readAt" field.
+// SetReadAt sets the "read_at" field.
 func (pu *PicUpdate) SetReadAt(t time.Time) *PicUpdate {
 	pu.mutation.SetReadAt(t)
 	return pu
 }
 
-// SetNillableReadAt sets the "readAt" field if the given value is not nil.
+// SetNillableReadAt sets the "read_at" field if the given value is not nil.
 func (pu *PicUpdate) SetNillableReadAt(t *time.Time) *PicUpdate {
 	if t != nil {
 		pu.SetReadAt(*t)
@@ -157,6 +130,7 @@ func (pu *PicUpdate) Save(ctx context.Context) (int, error) {
 		err      error
 		affected int
 	)
+	pu.defaults()
 	if len(pu.hooks) == 0 {
 		if err = pu.check(); err != nil {
 			return 0, err
@@ -211,6 +185,14 @@ func (pu *PicUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (pu *PicUpdate) defaults() {
+	if _, ok := pu.mutation.UpdatedAt(); !ok {
+		v := pic.UpdateDefaultUpdatedAt()
+		pu.mutation.SetUpdatedAt(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (pu *PicUpdate) check() error {
 	if v, ok := pu.mutation.URL(); ok {
@@ -227,7 +209,7 @@ func (pu *PicUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Table:   pic.Table,
 			Columns: pic.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeUUID,
 				Column: pic.FieldID,
 			},
 		},
@@ -239,25 +221,11 @@ func (pu *PicUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := pu.mutation.UID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: pic.FieldUID,
-		})
-	}
 	if value, ok := pu.mutation.URL(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
 			Column: pic.FieldURL,
-		})
-	}
-	if value, ok := pu.mutation.CreatedAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: pic.FieldCreatedAt,
 		})
 	}
 	if value, ok := pu.mutation.UpdatedAt(); ok {
@@ -283,7 +251,7 @@ func (pu *PicUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -299,7 +267,7 @@ func (pu *PicUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -318,7 +286,7 @@ func (pu *PicUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUUID,
 					Column: group.FieldID,
 				},
 			},
@@ -334,7 +302,7 @@ func (pu *PicUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUUID,
 					Column: group.FieldID,
 				},
 			},
@@ -363,22 +331,16 @@ type PicUpdateOne struct {
 	mutation *PicMutation
 }
 
-// SetUID sets the "uid" field.
-func (puo *PicUpdateOne) SetUID(s string) *PicUpdateOne {
-	puo.mutation.SetUID(s)
-	return puo
-}
-
 // SetUserID sets the "user_id" field.
-func (puo *PicUpdateOne) SetUserID(i int) *PicUpdateOne {
-	puo.mutation.SetUserID(i)
+func (puo *PicUpdateOne) SetUserID(s string) *PicUpdateOne {
+	puo.mutation.SetUserID(s)
 	return puo
 }
 
 // SetNillableUserID sets the "user_id" field if the given value is not nil.
-func (puo *PicUpdateOne) SetNillableUserID(i *int) *PicUpdateOne {
-	if i != nil {
-		puo.SetUserID(*i)
+func (puo *PicUpdateOne) SetNillableUserID(s *string) *PicUpdateOne {
+	if s != nil {
+		puo.SetUserID(*s)
 	}
 	return puo
 }
@@ -390,15 +352,15 @@ func (puo *PicUpdateOne) ClearUserID() *PicUpdateOne {
 }
 
 // SetGroupID sets the "group_id" field.
-func (puo *PicUpdateOne) SetGroupID(i int) *PicUpdateOne {
-	puo.mutation.SetGroupID(i)
+func (puo *PicUpdateOne) SetGroupID(u uuid.UUID) *PicUpdateOne {
+	puo.mutation.SetGroupID(u)
 	return puo
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (puo *PicUpdateOne) SetNillableGroupID(i *int) *PicUpdateOne {
-	if i != nil {
-		puo.SetGroupID(*i)
+func (puo *PicUpdateOne) SetNillableGroupID(u *uuid.UUID) *PicUpdateOne {
+	if u != nil {
+		puo.SetGroupID(*u)
 	}
 	return puo
 }
@@ -415,41 +377,19 @@ func (puo *PicUpdateOne) SetURL(s string) *PicUpdateOne {
 	return puo
 }
 
-// SetCreatedAt sets the "createdAt" field.
-func (puo *PicUpdateOne) SetCreatedAt(t time.Time) *PicUpdateOne {
-	puo.mutation.SetCreatedAt(t)
-	return puo
-}
-
-// SetNillableCreatedAt sets the "createdAt" field if the given value is not nil.
-func (puo *PicUpdateOne) SetNillableCreatedAt(t *time.Time) *PicUpdateOne {
-	if t != nil {
-		puo.SetCreatedAt(*t)
-	}
-	return puo
-}
-
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (puo *PicUpdateOne) SetUpdatedAt(t time.Time) *PicUpdateOne {
 	puo.mutation.SetUpdatedAt(t)
 	return puo
 }
 
-// SetNillableUpdatedAt sets the "updatedAt" field if the given value is not nil.
-func (puo *PicUpdateOne) SetNillableUpdatedAt(t *time.Time) *PicUpdateOne {
-	if t != nil {
-		puo.SetUpdatedAt(*t)
-	}
-	return puo
-}
-
-// SetReadAt sets the "readAt" field.
+// SetReadAt sets the "read_at" field.
 func (puo *PicUpdateOne) SetReadAt(t time.Time) *PicUpdateOne {
 	puo.mutation.SetReadAt(t)
 	return puo
 }
 
-// SetNillableReadAt sets the "readAt" field if the given value is not nil.
+// SetNillableReadAt sets the "read_at" field if the given value is not nil.
 func (puo *PicUpdateOne) SetNillableReadAt(t *time.Time) *PicUpdateOne {
 	if t != nil {
 		puo.SetReadAt(*t)
@@ -497,6 +437,7 @@ func (puo *PicUpdateOne) Save(ctx context.Context) (*Pic, error) {
 		err  error
 		node *Pic
 	)
+	puo.defaults()
 	if len(puo.hooks) == 0 {
 		if err = puo.check(); err != nil {
 			return nil, err
@@ -551,6 +492,14 @@ func (puo *PicUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (puo *PicUpdateOne) defaults() {
+	if _, ok := puo.mutation.UpdatedAt(); !ok {
+		v := pic.UpdateDefaultUpdatedAt()
+		puo.mutation.SetUpdatedAt(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (puo *PicUpdateOne) check() error {
 	if v, ok := puo.mutation.URL(); ok {
@@ -567,7 +516,7 @@ func (puo *PicUpdateOne) sqlSave(ctx context.Context) (_node *Pic, err error) {
 			Table:   pic.Table,
 			Columns: pic.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeUUID,
 				Column: pic.FieldID,
 			},
 		},
@@ -596,25 +545,11 @@ func (puo *PicUpdateOne) sqlSave(ctx context.Context) (_node *Pic, err error) {
 			}
 		}
 	}
-	if value, ok := puo.mutation.UID(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: pic.FieldUID,
-		})
-	}
 	if value, ok := puo.mutation.URL(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  value,
 			Column: pic.FieldURL,
-		})
-	}
-	if value, ok := puo.mutation.CreatedAt(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeTime,
-			Value:  value,
-			Column: pic.FieldCreatedAt,
 		})
 	}
 	if value, ok := puo.mutation.UpdatedAt(); ok {
@@ -640,7 +575,7 @@ func (puo *PicUpdateOne) sqlSave(ctx context.Context) (_node *Pic, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -656,7 +591,7 @@ func (puo *PicUpdateOne) sqlSave(ctx context.Context) (_node *Pic, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -675,7 +610,7 @@ func (puo *PicUpdateOne) sqlSave(ctx context.Context) (_node *Pic, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUUID,
 					Column: group.FieldID,
 				},
 			},
@@ -691,7 +626,7 @@ func (puo *PicUpdateOne) sqlSave(ctx context.Context) (_node *Pic, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUUID,
 					Column: group.FieldID,
 				},
 			},

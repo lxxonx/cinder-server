@@ -7,32 +7,33 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/google/uuid"
 	"github.com/lxxonx/cinder-server/ent/predicate"
 )
 
 // ID filters vertices based on their ID field.
-func ID(id int) predicate.ChatMessage {
+func ID(id uuid.UUID) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
 	})
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id int) predicate.ChatMessage {
+func IDEQ(id uuid.UUID) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
 	})
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id int) predicate.ChatMessage {
+func IDNEQ(id uuid.UUID) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldID), id))
 	})
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...int) predicate.ChatMessage {
+func IDIn(ids ...uuid.UUID) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		// if not arguments were provided, append the FALSE constants,
 		// since we can't apply "IN ()". This will make this predicate falsy.
@@ -49,7 +50,7 @@ func IDIn(ids ...int) predicate.ChatMessage {
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...int) predicate.ChatMessage {
+func IDNotIn(ids ...uuid.UUID) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		// if not arguments were provided, append the FALSE constants,
 		// since we can't apply "IN ()". This will make this predicate falsy.
@@ -66,37 +67,30 @@ func IDNotIn(ids ...int) predicate.ChatMessage {
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id int) predicate.ChatMessage {
+func IDGT(id uuid.UUID) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldID), id))
 	})
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id int) predicate.ChatMessage {
+func IDGTE(id uuid.UUID) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldID), id))
 	})
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id int) predicate.ChatMessage {
+func IDLT(id uuid.UUID) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldID), id))
 	})
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id int) predicate.ChatMessage {
+func IDLTE(id uuid.UUID) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldID), id))
-	})
-}
-
-// UID applies equality check predicate on the "uid" field. It's identical to UIDEQ.
-func UID(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldUID), v))
 	})
 }
 
@@ -108,141 +102,37 @@ func Message(v string) predicate.ChatMessage {
 }
 
 // RoomID applies equality check predicate on the "room_id" field. It's identical to RoomIDEQ.
-func RoomID(v int) predicate.ChatMessage {
+func RoomID(v uuid.UUID) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldRoomID), v))
 	})
 }
 
 // UserID applies equality check predicate on the "user_id" field. It's identical to UserIDEQ.
-func UserID(v int) predicate.ChatMessage {
+func UserID(v string) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldUserID), v))
 	})
 }
 
-// CreatedAt applies equality check predicate on the "createdAt" field. It's identical to CreatedAtEQ.
+// CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldCreatedAt), v))
 	})
 }
 
-// ReadAt applies equality check predicate on the "readAt" field. It's identical to ReadAtEQ.
+// UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
+func UpdatedAt(v time.Time) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldUpdatedAt), v))
+	})
+}
+
+// ReadAt applies equality check predicate on the "read_at" field. It's identical to ReadAtEQ.
 func ReadAt(v time.Time) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldReadAt), v))
-	})
-}
-
-// UIDEQ applies the EQ predicate on the "uid" field.
-func UIDEQ(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldUID), v))
-	})
-}
-
-// UIDNEQ applies the NEQ predicate on the "uid" field.
-func UIDNEQ(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldUID), v))
-	})
-}
-
-// UIDIn applies the In predicate on the "uid" field.
-func UIDIn(vs ...string) predicate.ChatMessage {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
-		s.Where(sql.In(s.C(FieldUID), v...))
-	})
-}
-
-// UIDNotIn applies the NotIn predicate on the "uid" field.
-func UIDNotIn(vs ...string) predicate.ChatMessage {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		// if not arguments were provided, append the FALSE constants,
-		// since we can't apply "IN ()". This will make this predicate falsy.
-		if len(v) == 0 {
-			s.Where(sql.False())
-			return
-		}
-		s.Where(sql.NotIn(s.C(FieldUID), v...))
-	})
-}
-
-// UIDGT applies the GT predicate on the "uid" field.
-func UIDGT(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldUID), v))
-	})
-}
-
-// UIDGTE applies the GTE predicate on the "uid" field.
-func UIDGTE(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldUID), v))
-	})
-}
-
-// UIDLT applies the LT predicate on the "uid" field.
-func UIDLT(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldUID), v))
-	})
-}
-
-// UIDLTE applies the LTE predicate on the "uid" field.
-func UIDLTE(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldUID), v))
-	})
-}
-
-// UIDContains applies the Contains predicate on the "uid" field.
-func UIDContains(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldUID), v))
-	})
-}
-
-// UIDHasPrefix applies the HasPrefix predicate on the "uid" field.
-func UIDHasPrefix(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldUID), v))
-	})
-}
-
-// UIDHasSuffix applies the HasSuffix predicate on the "uid" field.
-func UIDHasSuffix(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldUID), v))
-	})
-}
-
-// UIDEqualFold applies the EqualFold predicate on the "uid" field.
-func UIDEqualFold(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldUID), v))
-	})
-}
-
-// UIDContainsFold applies the ContainsFold predicate on the "uid" field.
-func UIDContainsFold(v string) predicate.ChatMessage {
-	return predicate.ChatMessage(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldUID), v))
 	})
 }
 
@@ -358,21 +248,21 @@ func MessageContainsFold(v string) predicate.ChatMessage {
 }
 
 // RoomIDEQ applies the EQ predicate on the "room_id" field.
-func RoomIDEQ(v int) predicate.ChatMessage {
+func RoomIDEQ(v uuid.UUID) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldRoomID), v))
 	})
 }
 
 // RoomIDNEQ applies the NEQ predicate on the "room_id" field.
-func RoomIDNEQ(v int) predicate.ChatMessage {
+func RoomIDNEQ(v uuid.UUID) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldRoomID), v))
 	})
 }
 
 // RoomIDIn applies the In predicate on the "room_id" field.
-func RoomIDIn(vs ...int) predicate.ChatMessage {
+func RoomIDIn(vs ...uuid.UUID) predicate.ChatMessage {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -389,7 +279,7 @@ func RoomIDIn(vs ...int) predicate.ChatMessage {
 }
 
 // RoomIDNotIn applies the NotIn predicate on the "room_id" field.
-func RoomIDNotIn(vs ...int) predicate.ChatMessage {
+func RoomIDNotIn(vs ...uuid.UUID) predicate.ChatMessage {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -420,21 +310,21 @@ func RoomIDNotNil() predicate.ChatMessage {
 }
 
 // UserIDEQ applies the EQ predicate on the "user_id" field.
-func UserIDEQ(v int) predicate.ChatMessage {
+func UserIDEQ(v string) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldUserID), v))
 	})
 }
 
 // UserIDNEQ applies the NEQ predicate on the "user_id" field.
-func UserIDNEQ(v int) predicate.ChatMessage {
+func UserIDNEQ(v string) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldUserID), v))
 	})
 }
 
 // UserIDIn applies the In predicate on the "user_id" field.
-func UserIDIn(vs ...int) predicate.ChatMessage {
+func UserIDIn(vs ...string) predicate.ChatMessage {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -451,7 +341,7 @@ func UserIDIn(vs ...int) predicate.ChatMessage {
 }
 
 // UserIDNotIn applies the NotIn predicate on the "user_id" field.
-func UserIDNotIn(vs ...int) predicate.ChatMessage {
+func UserIDNotIn(vs ...string) predicate.ChatMessage {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -464,6 +354,55 @@ func UserIDNotIn(vs ...int) predicate.ChatMessage {
 			return
 		}
 		s.Where(sql.NotIn(s.C(FieldUserID), v...))
+	})
+}
+
+// UserIDGT applies the GT predicate on the "user_id" field.
+func UserIDGT(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldUserID), v))
+	})
+}
+
+// UserIDGTE applies the GTE predicate on the "user_id" field.
+func UserIDGTE(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldUserID), v))
+	})
+}
+
+// UserIDLT applies the LT predicate on the "user_id" field.
+func UserIDLT(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldUserID), v))
+	})
+}
+
+// UserIDLTE applies the LTE predicate on the "user_id" field.
+func UserIDLTE(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldUserID), v))
+	})
+}
+
+// UserIDContains applies the Contains predicate on the "user_id" field.
+func UserIDContains(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldUserID), v))
+	})
+}
+
+// UserIDHasPrefix applies the HasPrefix predicate on the "user_id" field.
+func UserIDHasPrefix(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldUserID), v))
+	})
+}
+
+// UserIDHasSuffix applies the HasSuffix predicate on the "user_id" field.
+func UserIDHasSuffix(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldUserID), v))
 	})
 }
 
@@ -481,21 +420,35 @@ func UserIDNotNil() predicate.ChatMessage {
 	})
 }
 
-// CreatedAtEQ applies the EQ predicate on the "createdAt" field.
+// UserIDEqualFold applies the EqualFold predicate on the "user_id" field.
+func UserIDEqualFold(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldUserID), v))
+	})
+}
+
+// UserIDContainsFold applies the ContainsFold predicate on the "user_id" field.
+func UserIDContainsFold(v string) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldUserID), v))
+	})
+}
+
+// CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldCreatedAt), v))
 	})
 }
 
-// CreatedAtNEQ applies the NEQ predicate on the "createdAt" field.
+// CreatedAtNEQ applies the NEQ predicate on the "created_at" field.
 func CreatedAtNEQ(v time.Time) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldCreatedAt), v))
 	})
 }
 
-// CreatedAtIn applies the In predicate on the "createdAt" field.
+// CreatedAtIn applies the In predicate on the "created_at" field.
 func CreatedAtIn(vs ...time.Time) predicate.ChatMessage {
 	v := make([]interface{}, len(vs))
 	for i := range v {
@@ -512,7 +465,7 @@ func CreatedAtIn(vs ...time.Time) predicate.ChatMessage {
 	})
 }
 
-// CreatedAtNotIn applies the NotIn predicate on the "createdAt" field.
+// CreatedAtNotIn applies the NotIn predicate on the "created_at" field.
 func CreatedAtNotIn(vs ...time.Time) predicate.ChatMessage {
 	v := make([]interface{}, len(vs))
 	for i := range v {
@@ -529,49 +482,125 @@ func CreatedAtNotIn(vs ...time.Time) predicate.ChatMessage {
 	})
 }
 
-// CreatedAtGT applies the GT predicate on the "createdAt" field.
+// CreatedAtGT applies the GT predicate on the "created_at" field.
 func CreatedAtGT(v time.Time) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldCreatedAt), v))
 	})
 }
 
-// CreatedAtGTE applies the GTE predicate on the "createdAt" field.
+// CreatedAtGTE applies the GTE predicate on the "created_at" field.
 func CreatedAtGTE(v time.Time) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldCreatedAt), v))
 	})
 }
 
-// CreatedAtLT applies the LT predicate on the "createdAt" field.
+// CreatedAtLT applies the LT predicate on the "created_at" field.
 func CreatedAtLT(v time.Time) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldCreatedAt), v))
 	})
 }
 
-// CreatedAtLTE applies the LTE predicate on the "createdAt" field.
+// CreatedAtLTE applies the LTE predicate on the "created_at" field.
 func CreatedAtLTE(v time.Time) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldCreatedAt), v))
 	})
 }
 
-// ReadAtEQ applies the EQ predicate on the "readAt" field.
+// UpdatedAtEQ applies the EQ predicate on the "updated_at" field.
+func UpdatedAtEQ(v time.Time) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldUpdatedAt), v))
+	})
+}
+
+// UpdatedAtNEQ applies the NEQ predicate on the "updated_at" field.
+func UpdatedAtNEQ(v time.Time) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldUpdatedAt), v))
+	})
+}
+
+// UpdatedAtIn applies the In predicate on the "updated_at" field.
+func UpdatedAtIn(vs ...time.Time) predicate.ChatMessage {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldUpdatedAt), v...))
+	})
+}
+
+// UpdatedAtNotIn applies the NotIn predicate on the "updated_at" field.
+func UpdatedAtNotIn(vs ...time.Time) predicate.ChatMessage {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldUpdatedAt), v...))
+	})
+}
+
+// UpdatedAtGT applies the GT predicate on the "updated_at" field.
+func UpdatedAtGT(v time.Time) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldUpdatedAt), v))
+	})
+}
+
+// UpdatedAtGTE applies the GTE predicate on the "updated_at" field.
+func UpdatedAtGTE(v time.Time) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldUpdatedAt), v))
+	})
+}
+
+// UpdatedAtLT applies the LT predicate on the "updated_at" field.
+func UpdatedAtLT(v time.Time) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldUpdatedAt), v))
+	})
+}
+
+// UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
+func UpdatedAtLTE(v time.Time) predicate.ChatMessage {
+	return predicate.ChatMessage(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldUpdatedAt), v))
+	})
+}
+
+// ReadAtEQ applies the EQ predicate on the "read_at" field.
 func ReadAtEQ(v time.Time) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldReadAt), v))
 	})
 }
 
-// ReadAtNEQ applies the NEQ predicate on the "readAt" field.
+// ReadAtNEQ applies the NEQ predicate on the "read_at" field.
 func ReadAtNEQ(v time.Time) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldReadAt), v))
 	})
 }
 
-// ReadAtIn applies the In predicate on the "readAt" field.
+// ReadAtIn applies the In predicate on the "read_at" field.
 func ReadAtIn(vs ...time.Time) predicate.ChatMessage {
 	v := make([]interface{}, len(vs))
 	for i := range v {
@@ -588,7 +617,7 @@ func ReadAtIn(vs ...time.Time) predicate.ChatMessage {
 	})
 }
 
-// ReadAtNotIn applies the NotIn predicate on the "readAt" field.
+// ReadAtNotIn applies the NotIn predicate on the "read_at" field.
 func ReadAtNotIn(vs ...time.Time) predicate.ChatMessage {
 	v := make([]interface{}, len(vs))
 	for i := range v {
@@ -605,28 +634,28 @@ func ReadAtNotIn(vs ...time.Time) predicate.ChatMessage {
 	})
 }
 
-// ReadAtGT applies the GT predicate on the "readAt" field.
+// ReadAtGT applies the GT predicate on the "read_at" field.
 func ReadAtGT(v time.Time) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldReadAt), v))
 	})
 }
 
-// ReadAtGTE applies the GTE predicate on the "readAt" field.
+// ReadAtGTE applies the GTE predicate on the "read_at" field.
 func ReadAtGTE(v time.Time) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldReadAt), v))
 	})
 }
 
-// ReadAtLT applies the LT predicate on the "readAt" field.
+// ReadAtLT applies the LT predicate on the "read_at" field.
 func ReadAtLT(v time.Time) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldReadAt), v))
 	})
 }
 
-// ReadAtLTE applies the LTE predicate on the "readAt" field.
+// ReadAtLTE applies the LTE predicate on the "read_at" field.
 func ReadAtLTE(v time.Time) predicate.ChatMessage {
 	return predicate.ChatMessage(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldReadAt), v))

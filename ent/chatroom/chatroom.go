@@ -4,20 +4,20 @@ package chatroom
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const (
 	// Label holds the string label denoting the chatroom type in the database.
 	Label = "chat_room"
 	// FieldID holds the string denoting the id field in the database.
-	FieldID = "id"
-	// FieldUID holds the string denoting the uid field in the database.
-	FieldUID = "uid"
-	// FieldCreatedAt holds the string denoting the createdat field in the database.
+	FieldID = "uid"
+	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
-	// FieldUpdatedAt holds the string denoting the updatedat field in the database.
+	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
-	// FieldReadAt holds the string denoting the readat field in the database.
+	// FieldReadAt holds the string denoting the read_at field in the database.
 	FieldReadAt = "read_at"
 	// EdgeParticipants holds the string denoting the participants edge name in mutations.
 	EdgeParticipants = "participants"
@@ -42,7 +42,6 @@ const (
 // Columns holds all SQL columns for chatroom fields.
 var Columns = []string{
 	FieldID,
-	FieldUID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldReadAt,
@@ -65,10 +64,14 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// DefaultCreatedAt holds the default value on creation for the "createdAt" field.
+	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
-	// DefaultUpdatedAt holds the default value on creation for the "updatedAt" field.
+	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
 	DefaultUpdatedAt func() time.Time
-	// DefaultReadAt holds the default value on creation for the "readAt" field.
+	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
+	UpdateDefaultUpdatedAt func() time.Time
+	// DefaultReadAt holds the default value on creation for the "read_at" field.
 	DefaultReadAt func() time.Time
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() uuid.UUID
 )

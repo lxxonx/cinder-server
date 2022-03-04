@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/lxxonx/cinder-server/ent/chatmessage"
 	"github.com/lxxonx/cinder-server/ent/chatroom"
 	"github.com/lxxonx/cinder-server/ent/group"
@@ -40,15 +41,15 @@ type ChatMessageMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *int
-	uid           *string
+	id            *uuid.UUID
 	message       *string
-	createdAt     *time.Time
-	readAt        *time.Time
+	created_at    *time.Time
+	updated_at    *time.Time
+	read_at       *time.Time
 	clearedFields map[string]struct{}
-	user          *int
+	user          *string
 	cleareduser   bool
-	room          *int
+	room          *uuid.UUID
 	clearedroom   bool
 	done          bool
 	oldValue      func(context.Context) (*ChatMessage, error)
@@ -75,7 +76,7 @@ func newChatMessageMutation(c config, op Op, opts ...chatmessageOption) *ChatMes
 }
 
 // withChatMessageID sets the ID field of the mutation.
-func withChatMessageID(id int) chatmessageOption {
+func withChatMessageID(id uuid.UUID) chatmessageOption {
 	return func(m *ChatMessageMutation) {
 		var (
 			err   error
@@ -125,9 +126,15 @@ func (m ChatMessageMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of ChatMessage entities.
+func (m *ChatMessageMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *ChatMessageMutation) ID() (id int, exists bool) {
+func (m *ChatMessageMutation) ID() (id uuid.UUID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -138,12 +145,12 @@ func (m *ChatMessageMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *ChatMessageMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *ChatMessageMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []uuid.UUID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -151,42 +158,6 @@ func (m *ChatMessageMutation) IDs(ctx context.Context) ([]int, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
-}
-
-// SetUID sets the "uid" field.
-func (m *ChatMessageMutation) SetUID(s string) {
-	m.uid = &s
-}
-
-// UID returns the value of the "uid" field in the mutation.
-func (m *ChatMessageMutation) UID() (r string, exists bool) {
-	v := m.uid
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldUID returns the old "uid" field's value of the ChatMessage entity.
-// If the ChatMessage object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ChatMessageMutation) OldUID(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldUID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldUID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUID: %w", err)
-	}
-	return oldValue.UID, nil
-}
-
-// ResetUID resets all changes to the "uid" field.
-func (m *ChatMessageMutation) ResetUID() {
-	m.uid = nil
 }
 
 // SetMessage sets the "message" field.
@@ -226,12 +197,12 @@ func (m *ChatMessageMutation) ResetMessage() {
 }
 
 // SetRoomID sets the "room_id" field.
-func (m *ChatMessageMutation) SetRoomID(i int) {
-	m.room = &i
+func (m *ChatMessageMutation) SetRoomID(u uuid.UUID) {
+	m.room = &u
 }
 
 // RoomID returns the value of the "room_id" field in the mutation.
-func (m *ChatMessageMutation) RoomID() (r int, exists bool) {
+func (m *ChatMessageMutation) RoomID() (r uuid.UUID, exists bool) {
 	v := m.room
 	if v == nil {
 		return
@@ -242,7 +213,7 @@ func (m *ChatMessageMutation) RoomID() (r int, exists bool) {
 // OldRoomID returns the old "room_id" field's value of the ChatMessage entity.
 // If the ChatMessage object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ChatMessageMutation) OldRoomID(ctx context.Context) (v int, err error) {
+func (m *ChatMessageMutation) OldRoomID(ctx context.Context) (v uuid.UUID, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldRoomID is only allowed on UpdateOne operations")
 	}
@@ -275,12 +246,12 @@ func (m *ChatMessageMutation) ResetRoomID() {
 }
 
 // SetUserID sets the "user_id" field.
-func (m *ChatMessageMutation) SetUserID(i int) {
-	m.user = &i
+func (m *ChatMessageMutation) SetUserID(s string) {
+	m.user = &s
 }
 
 // UserID returns the value of the "user_id" field in the mutation.
-func (m *ChatMessageMutation) UserID() (r int, exists bool) {
+func (m *ChatMessageMutation) UserID() (r string, exists bool) {
 	v := m.user
 	if v == nil {
 		return
@@ -291,7 +262,7 @@ func (m *ChatMessageMutation) UserID() (r int, exists bool) {
 // OldUserID returns the old "user_id" field's value of the ChatMessage entity.
 // If the ChatMessage object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ChatMessageMutation) OldUserID(ctx context.Context) (v int, err error) {
+func (m *ChatMessageMutation) OldUserID(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
 	}
@@ -323,21 +294,21 @@ func (m *ChatMessageMutation) ResetUserID() {
 	delete(m.clearedFields, chatmessage.FieldUserID)
 }
 
-// SetCreatedAt sets the "createdAt" field.
+// SetCreatedAt sets the "created_at" field.
 func (m *ChatMessageMutation) SetCreatedAt(t time.Time) {
-	m.createdAt = &t
+	m.created_at = &t
 }
 
-// CreatedAt returns the value of the "createdAt" field in the mutation.
+// CreatedAt returns the value of the "created_at" field in the mutation.
 func (m *ChatMessageMutation) CreatedAt() (r time.Time, exists bool) {
-	v := m.createdAt
+	v := m.created_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldCreatedAt returns the old "createdAt" field's value of the ChatMessage entity.
+// OldCreatedAt returns the old "created_at" field's value of the ChatMessage entity.
 // If the ChatMessage object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *ChatMessageMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
@@ -354,26 +325,62 @@ func (m *ChatMessageMutation) OldCreatedAt(ctx context.Context) (v time.Time, er
 	return oldValue.CreatedAt, nil
 }
 
-// ResetCreatedAt resets all changes to the "createdAt" field.
+// ResetCreatedAt resets all changes to the "created_at" field.
 func (m *ChatMessageMutation) ResetCreatedAt() {
-	m.createdAt = nil
+	m.created_at = nil
 }
 
-// SetReadAt sets the "readAt" field.
-func (m *ChatMessageMutation) SetReadAt(t time.Time) {
-	m.readAt = &t
+// SetUpdatedAt sets the "updated_at" field.
+func (m *ChatMessageMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
 }
 
-// ReadAt returns the value of the "readAt" field in the mutation.
-func (m *ChatMessageMutation) ReadAt() (r time.Time, exists bool) {
-	v := m.readAt
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *ChatMessageMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldReadAt returns the old "readAt" field's value of the ChatMessage entity.
+// OldUpdatedAt returns the old "updated_at" field's value of the ChatMessage entity.
+// If the ChatMessage object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChatMessageMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *ChatMessageMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetReadAt sets the "read_at" field.
+func (m *ChatMessageMutation) SetReadAt(t time.Time) {
+	m.read_at = &t
+}
+
+// ReadAt returns the value of the "read_at" field in the mutation.
+func (m *ChatMessageMutation) ReadAt() (r time.Time, exists bool) {
+	v := m.read_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReadAt returns the old "read_at" field's value of the ChatMessage entity.
 // If the ChatMessage object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *ChatMessageMutation) OldReadAt(ctx context.Context) (v time.Time, err error) {
@@ -390,9 +397,9 @@ func (m *ChatMessageMutation) OldReadAt(ctx context.Context) (v time.Time, err e
 	return oldValue.ReadAt, nil
 }
 
-// ResetReadAt resets all changes to the "readAt" field.
+// ResetReadAt resets all changes to the "read_at" field.
 func (m *ChatMessageMutation) ResetReadAt() {
-	m.readAt = nil
+	m.read_at = nil
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -408,7 +415,7 @@ func (m *ChatMessageMutation) UserCleared() bool {
 // UserIDs returns the "user" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // UserID instead. It exists only for internal usage by the builders.
-func (m *ChatMessageMutation) UserIDs() (ids []int) {
+func (m *ChatMessageMutation) UserIDs() (ids []string) {
 	if id := m.user; id != nil {
 		ids = append(ids, *id)
 	}
@@ -434,7 +441,7 @@ func (m *ChatMessageMutation) RoomCleared() bool {
 // RoomIDs returns the "room" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // RoomID instead. It exists only for internal usage by the builders.
-func (m *ChatMessageMutation) RoomIDs() (ids []int) {
+func (m *ChatMessageMutation) RoomIDs() (ids []uuid.UUID) {
 	if id := m.room; id != nil {
 		ids = append(ids, *id)
 	}
@@ -467,9 +474,6 @@ func (m *ChatMessageMutation) Type() string {
 // AddedFields().
 func (m *ChatMessageMutation) Fields() []string {
 	fields := make([]string, 0, 6)
-	if m.uid != nil {
-		fields = append(fields, chatmessage.FieldUID)
-	}
 	if m.message != nil {
 		fields = append(fields, chatmessage.FieldMessage)
 	}
@@ -479,10 +483,13 @@ func (m *ChatMessageMutation) Fields() []string {
 	if m.user != nil {
 		fields = append(fields, chatmessage.FieldUserID)
 	}
-	if m.createdAt != nil {
+	if m.created_at != nil {
 		fields = append(fields, chatmessage.FieldCreatedAt)
 	}
-	if m.readAt != nil {
+	if m.updated_at != nil {
+		fields = append(fields, chatmessage.FieldUpdatedAt)
+	}
+	if m.read_at != nil {
 		fields = append(fields, chatmessage.FieldReadAt)
 	}
 	return fields
@@ -493,8 +500,6 @@ func (m *ChatMessageMutation) Fields() []string {
 // schema.
 func (m *ChatMessageMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case chatmessage.FieldUID:
-		return m.UID()
 	case chatmessage.FieldMessage:
 		return m.Message()
 	case chatmessage.FieldRoomID:
@@ -503,6 +508,8 @@ func (m *ChatMessageMutation) Field(name string) (ent.Value, bool) {
 		return m.UserID()
 	case chatmessage.FieldCreatedAt:
 		return m.CreatedAt()
+	case chatmessage.FieldUpdatedAt:
+		return m.UpdatedAt()
 	case chatmessage.FieldReadAt:
 		return m.ReadAt()
 	}
@@ -514,8 +521,6 @@ func (m *ChatMessageMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *ChatMessageMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case chatmessage.FieldUID:
-		return m.OldUID(ctx)
 	case chatmessage.FieldMessage:
 		return m.OldMessage(ctx)
 	case chatmessage.FieldRoomID:
@@ -524,6 +529,8 @@ func (m *ChatMessageMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldUserID(ctx)
 	case chatmessage.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
+	case chatmessage.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
 	case chatmessage.FieldReadAt:
 		return m.OldReadAt(ctx)
 	}
@@ -535,13 +542,6 @@ func (m *ChatMessageMutation) OldField(ctx context.Context, name string) (ent.Va
 // type.
 func (m *ChatMessageMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case chatmessage.FieldUID:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetUID(v)
-		return nil
 	case chatmessage.FieldMessage:
 		v, ok := value.(string)
 		if !ok {
@@ -550,14 +550,14 @@ func (m *ChatMessageMutation) SetField(name string, value ent.Value) error {
 		m.SetMessage(v)
 		return nil
 	case chatmessage.FieldRoomID:
-		v, ok := value.(int)
+		v, ok := value.(uuid.UUID)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetRoomID(v)
 		return nil
 	case chatmessage.FieldUserID:
-		v, ok := value.(int)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -569,6 +569,13 @@ func (m *ChatMessageMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCreatedAt(v)
+		return nil
+	case chatmessage.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
 		return nil
 	case chatmessage.FieldReadAt:
 		v, ok := value.(time.Time)
@@ -584,16 +591,13 @@ func (m *ChatMessageMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *ChatMessageMutation) AddedFields() []string {
-	var fields []string
-	return fields
+	return nil
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *ChatMessageMutation) AddedField(name string) (ent.Value, bool) {
-	switch name {
-	}
 	return nil, false
 }
 
@@ -644,9 +648,6 @@ func (m *ChatMessageMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *ChatMessageMutation) ResetField(name string) error {
 	switch name {
-	case chatmessage.FieldUID:
-		m.ResetUID()
-		return nil
 	case chatmessage.FieldMessage:
 		m.ResetMessage()
 		return nil
@@ -658,6 +659,9 @@ func (m *ChatMessageMutation) ResetField(name string) error {
 		return nil
 	case chatmessage.FieldCreatedAt:
 		m.ResetCreatedAt()
+		return nil
+	case chatmessage.FieldUpdatedAt:
+		m.ResetUpdatedAt()
 		return nil
 	case chatmessage.FieldReadAt:
 		m.ResetReadAt()
@@ -765,17 +769,16 @@ type ChatRoomMutation struct {
 	config
 	op                  Op
 	typ                 string
-	id                  *int
-	uid                 *string
-	createdAt           *time.Time
-	updatedAt           *time.Time
-	readAt              *time.Time
+	id                  *uuid.UUID
+	created_at          *time.Time
+	updated_at          *time.Time
+	read_at             *time.Time
 	clearedFields       map[string]struct{}
-	participants        map[int]struct{}
-	removedparticipants map[int]struct{}
+	participants        map[string]struct{}
+	removedparticipants map[string]struct{}
 	clearedparticipants bool
-	messages            map[int]struct{}
-	removedmessages     map[int]struct{}
+	messages            map[uuid.UUID]struct{}
+	removedmessages     map[uuid.UUID]struct{}
 	clearedmessages     bool
 	done                bool
 	oldValue            func(context.Context) (*ChatRoom, error)
@@ -802,7 +805,7 @@ func newChatRoomMutation(c config, op Op, opts ...chatroomOption) *ChatRoomMutat
 }
 
 // withChatRoomID sets the ID field of the mutation.
-func withChatRoomID(id int) chatroomOption {
+func withChatRoomID(id uuid.UUID) chatroomOption {
 	return func(m *ChatRoomMutation) {
 		var (
 			err   error
@@ -852,9 +855,15 @@ func (m ChatRoomMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of ChatRoom entities.
+func (m *ChatRoomMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *ChatRoomMutation) ID() (id int, exists bool) {
+func (m *ChatRoomMutation) ID() (id uuid.UUID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -865,12 +874,12 @@ func (m *ChatRoomMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *ChatRoomMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *ChatRoomMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []uuid.UUID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -880,57 +889,21 @@ func (m *ChatRoomMutation) IDs(ctx context.Context) ([]int, error) {
 	}
 }
 
-// SetUID sets the "uid" field.
-func (m *ChatRoomMutation) SetUID(s string) {
-	m.uid = &s
-}
-
-// UID returns the value of the "uid" field in the mutation.
-func (m *ChatRoomMutation) UID() (r string, exists bool) {
-	v := m.uid
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldUID returns the old "uid" field's value of the ChatRoom entity.
-// If the ChatRoom object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ChatRoomMutation) OldUID(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldUID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldUID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUID: %w", err)
-	}
-	return oldValue.UID, nil
-}
-
-// ResetUID resets all changes to the "uid" field.
-func (m *ChatRoomMutation) ResetUID() {
-	m.uid = nil
-}
-
-// SetCreatedAt sets the "createdAt" field.
+// SetCreatedAt sets the "created_at" field.
 func (m *ChatRoomMutation) SetCreatedAt(t time.Time) {
-	m.createdAt = &t
+	m.created_at = &t
 }
 
-// CreatedAt returns the value of the "createdAt" field in the mutation.
+// CreatedAt returns the value of the "created_at" field in the mutation.
 func (m *ChatRoomMutation) CreatedAt() (r time.Time, exists bool) {
-	v := m.createdAt
+	v := m.created_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldCreatedAt returns the old "createdAt" field's value of the ChatRoom entity.
+// OldCreatedAt returns the old "created_at" field's value of the ChatRoom entity.
 // If the ChatRoom object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *ChatRoomMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
@@ -947,26 +920,26 @@ func (m *ChatRoomMutation) OldCreatedAt(ctx context.Context) (v time.Time, err e
 	return oldValue.CreatedAt, nil
 }
 
-// ResetCreatedAt resets all changes to the "createdAt" field.
+// ResetCreatedAt resets all changes to the "created_at" field.
 func (m *ChatRoomMutation) ResetCreatedAt() {
-	m.createdAt = nil
+	m.created_at = nil
 }
 
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (m *ChatRoomMutation) SetUpdatedAt(t time.Time) {
-	m.updatedAt = &t
+	m.updated_at = &t
 }
 
-// UpdatedAt returns the value of the "updatedAt" field in the mutation.
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
 func (m *ChatRoomMutation) UpdatedAt() (r time.Time, exists bool) {
-	v := m.updatedAt
+	v := m.updated_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldUpdatedAt returns the old "updatedAt" field's value of the ChatRoom entity.
+// OldUpdatedAt returns the old "updated_at" field's value of the ChatRoom entity.
 // If the ChatRoom object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *ChatRoomMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
@@ -983,26 +956,26 @@ func (m *ChatRoomMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err e
 	return oldValue.UpdatedAt, nil
 }
 
-// ResetUpdatedAt resets all changes to the "updatedAt" field.
+// ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *ChatRoomMutation) ResetUpdatedAt() {
-	m.updatedAt = nil
+	m.updated_at = nil
 }
 
-// SetReadAt sets the "readAt" field.
+// SetReadAt sets the "read_at" field.
 func (m *ChatRoomMutation) SetReadAt(t time.Time) {
-	m.readAt = &t
+	m.read_at = &t
 }
 
-// ReadAt returns the value of the "readAt" field in the mutation.
+// ReadAt returns the value of the "read_at" field in the mutation.
 func (m *ChatRoomMutation) ReadAt() (r time.Time, exists bool) {
-	v := m.readAt
+	v := m.read_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldReadAt returns the old "readAt" field's value of the ChatRoom entity.
+// OldReadAt returns the old "read_at" field's value of the ChatRoom entity.
 // If the ChatRoom object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *ChatRoomMutation) OldReadAt(ctx context.Context) (v time.Time, err error) {
@@ -1019,15 +992,15 @@ func (m *ChatRoomMutation) OldReadAt(ctx context.Context) (v time.Time, err erro
 	return oldValue.ReadAt, nil
 }
 
-// ResetReadAt resets all changes to the "readAt" field.
+// ResetReadAt resets all changes to the "read_at" field.
 func (m *ChatRoomMutation) ResetReadAt() {
-	m.readAt = nil
+	m.read_at = nil
 }
 
 // AddParticipantIDs adds the "participants" edge to the User entity by ids.
-func (m *ChatRoomMutation) AddParticipantIDs(ids ...int) {
+func (m *ChatRoomMutation) AddParticipantIDs(ids ...string) {
 	if m.participants == nil {
-		m.participants = make(map[int]struct{})
+		m.participants = make(map[string]struct{})
 	}
 	for i := range ids {
 		m.participants[ids[i]] = struct{}{}
@@ -1045,9 +1018,9 @@ func (m *ChatRoomMutation) ParticipantsCleared() bool {
 }
 
 // RemoveParticipantIDs removes the "participants" edge to the User entity by IDs.
-func (m *ChatRoomMutation) RemoveParticipantIDs(ids ...int) {
+func (m *ChatRoomMutation) RemoveParticipantIDs(ids ...string) {
 	if m.removedparticipants == nil {
-		m.removedparticipants = make(map[int]struct{})
+		m.removedparticipants = make(map[string]struct{})
 	}
 	for i := range ids {
 		delete(m.participants, ids[i])
@@ -1056,7 +1029,7 @@ func (m *ChatRoomMutation) RemoveParticipantIDs(ids ...int) {
 }
 
 // RemovedParticipants returns the removed IDs of the "participants" edge to the User entity.
-func (m *ChatRoomMutation) RemovedParticipantsIDs() (ids []int) {
+func (m *ChatRoomMutation) RemovedParticipantsIDs() (ids []string) {
 	for id := range m.removedparticipants {
 		ids = append(ids, id)
 	}
@@ -1064,7 +1037,7 @@ func (m *ChatRoomMutation) RemovedParticipantsIDs() (ids []int) {
 }
 
 // ParticipantsIDs returns the "participants" edge IDs in the mutation.
-func (m *ChatRoomMutation) ParticipantsIDs() (ids []int) {
+func (m *ChatRoomMutation) ParticipantsIDs() (ids []string) {
 	for id := range m.participants {
 		ids = append(ids, id)
 	}
@@ -1079,9 +1052,9 @@ func (m *ChatRoomMutation) ResetParticipants() {
 }
 
 // AddMessageIDs adds the "messages" edge to the ChatMessage entity by ids.
-func (m *ChatRoomMutation) AddMessageIDs(ids ...int) {
+func (m *ChatRoomMutation) AddMessageIDs(ids ...uuid.UUID) {
 	if m.messages == nil {
-		m.messages = make(map[int]struct{})
+		m.messages = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		m.messages[ids[i]] = struct{}{}
@@ -1099,9 +1072,9 @@ func (m *ChatRoomMutation) MessagesCleared() bool {
 }
 
 // RemoveMessageIDs removes the "messages" edge to the ChatMessage entity by IDs.
-func (m *ChatRoomMutation) RemoveMessageIDs(ids ...int) {
+func (m *ChatRoomMutation) RemoveMessageIDs(ids ...uuid.UUID) {
 	if m.removedmessages == nil {
-		m.removedmessages = make(map[int]struct{})
+		m.removedmessages = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		delete(m.messages, ids[i])
@@ -1110,7 +1083,7 @@ func (m *ChatRoomMutation) RemoveMessageIDs(ids ...int) {
 }
 
 // RemovedMessages returns the removed IDs of the "messages" edge to the ChatMessage entity.
-func (m *ChatRoomMutation) RemovedMessagesIDs() (ids []int) {
+func (m *ChatRoomMutation) RemovedMessagesIDs() (ids []uuid.UUID) {
 	for id := range m.removedmessages {
 		ids = append(ids, id)
 	}
@@ -1118,7 +1091,7 @@ func (m *ChatRoomMutation) RemovedMessagesIDs() (ids []int) {
 }
 
 // MessagesIDs returns the "messages" edge IDs in the mutation.
-func (m *ChatRoomMutation) MessagesIDs() (ids []int) {
+func (m *ChatRoomMutation) MessagesIDs() (ids []uuid.UUID) {
 	for id := range m.messages {
 		ids = append(ids, id)
 	}
@@ -1151,17 +1124,14 @@ func (m *ChatRoomMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ChatRoomMutation) Fields() []string {
-	fields := make([]string, 0, 4)
-	if m.uid != nil {
-		fields = append(fields, chatroom.FieldUID)
-	}
-	if m.createdAt != nil {
+	fields := make([]string, 0, 3)
+	if m.created_at != nil {
 		fields = append(fields, chatroom.FieldCreatedAt)
 	}
-	if m.updatedAt != nil {
+	if m.updated_at != nil {
 		fields = append(fields, chatroom.FieldUpdatedAt)
 	}
-	if m.readAt != nil {
+	if m.read_at != nil {
 		fields = append(fields, chatroom.FieldReadAt)
 	}
 	return fields
@@ -1172,8 +1142,6 @@ func (m *ChatRoomMutation) Fields() []string {
 // schema.
 func (m *ChatRoomMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case chatroom.FieldUID:
-		return m.UID()
 	case chatroom.FieldCreatedAt:
 		return m.CreatedAt()
 	case chatroom.FieldUpdatedAt:
@@ -1189,8 +1157,6 @@ func (m *ChatRoomMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *ChatRoomMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case chatroom.FieldUID:
-		return m.OldUID(ctx)
 	case chatroom.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case chatroom.FieldUpdatedAt:
@@ -1206,13 +1172,6 @@ func (m *ChatRoomMutation) OldField(ctx context.Context, name string) (ent.Value
 // type.
 func (m *ChatRoomMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case chatroom.FieldUID:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetUID(v)
-		return nil
 	case chatroom.FieldCreatedAt:
 		v, ok := value.(time.Time)
 		if !ok {
@@ -1283,9 +1242,6 @@ func (m *ChatRoomMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *ChatRoomMutation) ResetField(name string) error {
 	switch name {
-	case chatroom.FieldUID:
-		m.ResetUID()
-		return nil
 	case chatroom.FieldCreatedAt:
 		m.ResetCreatedAt()
 		return nil
@@ -1414,31 +1370,30 @@ type GroupMutation struct {
 	config
 	op                     Op
 	typ                    string
-	id                     *int
-	uid                    *string
+	id                     *uuid.UUID
 	groupname              *string
 	bio                    *string
-	createdAt              *time.Time
-	updatedAt              *time.Time
-	readAt                 *time.Time
+	created_at             *time.Time
+	updated_at             *time.Time
+	read_at                *time.Time
 	clearedFields          map[string]struct{}
-	members                map[int]struct{}
-	removedmembers         map[int]struct{}
+	members                map[string]struct{}
+	removedmembers         map[string]struct{}
 	clearedmembers         bool
-	like_from_user         map[int]struct{}
-	removedlike_from_user  map[int]struct{}
+	like_from_user         map[string]struct{}
+	removedlike_from_user  map[string]struct{}
 	clearedlike_from_user  bool
-	saved                  map[int]struct{}
-	removedsaved           map[int]struct{}
+	saved                  map[string]struct{}
+	removedsaved           map[string]struct{}
 	clearedsaved           bool
-	like_from_group        map[int]struct{}
-	removedlike_from_group map[int]struct{}
+	like_from_group        map[uuid.UUID]struct{}
+	removedlike_from_group map[uuid.UUID]struct{}
 	clearedlike_from_group bool
-	like_to                map[int]struct{}
-	removedlike_to         map[int]struct{}
+	like_to                map[uuid.UUID]struct{}
+	removedlike_to         map[uuid.UUID]struct{}
 	clearedlike_to         bool
-	pics                   map[int]struct{}
-	removedpics            map[int]struct{}
+	pics                   map[uuid.UUID]struct{}
+	removedpics            map[uuid.UUID]struct{}
 	clearedpics            bool
 	done                   bool
 	oldValue               func(context.Context) (*Group, error)
@@ -1465,7 +1420,7 @@ func newGroupMutation(c config, op Op, opts ...groupOption) *GroupMutation {
 }
 
 // withGroupID sets the ID field of the mutation.
-func withGroupID(id int) groupOption {
+func withGroupID(id uuid.UUID) groupOption {
 	return func(m *GroupMutation) {
 		var (
 			err   error
@@ -1515,9 +1470,15 @@ func (m GroupMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Group entities.
+func (m *GroupMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *GroupMutation) ID() (id int, exists bool) {
+func (m *GroupMutation) ID() (id uuid.UUID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -1528,12 +1489,12 @@ func (m *GroupMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *GroupMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *GroupMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []uuid.UUID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -1541,42 +1502,6 @@ func (m *GroupMutation) IDs(ctx context.Context) ([]int, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
-}
-
-// SetUID sets the "uid" field.
-func (m *GroupMutation) SetUID(s string) {
-	m.uid = &s
-}
-
-// UID returns the value of the "uid" field in the mutation.
-func (m *GroupMutation) UID() (r string, exists bool) {
-	v := m.uid
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldUID returns the old "uid" field's value of the Group entity.
-// If the Group object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GroupMutation) OldUID(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldUID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldUID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUID: %w", err)
-	}
-	return oldValue.UID, nil
-}
-
-// ResetUID resets all changes to the "uid" field.
-func (m *GroupMutation) ResetUID() {
-	m.uid = nil
 }
 
 // SetGroupname sets the "groupname" field.
@@ -1651,21 +1576,21 @@ func (m *GroupMutation) ResetBio() {
 	m.bio = nil
 }
 
-// SetCreatedAt sets the "createdAt" field.
+// SetCreatedAt sets the "created_at" field.
 func (m *GroupMutation) SetCreatedAt(t time.Time) {
-	m.createdAt = &t
+	m.created_at = &t
 }
 
-// CreatedAt returns the value of the "createdAt" field in the mutation.
+// CreatedAt returns the value of the "created_at" field in the mutation.
 func (m *GroupMutation) CreatedAt() (r time.Time, exists bool) {
-	v := m.createdAt
+	v := m.created_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldCreatedAt returns the old "createdAt" field's value of the Group entity.
+// OldCreatedAt returns the old "created_at" field's value of the Group entity.
 // If the Group object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *GroupMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
@@ -1682,26 +1607,26 @@ func (m *GroupMutation) OldCreatedAt(ctx context.Context) (v time.Time, err erro
 	return oldValue.CreatedAt, nil
 }
 
-// ResetCreatedAt resets all changes to the "createdAt" field.
+// ResetCreatedAt resets all changes to the "created_at" field.
 func (m *GroupMutation) ResetCreatedAt() {
-	m.createdAt = nil
+	m.created_at = nil
 }
 
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (m *GroupMutation) SetUpdatedAt(t time.Time) {
-	m.updatedAt = &t
+	m.updated_at = &t
 }
 
-// UpdatedAt returns the value of the "updatedAt" field in the mutation.
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
 func (m *GroupMutation) UpdatedAt() (r time.Time, exists bool) {
-	v := m.updatedAt
+	v := m.updated_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldUpdatedAt returns the old "updatedAt" field's value of the Group entity.
+// OldUpdatedAt returns the old "updated_at" field's value of the Group entity.
 // If the Group object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *GroupMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
@@ -1718,26 +1643,26 @@ func (m *GroupMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err erro
 	return oldValue.UpdatedAt, nil
 }
 
-// ResetUpdatedAt resets all changes to the "updatedAt" field.
+// ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *GroupMutation) ResetUpdatedAt() {
-	m.updatedAt = nil
+	m.updated_at = nil
 }
 
-// SetReadAt sets the "readAt" field.
+// SetReadAt sets the "read_at" field.
 func (m *GroupMutation) SetReadAt(t time.Time) {
-	m.readAt = &t
+	m.read_at = &t
 }
 
-// ReadAt returns the value of the "readAt" field in the mutation.
+// ReadAt returns the value of the "read_at" field in the mutation.
 func (m *GroupMutation) ReadAt() (r time.Time, exists bool) {
-	v := m.readAt
+	v := m.read_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldReadAt returns the old "readAt" field's value of the Group entity.
+// OldReadAt returns the old "read_at" field's value of the Group entity.
 // If the Group object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *GroupMutation) OldReadAt(ctx context.Context) (v time.Time, err error) {
@@ -1754,15 +1679,15 @@ func (m *GroupMutation) OldReadAt(ctx context.Context) (v time.Time, err error) 
 	return oldValue.ReadAt, nil
 }
 
-// ResetReadAt resets all changes to the "readAt" field.
+// ResetReadAt resets all changes to the "read_at" field.
 func (m *GroupMutation) ResetReadAt() {
-	m.readAt = nil
+	m.read_at = nil
 }
 
 // AddMemberIDs adds the "members" edge to the User entity by ids.
-func (m *GroupMutation) AddMemberIDs(ids ...int) {
+func (m *GroupMutation) AddMemberIDs(ids ...string) {
 	if m.members == nil {
-		m.members = make(map[int]struct{})
+		m.members = make(map[string]struct{})
 	}
 	for i := range ids {
 		m.members[ids[i]] = struct{}{}
@@ -1780,9 +1705,9 @@ func (m *GroupMutation) MembersCleared() bool {
 }
 
 // RemoveMemberIDs removes the "members" edge to the User entity by IDs.
-func (m *GroupMutation) RemoveMemberIDs(ids ...int) {
+func (m *GroupMutation) RemoveMemberIDs(ids ...string) {
 	if m.removedmembers == nil {
-		m.removedmembers = make(map[int]struct{})
+		m.removedmembers = make(map[string]struct{})
 	}
 	for i := range ids {
 		delete(m.members, ids[i])
@@ -1791,7 +1716,7 @@ func (m *GroupMutation) RemoveMemberIDs(ids ...int) {
 }
 
 // RemovedMembers returns the removed IDs of the "members" edge to the User entity.
-func (m *GroupMutation) RemovedMembersIDs() (ids []int) {
+func (m *GroupMutation) RemovedMembersIDs() (ids []string) {
 	for id := range m.removedmembers {
 		ids = append(ids, id)
 	}
@@ -1799,7 +1724,7 @@ func (m *GroupMutation) RemovedMembersIDs() (ids []int) {
 }
 
 // MembersIDs returns the "members" edge IDs in the mutation.
-func (m *GroupMutation) MembersIDs() (ids []int) {
+func (m *GroupMutation) MembersIDs() (ids []string) {
 	for id := range m.members {
 		ids = append(ids, id)
 	}
@@ -1814,9 +1739,9 @@ func (m *GroupMutation) ResetMembers() {
 }
 
 // AddLikeFromUserIDs adds the "like_from_user" edge to the User entity by ids.
-func (m *GroupMutation) AddLikeFromUserIDs(ids ...int) {
+func (m *GroupMutation) AddLikeFromUserIDs(ids ...string) {
 	if m.like_from_user == nil {
-		m.like_from_user = make(map[int]struct{})
+		m.like_from_user = make(map[string]struct{})
 	}
 	for i := range ids {
 		m.like_from_user[ids[i]] = struct{}{}
@@ -1834,9 +1759,9 @@ func (m *GroupMutation) LikeFromUserCleared() bool {
 }
 
 // RemoveLikeFromUserIDs removes the "like_from_user" edge to the User entity by IDs.
-func (m *GroupMutation) RemoveLikeFromUserIDs(ids ...int) {
+func (m *GroupMutation) RemoveLikeFromUserIDs(ids ...string) {
 	if m.removedlike_from_user == nil {
-		m.removedlike_from_user = make(map[int]struct{})
+		m.removedlike_from_user = make(map[string]struct{})
 	}
 	for i := range ids {
 		delete(m.like_from_user, ids[i])
@@ -1845,7 +1770,7 @@ func (m *GroupMutation) RemoveLikeFromUserIDs(ids ...int) {
 }
 
 // RemovedLikeFromUser returns the removed IDs of the "like_from_user" edge to the User entity.
-func (m *GroupMutation) RemovedLikeFromUserIDs() (ids []int) {
+func (m *GroupMutation) RemovedLikeFromUserIDs() (ids []string) {
 	for id := range m.removedlike_from_user {
 		ids = append(ids, id)
 	}
@@ -1853,7 +1778,7 @@ func (m *GroupMutation) RemovedLikeFromUserIDs() (ids []int) {
 }
 
 // LikeFromUserIDs returns the "like_from_user" edge IDs in the mutation.
-func (m *GroupMutation) LikeFromUserIDs() (ids []int) {
+func (m *GroupMutation) LikeFromUserIDs() (ids []string) {
 	for id := range m.like_from_user {
 		ids = append(ids, id)
 	}
@@ -1868,9 +1793,9 @@ func (m *GroupMutation) ResetLikeFromUser() {
 }
 
 // AddSavedIDs adds the "saved" edge to the User entity by ids.
-func (m *GroupMutation) AddSavedIDs(ids ...int) {
+func (m *GroupMutation) AddSavedIDs(ids ...string) {
 	if m.saved == nil {
-		m.saved = make(map[int]struct{})
+		m.saved = make(map[string]struct{})
 	}
 	for i := range ids {
 		m.saved[ids[i]] = struct{}{}
@@ -1888,9 +1813,9 @@ func (m *GroupMutation) SavedCleared() bool {
 }
 
 // RemoveSavedIDs removes the "saved" edge to the User entity by IDs.
-func (m *GroupMutation) RemoveSavedIDs(ids ...int) {
+func (m *GroupMutation) RemoveSavedIDs(ids ...string) {
 	if m.removedsaved == nil {
-		m.removedsaved = make(map[int]struct{})
+		m.removedsaved = make(map[string]struct{})
 	}
 	for i := range ids {
 		delete(m.saved, ids[i])
@@ -1899,7 +1824,7 @@ func (m *GroupMutation) RemoveSavedIDs(ids ...int) {
 }
 
 // RemovedSaved returns the removed IDs of the "saved" edge to the User entity.
-func (m *GroupMutation) RemovedSavedIDs() (ids []int) {
+func (m *GroupMutation) RemovedSavedIDs() (ids []string) {
 	for id := range m.removedsaved {
 		ids = append(ids, id)
 	}
@@ -1907,7 +1832,7 @@ func (m *GroupMutation) RemovedSavedIDs() (ids []int) {
 }
 
 // SavedIDs returns the "saved" edge IDs in the mutation.
-func (m *GroupMutation) SavedIDs() (ids []int) {
+func (m *GroupMutation) SavedIDs() (ids []string) {
 	for id := range m.saved {
 		ids = append(ids, id)
 	}
@@ -1922,9 +1847,9 @@ func (m *GroupMutation) ResetSaved() {
 }
 
 // AddLikeFromGroupIDs adds the "like_from_group" edge to the Group entity by ids.
-func (m *GroupMutation) AddLikeFromGroupIDs(ids ...int) {
+func (m *GroupMutation) AddLikeFromGroupIDs(ids ...uuid.UUID) {
 	if m.like_from_group == nil {
-		m.like_from_group = make(map[int]struct{})
+		m.like_from_group = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		m.like_from_group[ids[i]] = struct{}{}
@@ -1942,9 +1867,9 @@ func (m *GroupMutation) LikeFromGroupCleared() bool {
 }
 
 // RemoveLikeFromGroupIDs removes the "like_from_group" edge to the Group entity by IDs.
-func (m *GroupMutation) RemoveLikeFromGroupIDs(ids ...int) {
+func (m *GroupMutation) RemoveLikeFromGroupIDs(ids ...uuid.UUID) {
 	if m.removedlike_from_group == nil {
-		m.removedlike_from_group = make(map[int]struct{})
+		m.removedlike_from_group = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		delete(m.like_from_group, ids[i])
@@ -1953,7 +1878,7 @@ func (m *GroupMutation) RemoveLikeFromGroupIDs(ids ...int) {
 }
 
 // RemovedLikeFromGroup returns the removed IDs of the "like_from_group" edge to the Group entity.
-func (m *GroupMutation) RemovedLikeFromGroupIDs() (ids []int) {
+func (m *GroupMutation) RemovedLikeFromGroupIDs() (ids []uuid.UUID) {
 	for id := range m.removedlike_from_group {
 		ids = append(ids, id)
 	}
@@ -1961,7 +1886,7 @@ func (m *GroupMutation) RemovedLikeFromGroupIDs() (ids []int) {
 }
 
 // LikeFromGroupIDs returns the "like_from_group" edge IDs in the mutation.
-func (m *GroupMutation) LikeFromGroupIDs() (ids []int) {
+func (m *GroupMutation) LikeFromGroupIDs() (ids []uuid.UUID) {
 	for id := range m.like_from_group {
 		ids = append(ids, id)
 	}
@@ -1976,9 +1901,9 @@ func (m *GroupMutation) ResetLikeFromGroup() {
 }
 
 // AddLikeToIDs adds the "like_to" edge to the Group entity by ids.
-func (m *GroupMutation) AddLikeToIDs(ids ...int) {
+func (m *GroupMutation) AddLikeToIDs(ids ...uuid.UUID) {
 	if m.like_to == nil {
-		m.like_to = make(map[int]struct{})
+		m.like_to = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		m.like_to[ids[i]] = struct{}{}
@@ -1996,9 +1921,9 @@ func (m *GroupMutation) LikeToCleared() bool {
 }
 
 // RemoveLikeToIDs removes the "like_to" edge to the Group entity by IDs.
-func (m *GroupMutation) RemoveLikeToIDs(ids ...int) {
+func (m *GroupMutation) RemoveLikeToIDs(ids ...uuid.UUID) {
 	if m.removedlike_to == nil {
-		m.removedlike_to = make(map[int]struct{})
+		m.removedlike_to = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		delete(m.like_to, ids[i])
@@ -2007,7 +1932,7 @@ func (m *GroupMutation) RemoveLikeToIDs(ids ...int) {
 }
 
 // RemovedLikeTo returns the removed IDs of the "like_to" edge to the Group entity.
-func (m *GroupMutation) RemovedLikeToIDs() (ids []int) {
+func (m *GroupMutation) RemovedLikeToIDs() (ids []uuid.UUID) {
 	for id := range m.removedlike_to {
 		ids = append(ids, id)
 	}
@@ -2015,7 +1940,7 @@ func (m *GroupMutation) RemovedLikeToIDs() (ids []int) {
 }
 
 // LikeToIDs returns the "like_to" edge IDs in the mutation.
-func (m *GroupMutation) LikeToIDs() (ids []int) {
+func (m *GroupMutation) LikeToIDs() (ids []uuid.UUID) {
 	for id := range m.like_to {
 		ids = append(ids, id)
 	}
@@ -2030,9 +1955,9 @@ func (m *GroupMutation) ResetLikeTo() {
 }
 
 // AddPicIDs adds the "pics" edge to the Pic entity by ids.
-func (m *GroupMutation) AddPicIDs(ids ...int) {
+func (m *GroupMutation) AddPicIDs(ids ...uuid.UUID) {
 	if m.pics == nil {
-		m.pics = make(map[int]struct{})
+		m.pics = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		m.pics[ids[i]] = struct{}{}
@@ -2050,9 +1975,9 @@ func (m *GroupMutation) PicsCleared() bool {
 }
 
 // RemovePicIDs removes the "pics" edge to the Pic entity by IDs.
-func (m *GroupMutation) RemovePicIDs(ids ...int) {
+func (m *GroupMutation) RemovePicIDs(ids ...uuid.UUID) {
 	if m.removedpics == nil {
-		m.removedpics = make(map[int]struct{})
+		m.removedpics = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		delete(m.pics, ids[i])
@@ -2061,7 +1986,7 @@ func (m *GroupMutation) RemovePicIDs(ids ...int) {
 }
 
 // RemovedPics returns the removed IDs of the "pics" edge to the Pic entity.
-func (m *GroupMutation) RemovedPicsIDs() (ids []int) {
+func (m *GroupMutation) RemovedPicsIDs() (ids []uuid.UUID) {
 	for id := range m.removedpics {
 		ids = append(ids, id)
 	}
@@ -2069,7 +1994,7 @@ func (m *GroupMutation) RemovedPicsIDs() (ids []int) {
 }
 
 // PicsIDs returns the "pics" edge IDs in the mutation.
-func (m *GroupMutation) PicsIDs() (ids []int) {
+func (m *GroupMutation) PicsIDs() (ids []uuid.UUID) {
 	for id := range m.pics {
 		ids = append(ids, id)
 	}
@@ -2102,23 +2027,20 @@ func (m *GroupMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GroupMutation) Fields() []string {
-	fields := make([]string, 0, 6)
-	if m.uid != nil {
-		fields = append(fields, group.FieldUID)
-	}
+	fields := make([]string, 0, 5)
 	if m.groupname != nil {
 		fields = append(fields, group.FieldGroupname)
 	}
 	if m.bio != nil {
 		fields = append(fields, group.FieldBio)
 	}
-	if m.createdAt != nil {
+	if m.created_at != nil {
 		fields = append(fields, group.FieldCreatedAt)
 	}
-	if m.updatedAt != nil {
+	if m.updated_at != nil {
 		fields = append(fields, group.FieldUpdatedAt)
 	}
-	if m.readAt != nil {
+	if m.read_at != nil {
 		fields = append(fields, group.FieldReadAt)
 	}
 	return fields
@@ -2129,8 +2051,6 @@ func (m *GroupMutation) Fields() []string {
 // schema.
 func (m *GroupMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case group.FieldUID:
-		return m.UID()
 	case group.FieldGroupname:
 		return m.Groupname()
 	case group.FieldBio:
@@ -2150,8 +2070,6 @@ func (m *GroupMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *GroupMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case group.FieldUID:
-		return m.OldUID(ctx)
 	case group.FieldGroupname:
 		return m.OldGroupname(ctx)
 	case group.FieldBio:
@@ -2171,13 +2089,6 @@ func (m *GroupMutation) OldField(ctx context.Context, name string) (ent.Value, e
 // type.
 func (m *GroupMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case group.FieldUID:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetUID(v)
-		return nil
 	case group.FieldGroupname:
 		v, ok := value.(string)
 		if !ok {
@@ -2262,9 +2173,6 @@ func (m *GroupMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *GroupMutation) ResetField(name string) error {
 	switch name {
-	case group.FieldUID:
-		m.ResetUID()
-		return nil
 	case group.FieldGroupname:
 		m.ResetGroupname()
 		return nil
@@ -2503,16 +2411,15 @@ type PicMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *int
-	uid           *string
+	id            *uuid.UUID
 	url           *string
-	createdAt     *time.Time
-	updatedAt     *time.Time
-	readAt        *time.Time
+	created_at    *time.Time
+	updated_at    *time.Time
+	read_at       *time.Time
 	clearedFields map[string]struct{}
-	user          *int
+	user          *string
 	cleareduser   bool
-	group         *int
+	group         *uuid.UUID
 	clearedgroup  bool
 	done          bool
 	oldValue      func(context.Context) (*Pic, error)
@@ -2539,7 +2446,7 @@ func newPicMutation(c config, op Op, opts ...picOption) *PicMutation {
 }
 
 // withPicID sets the ID field of the mutation.
-func withPicID(id int) picOption {
+func withPicID(id uuid.UUID) picOption {
 	return func(m *PicMutation) {
 		var (
 			err   error
@@ -2589,9 +2496,15 @@ func (m PicMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Pic entities.
+func (m *PicMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *PicMutation) ID() (id int, exists bool) {
+func (m *PicMutation) ID() (id uuid.UUID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -2602,12 +2515,12 @@ func (m *PicMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *PicMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *PicMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []uuid.UUID{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -2617,49 +2530,13 @@ func (m *PicMutation) IDs(ctx context.Context) ([]int, error) {
 	}
 }
 
-// SetUID sets the "uid" field.
-func (m *PicMutation) SetUID(s string) {
-	m.uid = &s
-}
-
-// UID returns the value of the "uid" field in the mutation.
-func (m *PicMutation) UID() (r string, exists bool) {
-	v := m.uid
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldUID returns the old "uid" field's value of the Pic entity.
-// If the Pic object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PicMutation) OldUID(ctx context.Context) (v string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldUID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldUID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUID: %w", err)
-	}
-	return oldValue.UID, nil
-}
-
-// ResetUID resets all changes to the "uid" field.
-func (m *PicMutation) ResetUID() {
-	m.uid = nil
-}
-
 // SetUserID sets the "user_id" field.
-func (m *PicMutation) SetUserID(i int) {
-	m.user = &i
+func (m *PicMutation) SetUserID(s string) {
+	m.user = &s
 }
 
 // UserID returns the value of the "user_id" field in the mutation.
-func (m *PicMutation) UserID() (r int, exists bool) {
+func (m *PicMutation) UserID() (r string, exists bool) {
 	v := m.user
 	if v == nil {
 		return
@@ -2670,7 +2547,7 @@ func (m *PicMutation) UserID() (r int, exists bool) {
 // OldUserID returns the old "user_id" field's value of the Pic entity.
 // If the Pic object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PicMutation) OldUserID(ctx context.Context) (v int, err error) {
+func (m *PicMutation) OldUserID(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
 	}
@@ -2703,12 +2580,12 @@ func (m *PicMutation) ResetUserID() {
 }
 
 // SetGroupID sets the "group_id" field.
-func (m *PicMutation) SetGroupID(i int) {
-	m.group = &i
+func (m *PicMutation) SetGroupID(u uuid.UUID) {
+	m.group = &u
 }
 
 // GroupID returns the value of the "group_id" field in the mutation.
-func (m *PicMutation) GroupID() (r int, exists bool) {
+func (m *PicMutation) GroupID() (r uuid.UUID, exists bool) {
 	v := m.group
 	if v == nil {
 		return
@@ -2719,7 +2596,7 @@ func (m *PicMutation) GroupID() (r int, exists bool) {
 // OldGroupID returns the old "group_id" field's value of the Pic entity.
 // If the Pic object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PicMutation) OldGroupID(ctx context.Context) (v int, err error) {
+func (m *PicMutation) OldGroupID(ctx context.Context) (v uuid.UUID, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGroupID is only allowed on UpdateOne operations")
 	}
@@ -2787,21 +2664,21 @@ func (m *PicMutation) ResetURL() {
 	m.url = nil
 }
 
-// SetCreatedAt sets the "createdAt" field.
+// SetCreatedAt sets the "created_at" field.
 func (m *PicMutation) SetCreatedAt(t time.Time) {
-	m.createdAt = &t
+	m.created_at = &t
 }
 
-// CreatedAt returns the value of the "createdAt" field in the mutation.
+// CreatedAt returns the value of the "created_at" field in the mutation.
 func (m *PicMutation) CreatedAt() (r time.Time, exists bool) {
-	v := m.createdAt
+	v := m.created_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldCreatedAt returns the old "createdAt" field's value of the Pic entity.
+// OldCreatedAt returns the old "created_at" field's value of the Pic entity.
 // If the Pic object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *PicMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
@@ -2818,26 +2695,26 @@ func (m *PicMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error)
 	return oldValue.CreatedAt, nil
 }
 
-// ResetCreatedAt resets all changes to the "createdAt" field.
+// ResetCreatedAt resets all changes to the "created_at" field.
 func (m *PicMutation) ResetCreatedAt() {
-	m.createdAt = nil
+	m.created_at = nil
 }
 
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (m *PicMutation) SetUpdatedAt(t time.Time) {
-	m.updatedAt = &t
+	m.updated_at = &t
 }
 
-// UpdatedAt returns the value of the "updatedAt" field in the mutation.
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
 func (m *PicMutation) UpdatedAt() (r time.Time, exists bool) {
-	v := m.updatedAt
+	v := m.updated_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldUpdatedAt returns the old "updatedAt" field's value of the Pic entity.
+// OldUpdatedAt returns the old "updated_at" field's value of the Pic entity.
 // If the Pic object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *PicMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
@@ -2854,26 +2731,26 @@ func (m *PicMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error)
 	return oldValue.UpdatedAt, nil
 }
 
-// ResetUpdatedAt resets all changes to the "updatedAt" field.
+// ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *PicMutation) ResetUpdatedAt() {
-	m.updatedAt = nil
+	m.updated_at = nil
 }
 
-// SetReadAt sets the "readAt" field.
+// SetReadAt sets the "read_at" field.
 func (m *PicMutation) SetReadAt(t time.Time) {
-	m.readAt = &t
+	m.read_at = &t
 }
 
-// ReadAt returns the value of the "readAt" field in the mutation.
+// ReadAt returns the value of the "read_at" field in the mutation.
 func (m *PicMutation) ReadAt() (r time.Time, exists bool) {
-	v := m.readAt
+	v := m.read_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldReadAt returns the old "readAt" field's value of the Pic entity.
+// OldReadAt returns the old "read_at" field's value of the Pic entity.
 // If the Pic object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *PicMutation) OldReadAt(ctx context.Context) (v time.Time, err error) {
@@ -2890,9 +2767,9 @@ func (m *PicMutation) OldReadAt(ctx context.Context) (v time.Time, err error) {
 	return oldValue.ReadAt, nil
 }
 
-// ResetReadAt resets all changes to the "readAt" field.
+// ResetReadAt resets all changes to the "read_at" field.
 func (m *PicMutation) ResetReadAt() {
-	m.readAt = nil
+	m.read_at = nil
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -2908,7 +2785,7 @@ func (m *PicMutation) UserCleared() bool {
 // UserIDs returns the "user" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // UserID instead. It exists only for internal usage by the builders.
-func (m *PicMutation) UserIDs() (ids []int) {
+func (m *PicMutation) UserIDs() (ids []string) {
 	if id := m.user; id != nil {
 		ids = append(ids, *id)
 	}
@@ -2934,7 +2811,7 @@ func (m *PicMutation) GroupCleared() bool {
 // GroupIDs returns the "group" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // GroupID instead. It exists only for internal usage by the builders.
-func (m *PicMutation) GroupIDs() (ids []int) {
+func (m *PicMutation) GroupIDs() (ids []uuid.UUID) {
 	if id := m.group; id != nil {
 		ids = append(ids, *id)
 	}
@@ -2966,10 +2843,7 @@ func (m *PicMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PicMutation) Fields() []string {
-	fields := make([]string, 0, 7)
-	if m.uid != nil {
-		fields = append(fields, pic.FieldUID)
-	}
+	fields := make([]string, 0, 6)
 	if m.user != nil {
 		fields = append(fields, pic.FieldUserID)
 	}
@@ -2979,13 +2853,13 @@ func (m *PicMutation) Fields() []string {
 	if m.url != nil {
 		fields = append(fields, pic.FieldURL)
 	}
-	if m.createdAt != nil {
+	if m.created_at != nil {
 		fields = append(fields, pic.FieldCreatedAt)
 	}
-	if m.updatedAt != nil {
+	if m.updated_at != nil {
 		fields = append(fields, pic.FieldUpdatedAt)
 	}
-	if m.readAt != nil {
+	if m.read_at != nil {
 		fields = append(fields, pic.FieldReadAt)
 	}
 	return fields
@@ -2996,8 +2870,6 @@ func (m *PicMutation) Fields() []string {
 // schema.
 func (m *PicMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case pic.FieldUID:
-		return m.UID()
 	case pic.FieldUserID:
 		return m.UserID()
 	case pic.FieldGroupID:
@@ -3019,8 +2891,6 @@ func (m *PicMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *PicMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case pic.FieldUID:
-		return m.OldUID(ctx)
 	case pic.FieldUserID:
 		return m.OldUserID(ctx)
 	case pic.FieldGroupID:
@@ -3042,22 +2912,15 @@ func (m *PicMutation) OldField(ctx context.Context, name string) (ent.Value, err
 // type.
 func (m *PicMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case pic.FieldUID:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetUID(v)
-		return nil
 	case pic.FieldUserID:
-		v, ok := value.(int)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUserID(v)
 		return nil
 	case pic.FieldGroupID:
-		v, ok := value.(int)
+		v, ok := value.(uuid.UUID)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -3098,16 +2961,13 @@ func (m *PicMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *PicMutation) AddedFields() []string {
-	var fields []string
-	return fields
+	return nil
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *PicMutation) AddedField(name string) (ent.Value, bool) {
-	switch name {
-	}
 	return nil, false
 }
 
@@ -3158,9 +3018,6 @@ func (m *PicMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *PicMutation) ResetField(name string) error {
 	switch name {
-	case pic.FieldUID:
-		m.ResetUID()
-		return nil
 	case pic.FieldUserID:
 		m.ResetUserID()
 		return nil
@@ -3280,48 +3137,56 @@ func (m *PicMutation) ResetEdge(name string) error {
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
 	config
-	op                Op
-	typ               string
-	id                *int
-	uid               *string
-	username          *string
-	password          *[]byte
-	uni               *string
-	dep               *string
-	bio               *string
-	createdAt         *time.Time
-	updatedAt         *time.Time
-	readAt            *time.Time
-	clearedFields     map[string]struct{}
-	friends           map[int]struct{}
-	removedfriends    map[int]struct{}
-	clearedfriends    bool
-	requests          map[int]struct{}
-	removedrequests   map[int]struct{}
-	clearedrequests   bool
-	friendsReq        map[int]struct{}
-	removedfriendsReq map[int]struct{}
-	clearedfriendsReq bool
-	like_to           map[int]struct{}
-	removedlike_to    map[int]struct{}
-	clearedlike_to    bool
-	save              map[int]struct{}
-	removedsave       map[int]struct{}
-	clearedsave       bool
-	group             *int
-	clearedgroup      bool
-	chatroom          map[int]struct{}
-	removedchatroom   map[int]struct{}
-	clearedchatroom   bool
-	message           map[int]struct{}
-	removedmessage    map[int]struct{}
-	clearedmessage    bool
-	pics              map[int]struct{}
-	removedpics       map[int]struct{}
-	clearedpics       bool
-	done              bool
-	oldValue          func(context.Context) (*User, error)
-	predicates        []predicate.User
+	op                 Op
+	typ                string
+	id                 *string
+	actual_name        *string
+	username           *string
+	gender             *string
+	password           *[]byte
+	uni                *string
+	dep                *string
+	bio                *string
+	birth_year         *int
+	addbirth_year      *int
+	is_verified        *bool
+	max_group          *int
+	addmax_group       *int
+	avatar             *string
+	created_at         *time.Time
+	updated_at         *time.Time
+	read_at            *time.Time
+	clearedFields      map[string]struct{}
+	friends            map[string]struct{}
+	removedfriends     map[string]struct{}
+	clearedfriends     bool
+	requests           map[string]struct{}
+	removedrequests    map[string]struct{}
+	clearedrequests    bool
+	friends_req        map[string]struct{}
+	removedfriends_req map[string]struct{}
+	clearedfriends_req bool
+	like_to            map[uuid.UUID]struct{}
+	removedlike_to     map[uuid.UUID]struct{}
+	clearedlike_to     bool
+	save               map[uuid.UUID]struct{}
+	removedsave        map[uuid.UUID]struct{}
+	clearedsave        bool
+	group              map[uuid.UUID]struct{}
+	removedgroup       map[uuid.UUID]struct{}
+	clearedgroup       bool
+	chatroom           map[uuid.UUID]struct{}
+	removedchatroom    map[uuid.UUID]struct{}
+	clearedchatroom    bool
+	message            map[uuid.UUID]struct{}
+	removedmessage     map[uuid.UUID]struct{}
+	clearedmessage     bool
+	pics               map[uuid.UUID]struct{}
+	removedpics        map[uuid.UUID]struct{}
+	clearedpics        bool
+	done               bool
+	oldValue           func(context.Context) (*User, error)
+	predicates         []predicate.User
 }
 
 var _ ent.Mutation = (*UserMutation)(nil)
@@ -3344,7 +3209,7 @@ func newUserMutation(c config, op Op, opts ...userOption) *UserMutation {
 }
 
 // withUserID sets the ID field of the mutation.
-func withUserID(id int) userOption {
+func withUserID(id string) userOption {
 	return func(m *UserMutation) {
 		var (
 			err   error
@@ -3394,9 +3259,15 @@ func (m UserMutation) Tx() (*Tx, error) {
 	return tx, nil
 }
 
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of User entities.
+func (m *UserMutation) SetID(id string) {
+	m.id = &id
+}
+
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *UserMutation) ID() (id int, exists bool) {
+func (m *UserMutation) ID() (id string, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -3407,12 +3278,12 @@ func (m *UserMutation) ID() (id int, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *UserMutation) IDs(ctx context.Context) ([]int, error) {
+func (m *UserMutation) IDs(ctx context.Context) ([]string, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []int{id}, nil
+			return []string{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -3422,40 +3293,40 @@ func (m *UserMutation) IDs(ctx context.Context) ([]int, error) {
 	}
 }
 
-// SetUID sets the "uid" field.
-func (m *UserMutation) SetUID(s string) {
-	m.uid = &s
+// SetActualName sets the "actual_name" field.
+func (m *UserMutation) SetActualName(s string) {
+	m.actual_name = &s
 }
 
-// UID returns the value of the "uid" field in the mutation.
-func (m *UserMutation) UID() (r string, exists bool) {
-	v := m.uid
+// ActualName returns the value of the "actual_name" field in the mutation.
+func (m *UserMutation) ActualName() (r string, exists bool) {
+	v := m.actual_name
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldUID returns the old "uid" field's value of the User entity.
+// OldActualName returns the old "actual_name" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldUID(ctx context.Context) (v string, err error) {
+func (m *UserMutation) OldActualName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldUID is only allowed on UpdateOne operations")
+		return v, errors.New("OldActualName is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldUID requires an ID field in the mutation")
+		return v, errors.New("OldActualName requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUID: %w", err)
+		return v, fmt.Errorf("querying old value for OldActualName: %w", err)
 	}
-	return oldValue.UID, nil
+	return oldValue.ActualName, nil
 }
 
-// ResetUID resets all changes to the "uid" field.
-func (m *UserMutation) ResetUID() {
-	m.uid = nil
+// ResetActualName resets all changes to the "actual_name" field.
+func (m *UserMutation) ResetActualName() {
+	m.actual_name = nil
 }
 
 // SetUsername sets the "username" field.
@@ -3492,6 +3363,42 @@ func (m *UserMutation) OldUsername(ctx context.Context) (v string, err error) {
 // ResetUsername resets all changes to the "username" field.
 func (m *UserMutation) ResetUsername() {
 	m.username = nil
+}
+
+// SetGender sets the "gender" field.
+func (m *UserMutation) SetGender(s string) {
+	m.gender = &s
+}
+
+// Gender returns the value of the "gender" field in the mutation.
+func (m *UserMutation) Gender() (r string, exists bool) {
+	v := m.gender
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGender returns the old "gender" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldGender(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGender is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGender requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGender: %w", err)
+	}
+	return oldValue.Gender, nil
+}
+
+// ResetGender resets all changes to the "gender" field.
+func (m *UserMutation) ResetGender() {
+	m.gender = nil
 }
 
 // SetPassword sets the "password" field.
@@ -3651,70 +3558,218 @@ func (m *UserMutation) ResetBio() {
 	delete(m.clearedFields, user.FieldBio)
 }
 
-// SetGroupID sets the "group_id" field.
-func (m *UserMutation) SetGroupID(i int) {
-	m.group = &i
+// SetBirthYear sets the "birth_year" field.
+func (m *UserMutation) SetBirthYear(i int) {
+	m.birth_year = &i
+	m.addbirth_year = nil
 }
 
-// GroupID returns the value of the "group_id" field in the mutation.
-func (m *UserMutation) GroupID() (r int, exists bool) {
-	v := m.group
+// BirthYear returns the value of the "birth_year" field in the mutation.
+func (m *UserMutation) BirthYear() (r int, exists bool) {
+	v := m.birth_year
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldGroupID returns the old "group_id" field's value of the User entity.
+// OldBirthYear returns the old "birth_year" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldGroupID(ctx context.Context) (v int, err error) {
+func (m *UserMutation) OldBirthYear(ctx context.Context) (v int, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldGroupID is only allowed on UpdateOne operations")
+		return v, errors.New("OldBirthYear is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldGroupID requires an ID field in the mutation")
+		return v, errors.New("OldBirthYear requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldGroupID: %w", err)
+		return v, fmt.Errorf("querying old value for OldBirthYear: %w", err)
 	}
-	return oldValue.GroupID, nil
+	return oldValue.BirthYear, nil
 }
 
-// ClearGroupID clears the value of the "group_id" field.
-func (m *UserMutation) ClearGroupID() {
-	m.group = nil
-	m.clearedFields[user.FieldGroupID] = struct{}{}
+// AddBirthYear adds i to the "birth_year" field.
+func (m *UserMutation) AddBirthYear(i int) {
+	if m.addbirth_year != nil {
+		*m.addbirth_year += i
+	} else {
+		m.addbirth_year = &i
+	}
 }
 
-// GroupIDCleared returns if the "group_id" field was cleared in this mutation.
-func (m *UserMutation) GroupIDCleared() bool {
-	_, ok := m.clearedFields[user.FieldGroupID]
-	return ok
-}
-
-// ResetGroupID resets all changes to the "group_id" field.
-func (m *UserMutation) ResetGroupID() {
-	m.group = nil
-	delete(m.clearedFields, user.FieldGroupID)
-}
-
-// SetCreatedAt sets the "createdAt" field.
-func (m *UserMutation) SetCreatedAt(t time.Time) {
-	m.createdAt = &t
-}
-
-// CreatedAt returns the value of the "createdAt" field in the mutation.
-func (m *UserMutation) CreatedAt() (r time.Time, exists bool) {
-	v := m.createdAt
+// AddedBirthYear returns the value that was added to the "birth_year" field in this mutation.
+func (m *UserMutation) AddedBirthYear() (r int, exists bool) {
+	v := m.addbirth_year
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldCreatedAt returns the old "createdAt" field's value of the User entity.
+// ResetBirthYear resets all changes to the "birth_year" field.
+func (m *UserMutation) ResetBirthYear() {
+	m.birth_year = nil
+	m.addbirth_year = nil
+}
+
+// SetIsVerified sets the "is_verified" field.
+func (m *UserMutation) SetIsVerified(b bool) {
+	m.is_verified = &b
+}
+
+// IsVerified returns the value of the "is_verified" field in the mutation.
+func (m *UserMutation) IsVerified() (r bool, exists bool) {
+	v := m.is_verified
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsVerified returns the old "is_verified" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldIsVerified(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsVerified is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsVerified requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsVerified: %w", err)
+	}
+	return oldValue.IsVerified, nil
+}
+
+// ResetIsVerified resets all changes to the "is_verified" field.
+func (m *UserMutation) ResetIsVerified() {
+	m.is_verified = nil
+}
+
+// SetMaxGroup sets the "max_group" field.
+func (m *UserMutation) SetMaxGroup(i int) {
+	m.max_group = &i
+	m.addmax_group = nil
+}
+
+// MaxGroup returns the value of the "max_group" field in the mutation.
+func (m *UserMutation) MaxGroup() (r int, exists bool) {
+	v := m.max_group
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMaxGroup returns the old "max_group" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldMaxGroup(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMaxGroup is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMaxGroup requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMaxGroup: %w", err)
+	}
+	return oldValue.MaxGroup, nil
+}
+
+// AddMaxGroup adds i to the "max_group" field.
+func (m *UserMutation) AddMaxGroup(i int) {
+	if m.addmax_group != nil {
+		*m.addmax_group += i
+	} else {
+		m.addmax_group = &i
+	}
+}
+
+// AddedMaxGroup returns the value that was added to the "max_group" field in this mutation.
+func (m *UserMutation) AddedMaxGroup() (r int, exists bool) {
+	v := m.addmax_group
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMaxGroup resets all changes to the "max_group" field.
+func (m *UserMutation) ResetMaxGroup() {
+	m.max_group = nil
+	m.addmax_group = nil
+}
+
+// SetAvatar sets the "avatar" field.
+func (m *UserMutation) SetAvatar(s string) {
+	m.avatar = &s
+}
+
+// Avatar returns the value of the "avatar" field in the mutation.
+func (m *UserMutation) Avatar() (r string, exists bool) {
+	v := m.avatar
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAvatar returns the old "avatar" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldAvatar(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAvatar is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAvatar requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAvatar: %w", err)
+	}
+	return oldValue.Avatar, nil
+}
+
+// ClearAvatar clears the value of the "avatar" field.
+func (m *UserMutation) ClearAvatar() {
+	m.avatar = nil
+	m.clearedFields[user.FieldAvatar] = struct{}{}
+}
+
+// AvatarCleared returns if the "avatar" field was cleared in this mutation.
+func (m *UserMutation) AvatarCleared() bool {
+	_, ok := m.clearedFields[user.FieldAvatar]
+	return ok
+}
+
+// ResetAvatar resets all changes to the "avatar" field.
+func (m *UserMutation) ResetAvatar() {
+	m.avatar = nil
+	delete(m.clearedFields, user.FieldAvatar)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *UserMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *UserMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *UserMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
@@ -3731,26 +3786,26 @@ func (m *UserMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error
 	return oldValue.CreatedAt, nil
 }
 
-// ResetCreatedAt resets all changes to the "createdAt" field.
+// ResetCreatedAt resets all changes to the "created_at" field.
 func (m *UserMutation) ResetCreatedAt() {
-	m.createdAt = nil
+	m.created_at = nil
 }
 
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (m *UserMutation) SetUpdatedAt(t time.Time) {
-	m.updatedAt = &t
+	m.updated_at = &t
 }
 
-// UpdatedAt returns the value of the "updatedAt" field in the mutation.
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
 func (m *UserMutation) UpdatedAt() (r time.Time, exists bool) {
-	v := m.updatedAt
+	v := m.updated_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldUpdatedAt returns the old "updatedAt" field's value of the User entity.
+// OldUpdatedAt returns the old "updated_at" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *UserMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
@@ -3767,26 +3822,26 @@ func (m *UserMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error
 	return oldValue.UpdatedAt, nil
 }
 
-// ResetUpdatedAt resets all changes to the "updatedAt" field.
+// ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *UserMutation) ResetUpdatedAt() {
-	m.updatedAt = nil
+	m.updated_at = nil
 }
 
-// SetReadAt sets the "readAt" field.
+// SetReadAt sets the "read_at" field.
 func (m *UserMutation) SetReadAt(t time.Time) {
-	m.readAt = &t
+	m.read_at = &t
 }
 
-// ReadAt returns the value of the "readAt" field in the mutation.
+// ReadAt returns the value of the "read_at" field in the mutation.
 func (m *UserMutation) ReadAt() (r time.Time, exists bool) {
-	v := m.readAt
+	v := m.read_at
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldReadAt returns the old "readAt" field's value of the User entity.
+// OldReadAt returns the old "read_at" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
 func (m *UserMutation) OldReadAt(ctx context.Context) (v time.Time, err error) {
@@ -3803,15 +3858,15 @@ func (m *UserMutation) OldReadAt(ctx context.Context) (v time.Time, err error) {
 	return oldValue.ReadAt, nil
 }
 
-// ResetReadAt resets all changes to the "readAt" field.
+// ResetReadAt resets all changes to the "read_at" field.
 func (m *UserMutation) ResetReadAt() {
-	m.readAt = nil
+	m.read_at = nil
 }
 
 // AddFriendIDs adds the "friends" edge to the User entity by ids.
-func (m *UserMutation) AddFriendIDs(ids ...int) {
+func (m *UserMutation) AddFriendIDs(ids ...string) {
 	if m.friends == nil {
-		m.friends = make(map[int]struct{})
+		m.friends = make(map[string]struct{})
 	}
 	for i := range ids {
 		m.friends[ids[i]] = struct{}{}
@@ -3829,9 +3884,9 @@ func (m *UserMutation) FriendsCleared() bool {
 }
 
 // RemoveFriendIDs removes the "friends" edge to the User entity by IDs.
-func (m *UserMutation) RemoveFriendIDs(ids ...int) {
+func (m *UserMutation) RemoveFriendIDs(ids ...string) {
 	if m.removedfriends == nil {
-		m.removedfriends = make(map[int]struct{})
+		m.removedfriends = make(map[string]struct{})
 	}
 	for i := range ids {
 		delete(m.friends, ids[i])
@@ -3840,7 +3895,7 @@ func (m *UserMutation) RemoveFriendIDs(ids ...int) {
 }
 
 // RemovedFriends returns the removed IDs of the "friends" edge to the User entity.
-func (m *UserMutation) RemovedFriendsIDs() (ids []int) {
+func (m *UserMutation) RemovedFriendsIDs() (ids []string) {
 	for id := range m.removedfriends {
 		ids = append(ids, id)
 	}
@@ -3848,7 +3903,7 @@ func (m *UserMutation) RemovedFriendsIDs() (ids []int) {
 }
 
 // FriendsIDs returns the "friends" edge IDs in the mutation.
-func (m *UserMutation) FriendsIDs() (ids []int) {
+func (m *UserMutation) FriendsIDs() (ids []string) {
 	for id := range m.friends {
 		ids = append(ids, id)
 	}
@@ -3863,9 +3918,9 @@ func (m *UserMutation) ResetFriends() {
 }
 
 // AddRequestIDs adds the "requests" edge to the User entity by ids.
-func (m *UserMutation) AddRequestIDs(ids ...int) {
+func (m *UserMutation) AddRequestIDs(ids ...string) {
 	if m.requests == nil {
-		m.requests = make(map[int]struct{})
+		m.requests = make(map[string]struct{})
 	}
 	for i := range ids {
 		m.requests[ids[i]] = struct{}{}
@@ -3883,9 +3938,9 @@ func (m *UserMutation) RequestsCleared() bool {
 }
 
 // RemoveRequestIDs removes the "requests" edge to the User entity by IDs.
-func (m *UserMutation) RemoveRequestIDs(ids ...int) {
+func (m *UserMutation) RemoveRequestIDs(ids ...string) {
 	if m.removedrequests == nil {
-		m.removedrequests = make(map[int]struct{})
+		m.removedrequests = make(map[string]struct{})
 	}
 	for i := range ids {
 		delete(m.requests, ids[i])
@@ -3894,7 +3949,7 @@ func (m *UserMutation) RemoveRequestIDs(ids ...int) {
 }
 
 // RemovedRequests returns the removed IDs of the "requests" edge to the User entity.
-func (m *UserMutation) RemovedRequestsIDs() (ids []int) {
+func (m *UserMutation) RemovedRequestsIDs() (ids []string) {
 	for id := range m.removedrequests {
 		ids = append(ids, id)
 	}
@@ -3902,7 +3957,7 @@ func (m *UserMutation) RemovedRequestsIDs() (ids []int) {
 }
 
 // RequestsIDs returns the "requests" edge IDs in the mutation.
-func (m *UserMutation) RequestsIDs() (ids []int) {
+func (m *UserMutation) RequestsIDs() (ids []string) {
 	for id := range m.requests {
 		ids = append(ids, id)
 	}
@@ -3916,64 +3971,64 @@ func (m *UserMutation) ResetRequests() {
 	m.removedrequests = nil
 }
 
-// AddFriendsReqIDs adds the "friendsReq" edge to the User entity by ids.
-func (m *UserMutation) AddFriendsReqIDs(ids ...int) {
-	if m.friendsReq == nil {
-		m.friendsReq = make(map[int]struct{})
+// AddFriendsReqIDs adds the "friends_req" edge to the User entity by ids.
+func (m *UserMutation) AddFriendsReqIDs(ids ...string) {
+	if m.friends_req == nil {
+		m.friends_req = make(map[string]struct{})
 	}
 	for i := range ids {
-		m.friendsReq[ids[i]] = struct{}{}
+		m.friends_req[ids[i]] = struct{}{}
 	}
 }
 
-// ClearFriendsReq clears the "friendsReq" edge to the User entity.
+// ClearFriendsReq clears the "friends_req" edge to the User entity.
 func (m *UserMutation) ClearFriendsReq() {
-	m.clearedfriendsReq = true
+	m.clearedfriends_req = true
 }
 
-// FriendsReqCleared reports if the "friendsReq" edge to the User entity was cleared.
+// FriendsReqCleared reports if the "friends_req" edge to the User entity was cleared.
 func (m *UserMutation) FriendsReqCleared() bool {
-	return m.clearedfriendsReq
+	return m.clearedfriends_req
 }
 
-// RemoveFriendsReqIDs removes the "friendsReq" edge to the User entity by IDs.
-func (m *UserMutation) RemoveFriendsReqIDs(ids ...int) {
-	if m.removedfriendsReq == nil {
-		m.removedfriendsReq = make(map[int]struct{})
+// RemoveFriendsReqIDs removes the "friends_req" edge to the User entity by IDs.
+func (m *UserMutation) RemoveFriendsReqIDs(ids ...string) {
+	if m.removedfriends_req == nil {
+		m.removedfriends_req = make(map[string]struct{})
 	}
 	for i := range ids {
-		delete(m.friendsReq, ids[i])
-		m.removedfriendsReq[ids[i]] = struct{}{}
+		delete(m.friends_req, ids[i])
+		m.removedfriends_req[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedFriendsReq returns the removed IDs of the "friendsReq" edge to the User entity.
-func (m *UserMutation) RemovedFriendsReqIDs() (ids []int) {
-	for id := range m.removedfriendsReq {
+// RemovedFriendsReq returns the removed IDs of the "friends_req" edge to the User entity.
+func (m *UserMutation) RemovedFriendsReqIDs() (ids []string) {
+	for id := range m.removedfriends_req {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// FriendsReqIDs returns the "friendsReq" edge IDs in the mutation.
-func (m *UserMutation) FriendsReqIDs() (ids []int) {
-	for id := range m.friendsReq {
+// FriendsReqIDs returns the "friends_req" edge IDs in the mutation.
+func (m *UserMutation) FriendsReqIDs() (ids []string) {
+	for id := range m.friends_req {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetFriendsReq resets all changes to the "friendsReq" edge.
+// ResetFriendsReq resets all changes to the "friends_req" edge.
 func (m *UserMutation) ResetFriendsReq() {
-	m.friendsReq = nil
-	m.clearedfriendsReq = false
-	m.removedfriendsReq = nil
+	m.friends_req = nil
+	m.clearedfriends_req = false
+	m.removedfriends_req = nil
 }
 
 // AddLikeToIDs adds the "like_to" edge to the Group entity by ids.
-func (m *UserMutation) AddLikeToIDs(ids ...int) {
+func (m *UserMutation) AddLikeToIDs(ids ...uuid.UUID) {
 	if m.like_to == nil {
-		m.like_to = make(map[int]struct{})
+		m.like_to = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		m.like_to[ids[i]] = struct{}{}
@@ -3991,9 +4046,9 @@ func (m *UserMutation) LikeToCleared() bool {
 }
 
 // RemoveLikeToIDs removes the "like_to" edge to the Group entity by IDs.
-func (m *UserMutation) RemoveLikeToIDs(ids ...int) {
+func (m *UserMutation) RemoveLikeToIDs(ids ...uuid.UUID) {
 	if m.removedlike_to == nil {
-		m.removedlike_to = make(map[int]struct{})
+		m.removedlike_to = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		delete(m.like_to, ids[i])
@@ -4002,7 +4057,7 @@ func (m *UserMutation) RemoveLikeToIDs(ids ...int) {
 }
 
 // RemovedLikeTo returns the removed IDs of the "like_to" edge to the Group entity.
-func (m *UserMutation) RemovedLikeToIDs() (ids []int) {
+func (m *UserMutation) RemovedLikeToIDs() (ids []uuid.UUID) {
 	for id := range m.removedlike_to {
 		ids = append(ids, id)
 	}
@@ -4010,7 +4065,7 @@ func (m *UserMutation) RemovedLikeToIDs() (ids []int) {
 }
 
 // LikeToIDs returns the "like_to" edge IDs in the mutation.
-func (m *UserMutation) LikeToIDs() (ids []int) {
+func (m *UserMutation) LikeToIDs() (ids []uuid.UUID) {
 	for id := range m.like_to {
 		ids = append(ids, id)
 	}
@@ -4025,9 +4080,9 @@ func (m *UserMutation) ResetLikeTo() {
 }
 
 // AddSaveIDs adds the "save" edge to the Group entity by ids.
-func (m *UserMutation) AddSaveIDs(ids ...int) {
+func (m *UserMutation) AddSaveIDs(ids ...uuid.UUID) {
 	if m.save == nil {
-		m.save = make(map[int]struct{})
+		m.save = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		m.save[ids[i]] = struct{}{}
@@ -4045,9 +4100,9 @@ func (m *UserMutation) SaveCleared() bool {
 }
 
 // RemoveSaveIDs removes the "save" edge to the Group entity by IDs.
-func (m *UserMutation) RemoveSaveIDs(ids ...int) {
+func (m *UserMutation) RemoveSaveIDs(ids ...uuid.UUID) {
 	if m.removedsave == nil {
-		m.removedsave = make(map[int]struct{})
+		m.removedsave = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		delete(m.save, ids[i])
@@ -4056,7 +4111,7 @@ func (m *UserMutation) RemoveSaveIDs(ids ...int) {
 }
 
 // RemovedSave returns the removed IDs of the "save" edge to the Group entity.
-func (m *UserMutation) RemovedSaveIDs() (ids []int) {
+func (m *UserMutation) RemovedSaveIDs() (ids []uuid.UUID) {
 	for id := range m.removedsave {
 		ids = append(ids, id)
 	}
@@ -4064,7 +4119,7 @@ func (m *UserMutation) RemovedSaveIDs() (ids []int) {
 }
 
 // SaveIDs returns the "save" edge IDs in the mutation.
-func (m *UserMutation) SaveIDs() (ids []int) {
+func (m *UserMutation) SaveIDs() (ids []uuid.UUID) {
 	for id := range m.save {
 		ids = append(ids, id)
 	}
@@ -4078,6 +4133,16 @@ func (m *UserMutation) ResetSave() {
 	m.removedsave = nil
 }
 
+// AddGroupIDs adds the "group" edge to the Group entity by ids.
+func (m *UserMutation) AddGroupIDs(ids ...uuid.UUID) {
+	if m.group == nil {
+		m.group = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.group[ids[i]] = struct{}{}
+	}
+}
+
 // ClearGroup clears the "group" edge to the Group entity.
 func (m *UserMutation) ClearGroup() {
 	m.clearedgroup = true
@@ -4085,15 +4150,32 @@ func (m *UserMutation) ClearGroup() {
 
 // GroupCleared reports if the "group" edge to the Group entity was cleared.
 func (m *UserMutation) GroupCleared() bool {
-	return m.GroupIDCleared() || m.clearedgroup
+	return m.clearedgroup
+}
+
+// RemoveGroupIDs removes the "group" edge to the Group entity by IDs.
+func (m *UserMutation) RemoveGroupIDs(ids ...uuid.UUID) {
+	if m.removedgroup == nil {
+		m.removedgroup = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.group, ids[i])
+		m.removedgroup[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedGroup returns the removed IDs of the "group" edge to the Group entity.
+func (m *UserMutation) RemovedGroupIDs() (ids []uuid.UUID) {
+	for id := range m.removedgroup {
+		ids = append(ids, id)
+	}
+	return
 }
 
 // GroupIDs returns the "group" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// GroupID instead. It exists only for internal usage by the builders.
-func (m *UserMutation) GroupIDs() (ids []int) {
-	if id := m.group; id != nil {
-		ids = append(ids, *id)
+func (m *UserMutation) GroupIDs() (ids []uuid.UUID) {
+	for id := range m.group {
+		ids = append(ids, id)
 	}
 	return
 }
@@ -4102,12 +4184,13 @@ func (m *UserMutation) GroupIDs() (ids []int) {
 func (m *UserMutation) ResetGroup() {
 	m.group = nil
 	m.clearedgroup = false
+	m.removedgroup = nil
 }
 
 // AddChatroomIDs adds the "chatroom" edge to the ChatRoom entity by ids.
-func (m *UserMutation) AddChatroomIDs(ids ...int) {
+func (m *UserMutation) AddChatroomIDs(ids ...uuid.UUID) {
 	if m.chatroom == nil {
-		m.chatroom = make(map[int]struct{})
+		m.chatroom = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		m.chatroom[ids[i]] = struct{}{}
@@ -4125,9 +4208,9 @@ func (m *UserMutation) ChatroomCleared() bool {
 }
 
 // RemoveChatroomIDs removes the "chatroom" edge to the ChatRoom entity by IDs.
-func (m *UserMutation) RemoveChatroomIDs(ids ...int) {
+func (m *UserMutation) RemoveChatroomIDs(ids ...uuid.UUID) {
 	if m.removedchatroom == nil {
-		m.removedchatroom = make(map[int]struct{})
+		m.removedchatroom = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		delete(m.chatroom, ids[i])
@@ -4136,7 +4219,7 @@ func (m *UserMutation) RemoveChatroomIDs(ids ...int) {
 }
 
 // RemovedChatroom returns the removed IDs of the "chatroom" edge to the ChatRoom entity.
-func (m *UserMutation) RemovedChatroomIDs() (ids []int) {
+func (m *UserMutation) RemovedChatroomIDs() (ids []uuid.UUID) {
 	for id := range m.removedchatroom {
 		ids = append(ids, id)
 	}
@@ -4144,7 +4227,7 @@ func (m *UserMutation) RemovedChatroomIDs() (ids []int) {
 }
 
 // ChatroomIDs returns the "chatroom" edge IDs in the mutation.
-func (m *UserMutation) ChatroomIDs() (ids []int) {
+func (m *UserMutation) ChatroomIDs() (ids []uuid.UUID) {
 	for id := range m.chatroom {
 		ids = append(ids, id)
 	}
@@ -4159,9 +4242,9 @@ func (m *UserMutation) ResetChatroom() {
 }
 
 // AddMessageIDs adds the "message" edge to the ChatMessage entity by ids.
-func (m *UserMutation) AddMessageIDs(ids ...int) {
+func (m *UserMutation) AddMessageIDs(ids ...uuid.UUID) {
 	if m.message == nil {
-		m.message = make(map[int]struct{})
+		m.message = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		m.message[ids[i]] = struct{}{}
@@ -4179,9 +4262,9 @@ func (m *UserMutation) MessageCleared() bool {
 }
 
 // RemoveMessageIDs removes the "message" edge to the ChatMessage entity by IDs.
-func (m *UserMutation) RemoveMessageIDs(ids ...int) {
+func (m *UserMutation) RemoveMessageIDs(ids ...uuid.UUID) {
 	if m.removedmessage == nil {
-		m.removedmessage = make(map[int]struct{})
+		m.removedmessage = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		delete(m.message, ids[i])
@@ -4190,7 +4273,7 @@ func (m *UserMutation) RemoveMessageIDs(ids ...int) {
 }
 
 // RemovedMessage returns the removed IDs of the "message" edge to the ChatMessage entity.
-func (m *UserMutation) RemovedMessageIDs() (ids []int) {
+func (m *UserMutation) RemovedMessageIDs() (ids []uuid.UUID) {
 	for id := range m.removedmessage {
 		ids = append(ids, id)
 	}
@@ -4198,7 +4281,7 @@ func (m *UserMutation) RemovedMessageIDs() (ids []int) {
 }
 
 // MessageIDs returns the "message" edge IDs in the mutation.
-func (m *UserMutation) MessageIDs() (ids []int) {
+func (m *UserMutation) MessageIDs() (ids []uuid.UUID) {
 	for id := range m.message {
 		ids = append(ids, id)
 	}
@@ -4213,9 +4296,9 @@ func (m *UserMutation) ResetMessage() {
 }
 
 // AddPicIDs adds the "pics" edge to the Pic entity by ids.
-func (m *UserMutation) AddPicIDs(ids ...int) {
+func (m *UserMutation) AddPicIDs(ids ...uuid.UUID) {
 	if m.pics == nil {
-		m.pics = make(map[int]struct{})
+		m.pics = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		m.pics[ids[i]] = struct{}{}
@@ -4233,9 +4316,9 @@ func (m *UserMutation) PicsCleared() bool {
 }
 
 // RemovePicIDs removes the "pics" edge to the Pic entity by IDs.
-func (m *UserMutation) RemovePicIDs(ids ...int) {
+func (m *UserMutation) RemovePicIDs(ids ...uuid.UUID) {
 	if m.removedpics == nil {
-		m.removedpics = make(map[int]struct{})
+		m.removedpics = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
 		delete(m.pics, ids[i])
@@ -4244,7 +4327,7 @@ func (m *UserMutation) RemovePicIDs(ids ...int) {
 }
 
 // RemovedPics returns the removed IDs of the "pics" edge to the Pic entity.
-func (m *UserMutation) RemovedPicsIDs() (ids []int) {
+func (m *UserMutation) RemovedPicsIDs() (ids []uuid.UUID) {
 	for id := range m.removedpics {
 		ids = append(ids, id)
 	}
@@ -4252,7 +4335,7 @@ func (m *UserMutation) RemovedPicsIDs() (ids []int) {
 }
 
 // PicsIDs returns the "pics" edge IDs in the mutation.
-func (m *UserMutation) PicsIDs() (ids []int) {
+func (m *UserMutation) PicsIDs() (ids []uuid.UUID) {
 	for id := range m.pics {
 		ids = append(ids, id)
 	}
@@ -4285,12 +4368,15 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 10)
-	if m.uid != nil {
-		fields = append(fields, user.FieldUID)
+	fields := make([]string, 0, 14)
+	if m.actual_name != nil {
+		fields = append(fields, user.FieldActualName)
 	}
 	if m.username != nil {
 		fields = append(fields, user.FieldUsername)
+	}
+	if m.gender != nil {
+		fields = append(fields, user.FieldGender)
 	}
 	if m.password != nil {
 		fields = append(fields, user.FieldPassword)
@@ -4304,16 +4390,25 @@ func (m *UserMutation) Fields() []string {
 	if m.bio != nil {
 		fields = append(fields, user.FieldBio)
 	}
-	if m.group != nil {
-		fields = append(fields, user.FieldGroupID)
+	if m.birth_year != nil {
+		fields = append(fields, user.FieldBirthYear)
 	}
-	if m.createdAt != nil {
+	if m.is_verified != nil {
+		fields = append(fields, user.FieldIsVerified)
+	}
+	if m.max_group != nil {
+		fields = append(fields, user.FieldMaxGroup)
+	}
+	if m.avatar != nil {
+		fields = append(fields, user.FieldAvatar)
+	}
+	if m.created_at != nil {
 		fields = append(fields, user.FieldCreatedAt)
 	}
-	if m.updatedAt != nil {
+	if m.updated_at != nil {
 		fields = append(fields, user.FieldUpdatedAt)
 	}
-	if m.readAt != nil {
+	if m.read_at != nil {
 		fields = append(fields, user.FieldReadAt)
 	}
 	return fields
@@ -4324,10 +4419,12 @@ func (m *UserMutation) Fields() []string {
 // schema.
 func (m *UserMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case user.FieldUID:
-		return m.UID()
+	case user.FieldActualName:
+		return m.ActualName()
 	case user.FieldUsername:
 		return m.Username()
+	case user.FieldGender:
+		return m.Gender()
 	case user.FieldPassword:
 		return m.Password()
 	case user.FieldUni:
@@ -4336,8 +4433,14 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.Dep()
 	case user.FieldBio:
 		return m.Bio()
-	case user.FieldGroupID:
-		return m.GroupID()
+	case user.FieldBirthYear:
+		return m.BirthYear()
+	case user.FieldIsVerified:
+		return m.IsVerified()
+	case user.FieldMaxGroup:
+		return m.MaxGroup()
+	case user.FieldAvatar:
+		return m.Avatar()
 	case user.FieldCreatedAt:
 		return m.CreatedAt()
 	case user.FieldUpdatedAt:
@@ -4353,10 +4456,12 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case user.FieldUID:
-		return m.OldUID(ctx)
+	case user.FieldActualName:
+		return m.OldActualName(ctx)
 	case user.FieldUsername:
 		return m.OldUsername(ctx)
+	case user.FieldGender:
+		return m.OldGender(ctx)
 	case user.FieldPassword:
 		return m.OldPassword(ctx)
 	case user.FieldUni:
@@ -4365,8 +4470,14 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldDep(ctx)
 	case user.FieldBio:
 		return m.OldBio(ctx)
-	case user.FieldGroupID:
-		return m.OldGroupID(ctx)
+	case user.FieldBirthYear:
+		return m.OldBirthYear(ctx)
+	case user.FieldIsVerified:
+		return m.OldIsVerified(ctx)
+	case user.FieldMaxGroup:
+		return m.OldMaxGroup(ctx)
+	case user.FieldAvatar:
+		return m.OldAvatar(ctx)
 	case user.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case user.FieldUpdatedAt:
@@ -4382,12 +4493,12 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 // type.
 func (m *UserMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case user.FieldUID:
+	case user.FieldActualName:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetUID(v)
+		m.SetActualName(v)
 		return nil
 	case user.FieldUsername:
 		v, ok := value.(string)
@@ -4395,6 +4506,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUsername(v)
+		return nil
+	case user.FieldGender:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGender(v)
 		return nil
 	case user.FieldPassword:
 		v, ok := value.([]byte)
@@ -4424,12 +4542,33 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetBio(v)
 		return nil
-	case user.FieldGroupID:
+	case user.FieldBirthYear:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetGroupID(v)
+		m.SetBirthYear(v)
+		return nil
+	case user.FieldIsVerified:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsVerified(v)
+		return nil
+	case user.FieldMaxGroup:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMaxGroup(v)
+		return nil
+	case user.FieldAvatar:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAvatar(v)
 		return nil
 	case user.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -4460,6 +4599,12 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *UserMutation) AddedFields() []string {
 	var fields []string
+	if m.addbirth_year != nil {
+		fields = append(fields, user.FieldBirthYear)
+	}
+	if m.addmax_group != nil {
+		fields = append(fields, user.FieldMaxGroup)
+	}
 	return fields
 }
 
@@ -4468,6 +4613,10 @@ func (m *UserMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case user.FieldBirthYear:
+		return m.AddedBirthYear()
+	case user.FieldMaxGroup:
+		return m.AddedMaxGroup()
 	}
 	return nil, false
 }
@@ -4477,6 +4626,20 @@ func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *UserMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case user.FieldBirthYear:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddBirthYear(v)
+		return nil
+	case user.FieldMaxGroup:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMaxGroup(v)
+		return nil
 	}
 	return fmt.Errorf("unknown User numeric field %s", name)
 }
@@ -4488,8 +4651,8 @@ func (m *UserMutation) ClearedFields() []string {
 	if m.FieldCleared(user.FieldBio) {
 		fields = append(fields, user.FieldBio)
 	}
-	if m.FieldCleared(user.FieldGroupID) {
-		fields = append(fields, user.FieldGroupID)
+	if m.FieldCleared(user.FieldAvatar) {
+		fields = append(fields, user.FieldAvatar)
 	}
 	return fields
 }
@@ -4508,8 +4671,8 @@ func (m *UserMutation) ClearField(name string) error {
 	case user.FieldBio:
 		m.ClearBio()
 		return nil
-	case user.FieldGroupID:
-		m.ClearGroupID()
+	case user.FieldAvatar:
+		m.ClearAvatar()
 		return nil
 	}
 	return fmt.Errorf("unknown User nullable field %s", name)
@@ -4519,11 +4682,14 @@ func (m *UserMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *UserMutation) ResetField(name string) error {
 	switch name {
-	case user.FieldUID:
-		m.ResetUID()
+	case user.FieldActualName:
+		m.ResetActualName()
 		return nil
 	case user.FieldUsername:
 		m.ResetUsername()
+		return nil
+	case user.FieldGender:
+		m.ResetGender()
 		return nil
 	case user.FieldPassword:
 		m.ResetPassword()
@@ -4537,8 +4703,17 @@ func (m *UserMutation) ResetField(name string) error {
 	case user.FieldBio:
 		m.ResetBio()
 		return nil
-	case user.FieldGroupID:
-		m.ResetGroupID()
+	case user.FieldBirthYear:
+		m.ResetBirthYear()
+		return nil
+	case user.FieldIsVerified:
+		m.ResetIsVerified()
+		return nil
+	case user.FieldMaxGroup:
+		m.ResetMaxGroup()
+		return nil
+	case user.FieldAvatar:
+		m.ResetAvatar()
 		return nil
 	case user.FieldCreatedAt:
 		m.ResetCreatedAt()
@@ -4562,7 +4737,7 @@ func (m *UserMutation) AddedEdges() []string {
 	if m.requests != nil {
 		edges = append(edges, user.EdgeRequests)
 	}
-	if m.friendsReq != nil {
+	if m.friends_req != nil {
 		edges = append(edges, user.EdgeFriendsReq)
 	}
 	if m.like_to != nil {
@@ -4603,8 +4778,8 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 		}
 		return ids
 	case user.EdgeFriendsReq:
-		ids := make([]ent.Value, 0, len(m.friendsReq))
-		for id := range m.friendsReq {
+		ids := make([]ent.Value, 0, len(m.friends_req))
+		for id := range m.friends_req {
 			ids = append(ids, id)
 		}
 		return ids
@@ -4621,9 +4796,11 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 		}
 		return ids
 	case user.EdgeGroup:
-		if id := m.group; id != nil {
-			return []ent.Value{*id}
+		ids := make([]ent.Value, 0, len(m.group))
+		for id := range m.group {
+			ids = append(ids, id)
 		}
+		return ids
 	case user.EdgeChatroom:
 		ids := make([]ent.Value, 0, len(m.chatroom))
 		for id := range m.chatroom {
@@ -4655,7 +4832,7 @@ func (m *UserMutation) RemovedEdges() []string {
 	if m.removedrequests != nil {
 		edges = append(edges, user.EdgeRequests)
 	}
-	if m.removedfriendsReq != nil {
+	if m.removedfriends_req != nil {
 		edges = append(edges, user.EdgeFriendsReq)
 	}
 	if m.removedlike_to != nil {
@@ -4663,6 +4840,9 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedsave != nil {
 		edges = append(edges, user.EdgeSave)
+	}
+	if m.removedgroup != nil {
+		edges = append(edges, user.EdgeGroup)
 	}
 	if m.removedchatroom != nil {
 		edges = append(edges, user.EdgeChatroom)
@@ -4693,8 +4873,8 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 		}
 		return ids
 	case user.EdgeFriendsReq:
-		ids := make([]ent.Value, 0, len(m.removedfriendsReq))
-		for id := range m.removedfriendsReq {
+		ids := make([]ent.Value, 0, len(m.removedfriends_req))
+		for id := range m.removedfriends_req {
 			ids = append(ids, id)
 		}
 		return ids
@@ -4707,6 +4887,12 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 	case user.EdgeSave:
 		ids := make([]ent.Value, 0, len(m.removedsave))
 		for id := range m.removedsave {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgeGroup:
+		ids := make([]ent.Value, 0, len(m.removedgroup))
+		for id := range m.removedgroup {
 			ids = append(ids, id)
 		}
 		return ids
@@ -4741,7 +4927,7 @@ func (m *UserMutation) ClearedEdges() []string {
 	if m.clearedrequests {
 		edges = append(edges, user.EdgeRequests)
 	}
-	if m.clearedfriendsReq {
+	if m.clearedfriends_req {
 		edges = append(edges, user.EdgeFriendsReq)
 	}
 	if m.clearedlike_to {
@@ -4774,7 +4960,7 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 	case user.EdgeRequests:
 		return m.clearedrequests
 	case user.EdgeFriendsReq:
-		return m.clearedfriendsReq
+		return m.clearedfriends_req
 	case user.EdgeLikeTo:
 		return m.clearedlike_to
 	case user.EdgeSave:
@@ -4795,9 +4981,6 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *UserMutation) ClearEdge(name string) error {
 	switch name {
-	case user.EdgeGroup:
-		m.ClearGroup()
-		return nil
 	}
 	return fmt.Errorf("unknown User unique edge %s", name)
 }

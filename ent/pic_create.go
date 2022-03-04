@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/lxxonx/cinder-server/ent/group"
 	"github.com/lxxonx/cinder-server/ent/pic"
 	"github.com/lxxonx/cinder-server/ent/user"
@@ -22,36 +23,30 @@ type PicCreate struct {
 	hooks    []Hook
 }
 
-// SetUID sets the "uid" field.
-func (pc *PicCreate) SetUID(s string) *PicCreate {
-	pc.mutation.SetUID(s)
-	return pc
-}
-
 // SetUserID sets the "user_id" field.
-func (pc *PicCreate) SetUserID(i int) *PicCreate {
-	pc.mutation.SetUserID(i)
+func (pc *PicCreate) SetUserID(s string) *PicCreate {
+	pc.mutation.SetUserID(s)
 	return pc
 }
 
 // SetNillableUserID sets the "user_id" field if the given value is not nil.
-func (pc *PicCreate) SetNillableUserID(i *int) *PicCreate {
-	if i != nil {
-		pc.SetUserID(*i)
+func (pc *PicCreate) SetNillableUserID(s *string) *PicCreate {
+	if s != nil {
+		pc.SetUserID(*s)
 	}
 	return pc
 }
 
 // SetGroupID sets the "group_id" field.
-func (pc *PicCreate) SetGroupID(i int) *PicCreate {
-	pc.mutation.SetGroupID(i)
+func (pc *PicCreate) SetGroupID(u uuid.UUID) *PicCreate {
+	pc.mutation.SetGroupID(u)
 	return pc
 }
 
 // SetNillableGroupID sets the "group_id" field if the given value is not nil.
-func (pc *PicCreate) SetNillableGroupID(i *int) *PicCreate {
-	if i != nil {
-		pc.SetGroupID(*i)
+func (pc *PicCreate) SetNillableGroupID(u *uuid.UUID) *PicCreate {
+	if u != nil {
+		pc.SetGroupID(*u)
 	}
 	return pc
 }
@@ -62,13 +57,13 @@ func (pc *PicCreate) SetURL(s string) *PicCreate {
 	return pc
 }
 
-// SetCreatedAt sets the "createdAt" field.
+// SetCreatedAt sets the "created_at" field.
 func (pc *PicCreate) SetCreatedAt(t time.Time) *PicCreate {
 	pc.mutation.SetCreatedAt(t)
 	return pc
 }
 
-// SetNillableCreatedAt sets the "createdAt" field if the given value is not nil.
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
 func (pc *PicCreate) SetNillableCreatedAt(t *time.Time) *PicCreate {
 	if t != nil {
 		pc.SetCreatedAt(*t)
@@ -76,13 +71,13 @@ func (pc *PicCreate) SetNillableCreatedAt(t *time.Time) *PicCreate {
 	return pc
 }
 
-// SetUpdatedAt sets the "updatedAt" field.
+// SetUpdatedAt sets the "updated_at" field.
 func (pc *PicCreate) SetUpdatedAt(t time.Time) *PicCreate {
 	pc.mutation.SetUpdatedAt(t)
 	return pc
 }
 
-// SetNillableUpdatedAt sets the "updatedAt" field if the given value is not nil.
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
 func (pc *PicCreate) SetNillableUpdatedAt(t *time.Time) *PicCreate {
 	if t != nil {
 		pc.SetUpdatedAt(*t)
@@ -90,16 +85,30 @@ func (pc *PicCreate) SetNillableUpdatedAt(t *time.Time) *PicCreate {
 	return pc
 }
 
-// SetReadAt sets the "readAt" field.
+// SetReadAt sets the "read_at" field.
 func (pc *PicCreate) SetReadAt(t time.Time) *PicCreate {
 	pc.mutation.SetReadAt(t)
 	return pc
 }
 
-// SetNillableReadAt sets the "readAt" field if the given value is not nil.
+// SetNillableReadAt sets the "read_at" field if the given value is not nil.
 func (pc *PicCreate) SetNillableReadAt(t *time.Time) *PicCreate {
 	if t != nil {
 		pc.SetReadAt(*t)
+	}
+	return pc
+}
+
+// SetID sets the "id" field.
+func (pc *PicCreate) SetID(u uuid.UUID) *PicCreate {
+	pc.mutation.SetID(u)
+	return pc
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (pc *PicCreate) SetNillableID(u *uuid.UUID) *PicCreate {
+	if u != nil {
+		pc.SetID(*u)
 	}
 	return pc
 }
@@ -197,13 +206,14 @@ func (pc *PicCreate) defaults() {
 		v := pic.DefaultReadAt()
 		pc.mutation.SetReadAt(v)
 	}
+	if _, ok := pc.mutation.ID(); !ok {
+		v := pic.DefaultID()
+		pc.mutation.SetID(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
 func (pc *PicCreate) check() error {
-	if _, ok := pc.mutation.UID(); !ok {
-		return &ValidationError{Name: "uid", err: errors.New(`ent: missing required field "Pic.uid"`)}
-	}
 	if _, ok := pc.mutation.URL(); !ok {
 		return &ValidationError{Name: "url", err: errors.New(`ent: missing required field "Pic.url"`)}
 	}
@@ -213,13 +223,13 @@ func (pc *PicCreate) check() error {
 		}
 	}
 	if _, ok := pc.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "createdAt", err: errors.New(`ent: missing required field "Pic.createdAt"`)}
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Pic.created_at"`)}
 	}
 	if _, ok := pc.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updatedAt", err: errors.New(`ent: missing required field "Pic.updatedAt"`)}
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Pic.updated_at"`)}
 	}
 	if _, ok := pc.mutation.ReadAt(); !ok {
-		return &ValidationError{Name: "readAt", err: errors.New(`ent: missing required field "Pic.readAt"`)}
+		return &ValidationError{Name: "read_at", err: errors.New(`ent: missing required field "Pic.read_at"`)}
 	}
 	return nil
 }
@@ -232,8 +242,13 @@ func (pc *PicCreate) sqlSave(ctx context.Context) (*Pic, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(*uuid.UUID); ok {
+			_node.ID = *id
+		} else if err := _node.ID.Scan(_spec.ID.Value); err != nil {
+			return nil, err
+		}
+	}
 	return _node, nil
 }
 
@@ -243,18 +258,14 @@ func (pc *PicCreate) createSpec() (*Pic, *sqlgraph.CreateSpec) {
 		_spec = &sqlgraph.CreateSpec{
 			Table: pic.Table,
 			ID: &sqlgraph.FieldSpec{
-				Type:   field.TypeInt,
+				Type:   field.TypeUUID,
 				Column: pic.FieldID,
 			},
 		}
 	)
-	if value, ok := pc.mutation.UID(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  value,
-			Column: pic.FieldUID,
-		})
-		_node.UID = value
+	if id, ok := pc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = &id
 	}
 	if value, ok := pc.mutation.URL(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
@@ -297,7 +308,7 @@ func (pc *PicCreate) createSpec() (*Pic, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeString,
 					Column: user.FieldID,
 				},
 			},
@@ -317,7 +328,7 @@ func (pc *PicCreate) createSpec() (*Pic, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
+					Type:   field.TypeUUID,
 					Column: group.FieldID,
 				},
 			},
@@ -373,10 +384,6 @@ func (pcb *PicCreateBulk) Save(ctx context.Context) ([]*Pic, error) {
 				}
 				mutation.id = &nodes[i].ID
 				mutation.done = true
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				return nodes[i], nil
 			})
 			for i := len(builder.hooks) - 1; i >= 0; i-- {

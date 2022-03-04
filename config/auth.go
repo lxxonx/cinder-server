@@ -13,7 +13,7 @@ func AuthMiddleware(c *fiber.Ctx) error {
 	env := os.Getenv("ENV")
 
 	if env == "dev" {
-		c.Locals("userId", 1)
+		c.Locals("userId", 4)
 		return c.Next()
 	}
 
@@ -44,7 +44,7 @@ func AuthMiddleware(c *fiber.Ctx) error {
 		})
 	}
 
-	userId := DB.User.Query().Where(user.UID(token.UID)).OnlyIDX(c.Context())
+	userId := DB.User.Query().Where(user.IDEQ(token.UID)).OnlyIDX(c.Context())
 
 	c.Locals("userId", userId)
 	return c.Next()

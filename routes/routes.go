@@ -14,14 +14,15 @@ func SetupRoutes(app *fiber.App) {
 	users.Get("/current", controllers.GetCurrentUser)
 	users.Get("/", controllers.GetAllUsers)
 	users.Post("/signup", controllers.SignUpUser)
-	users.Post("/profile/upload", controllers.UploadProfile)
+	users.Post("/pic", config.AuthMiddleware, controllers.UploadProfile)
 
 	friends := api.Group("/friends")
-	friends.Get("/req", config.AuthMiddleware, controllers.GetFriendsRequest)
+	friends.Get("/req", config.AuthMiddleware, controllers.GetFriendRequest)
 	friends.Post("/req", config.AuthMiddleware, controllers.RequestFriend)
 	friends.Post("/act", config.AuthMiddleware, controllers.AcceptFriendRequest)
 
 	groups := api.Group("/groups")
 	groups.Get("/", config.AuthMiddleware, controllers.GetGroups)
 	groups.Post("/join", config.AuthMiddleware, controllers.JoinGroup)
+	groups.Post("/pic", config.AuthMiddleware, controllers.UploadGroupProfile)
 }
