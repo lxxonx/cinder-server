@@ -1,27 +1,31 @@
 package config
 
 import (
-	"os"
+	"fmt"
 	"strings"
 
-	firebase "firebase.google.com/go/v4"
 	"github.com/gofiber/fiber/v2"
-	"github.com/lxxonx/cinder-server/ent/user"
 )
 
 func AuthMiddleware(c *fiber.Ctx) error {
-	env := os.Getenv("ENV")
+	headers := c.GetReqHeaders()
 
-	if env == "dev" {
-		c.Locals("userId", 4)
-		return c.Next()
+	if headers["Authorization"] == "" {
+		return c.Status(401).JSON(fiber.Map{
+			"ok":      false,
+			"message": "Unauthorized",
+		})
 	}
 
-	headers := c.GetReqHeaders()
 	jwt := strings.Split(headers["Authorization"], " ")[1]
-	firebaseApp := c.Locals("firebase").(*firebase.App)
+	if jwt == "" {
+		return c.Status(401).JSON(fiber.Map{
+			"ok":      false,
+			"message": "Unauthorized",
+		})
+	}
 
-	auth, err := firebaseApp.Auth(c.Context())
+	auth, err := FBA.Auth(c.Context())
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"ok":      false,
@@ -31,6 +35,7 @@ func AuthMiddleware(c *fiber.Ctx) error {
 
 	token, err := auth.VerifyIDToken(c.Context(), jwt)
 	if err != nil {
+		fmt.Println(err.Error())
 		return c.Status(401).JSON(fiber.Map{
 			"ok":      false,
 			"message": "Invalid token",
@@ -44,8 +49,6 @@ func AuthMiddleware(c *fiber.Ctx) error {
 		})
 	}
 
-	userId := DB.User.Query().Where(user.IDEQ(token.UID)).OnlyIDX(c.Context())
-
-	c.Locals("userId", userId)
+	c.Locals("userId", token.UID)
 	return c.Next()
 }

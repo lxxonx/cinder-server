@@ -33,12 +33,6 @@ func (uu *UserUpdate) Where(ps ...predicate.User) *UserUpdate {
 	return uu
 }
 
-// SetPassword sets the "password" field.
-func (uu *UserUpdate) SetPassword(b []byte) *UserUpdate {
-	uu.mutation.SetPassword(b)
-	return uu
-}
-
 // SetUni sets the "uni" field.
 func (uu *UserUpdate) SetUni(s string) *UserUpdate {
 	uu.mutation.SetUni(s)
@@ -94,6 +88,20 @@ func (uu *UserUpdate) SetIsVerified(b bool) *UserUpdate {
 func (uu *UserUpdate) SetNillableIsVerified(b *bool) *UserUpdate {
 	if b != nil {
 		uu.SetIsVerified(*b)
+	}
+	return uu
+}
+
+// SetStatus sets the "status" field.
+func (uu *UserUpdate) SetStatus(s string) *UserUpdate {
+	uu.mutation.SetStatus(s)
+	return uu
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableStatus(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetStatus(*s)
 	}
 	return uu
 }
@@ -595,11 +603,10 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := uu.mutation.Password(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBytes,
-			Value:  value,
-			Column: user.FieldPassword,
+	if uu.mutation.PhoneNumberCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Column: user.FieldPhoneNumber,
 		})
 	}
 	if value, ok := uu.mutation.Uni(); ok {
@@ -648,6 +655,13 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Type:   field.TypeBool,
 			Value:  value,
 			Column: user.FieldIsVerified,
+		})
+	}
+	if value, ok := uu.mutation.Status(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: user.FieldStatus,
 		})
 	}
 	if value, ok := uu.mutation.MaxGroup(); ok {
@@ -1196,12 +1210,6 @@ type UserUpdateOne struct {
 	mutation *UserMutation
 }
 
-// SetPassword sets the "password" field.
-func (uuo *UserUpdateOne) SetPassword(b []byte) *UserUpdateOne {
-	uuo.mutation.SetPassword(b)
-	return uuo
-}
-
 // SetUni sets the "uni" field.
 func (uuo *UserUpdateOne) SetUni(s string) *UserUpdateOne {
 	uuo.mutation.SetUni(s)
@@ -1257,6 +1265,20 @@ func (uuo *UserUpdateOne) SetIsVerified(b bool) *UserUpdateOne {
 func (uuo *UserUpdateOne) SetNillableIsVerified(b *bool) *UserUpdateOne {
 	if b != nil {
 		uuo.SetIsVerified(*b)
+	}
+	return uuo
+}
+
+// SetStatus sets the "status" field.
+func (uuo *UserUpdateOne) SetStatus(s string) *UserUpdateOne {
+	uuo.mutation.SetStatus(s)
+	return uuo
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableStatus(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetStatus(*s)
 	}
 	return uuo
 }
@@ -1782,11 +1804,10 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			}
 		}
 	}
-	if value, ok := uuo.mutation.Password(); ok {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeBytes,
-			Value:  value,
-			Column: user.FieldPassword,
+	if uuo.mutation.PhoneNumberCleared() {
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Column: user.FieldPhoneNumber,
 		})
 	}
 	if value, ok := uuo.mutation.Uni(); ok {
@@ -1835,6 +1856,13 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Type:   field.TypeBool,
 			Value:  value,
 			Column: user.FieldIsVerified,
+		})
+	}
+	if value, ok := uuo.mutation.Status(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: user.FieldStatus,
 		})
 	}
 	if value, ok := uuo.mutation.MaxGroup(); ok {

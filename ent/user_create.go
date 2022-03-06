@@ -31,6 +31,20 @@ func (uc *UserCreate) SetActualName(s string) *UserCreate {
 	return uc
 }
 
+// SetPhoneNumber sets the "phone_number" field.
+func (uc *UserCreate) SetPhoneNumber(i int) *UserCreate {
+	uc.mutation.SetPhoneNumber(i)
+	return uc
+}
+
+// SetNillablePhoneNumber sets the "phone_number" field if the given value is not nil.
+func (uc *UserCreate) SetNillablePhoneNumber(i *int) *UserCreate {
+	if i != nil {
+		uc.SetPhoneNumber(*i)
+	}
+	return uc
+}
+
 // SetUsername sets the "username" field.
 func (uc *UserCreate) SetUsername(s string) *UserCreate {
 	uc.mutation.SetUsername(s)
@@ -40,12 +54,6 @@ func (uc *UserCreate) SetUsername(s string) *UserCreate {
 // SetGender sets the "gender" field.
 func (uc *UserCreate) SetGender(s string) *UserCreate {
 	uc.mutation.SetGender(s)
-	return uc
-}
-
-// SetPassword sets the "password" field.
-func (uc *UserCreate) SetPassword(b []byte) *UserCreate {
-	uc.mutation.SetPassword(b)
 	return uc
 }
 
@@ -91,6 +99,20 @@ func (uc *UserCreate) SetIsVerified(b bool) *UserCreate {
 func (uc *UserCreate) SetNillableIsVerified(b *bool) *UserCreate {
 	if b != nil {
 		uc.SetIsVerified(*b)
+	}
+	return uc
+}
+
+// SetStatus sets the "status" field.
+func (uc *UserCreate) SetStatus(s string) *UserCreate {
+	uc.mutation.SetStatus(s)
+	return uc
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (uc *UserCreate) SetNillableStatus(s *string) *UserCreate {
+	if s != nil {
+		uc.SetStatus(*s)
 	}
 	return uc
 }
@@ -381,6 +403,10 @@ func (uc *UserCreate) defaults() {
 		v := user.DefaultIsVerified
 		uc.mutation.SetIsVerified(v)
 	}
+	if _, ok := uc.mutation.Status(); !ok {
+		v := user.DefaultStatus
+		uc.mutation.SetStatus(v)
+	}
 	if _, ok := uc.mutation.MaxGroup(); !ok {
 		v := user.DefaultMaxGroup
 		uc.mutation.SetMaxGroup(v)
@@ -420,9 +446,6 @@ func (uc *UserCreate) check() error {
 	if _, ok := uc.mutation.Gender(); !ok {
 		return &ValidationError{Name: "gender", err: errors.New(`ent: missing required field "User.gender"`)}
 	}
-	if _, ok := uc.mutation.Password(); !ok {
-		return &ValidationError{Name: "password", err: errors.New(`ent: missing required field "User.password"`)}
-	}
 	if _, ok := uc.mutation.Uni(); !ok {
 		return &ValidationError{Name: "uni", err: errors.New(`ent: missing required field "User.uni"`)}
 	}
@@ -449,6 +472,9 @@ func (uc *UserCreate) check() error {
 	}
 	if _, ok := uc.mutation.IsVerified(); !ok {
 		return &ValidationError{Name: "is_verified", err: errors.New(`ent: missing required field "User.is_verified"`)}
+	}
+	if _, ok := uc.mutation.Status(); !ok {
+		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "User.status"`)}
 	}
 	if _, ok := uc.mutation.MaxGroup(); !ok {
 		return &ValidationError{Name: "max_group", err: errors.New(`ent: missing required field "User.max_group"`)}
@@ -506,6 +532,14 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		})
 		_node.ActualName = value
 	}
+	if value, ok := uc.mutation.PhoneNumber(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  value,
+			Column: user.FieldPhoneNumber,
+		})
+		_node.PhoneNumber = value
+	}
 	if value, ok := uc.mutation.Username(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -521,14 +555,6 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Column: user.FieldGender,
 		})
 		_node.Gender = value
-	}
-	if value, ok := uc.mutation.Password(); ok {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeBytes,
-			Value:  value,
-			Column: user.FieldPassword,
-		})
-		_node.Password = value
 	}
 	if value, ok := uc.mutation.Uni(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
@@ -569,6 +595,14 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Column: user.FieldIsVerified,
 		})
 		_node.IsVerified = value
+	}
+	if value, ok := uc.mutation.Status(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  value,
+			Column: user.FieldStatus,
+		})
+		_node.Status = value
 	}
 	if value, ok := uc.mutation.MaxGroup(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{

@@ -60,7 +60,7 @@ func RequestFriend(c *fiber.Ctx) error {
 
 	me := config.DB.User.Query().Where(user.IDEQ(userId)).OnlyX(c.Context())
 
-	friend, err := config.DB.User.Query().Where(user.IDEQ(input.FID)).Only(c.Context())
+	friend, err := config.DB.User.Query().Where(user.UsernameEQ(input.FriendName)).Only(c.Context())
 	if err != nil {
 		fmt.Println(err.Error())
 		return c.Status(500).JSON(fiber.Map{
@@ -88,7 +88,7 @@ func AcceptFriendRequest(c *fiber.Ctx) error {
 	}
 
 	me := config.DB.User.Query().Where(user.IDEQ(userId)).OnlyX(c.Context())
-	_, err := me.QueryFriendsReq().Where(user.IDEQ(input.FID)).Exist(c.Context())
+	_, err := me.QueryFriendsReq().Where(user.UsernameEQ(input.FriendName)).Exist(c.Context())
 	if err != nil {
 		fmt.Println(err.Error())
 		return c.Status(500).JSON(fiber.Map{
@@ -96,7 +96,7 @@ func AcceptFriendRequest(c *fiber.Ctx) error {
 			"message": "Invalid request",
 		})
 	}
-	friend := config.DB.User.Query().Where(user.IDEQ(input.FID)).OnlyX(c.Context())
+	friend := config.DB.User.Query().Where(user.UsernameEQ(input.FriendName)).OnlyX(c.Context())
 
 	err = me.Update().AddFriends(friend).RemoveFriendsReq(friend).Exec(c.Context())
 	if err != nil {
@@ -123,7 +123,7 @@ func DeleteFriendRequest(c *fiber.Ctx) error {
 	}
 
 	me := config.DB.User.Query().Where(user.IDEQ(userId)).OnlyX(c.Context())
-	_, err := me.QueryFriendsReq().Where(user.IDEQ(input.FID)).Exist(c.Context())
+	_, err := me.QueryFriendsReq().Where(user.UsernameEQ(input.FriendName)).Exist(c.Context())
 	if err != nil {
 		fmt.Println(err.Error())
 		return c.Status(500).JSON(fiber.Map{
@@ -131,12 +131,37 @@ func DeleteFriendRequest(c *fiber.Ctx) error {
 			"message": "Invalid request",
 		})
 	}
-	friend := config.DB.User.Query().Where(user.IDEQ(input.FID)).OnlyX(c.Context())
+	friend := config.DB.User.Query().Where(user.UsernameEQ(input.FriendName)).OnlyX(c.Context())
 
 	me.Update().RemoveFriendsReq(friend).ExecX(c.Context())
 
 	return c.Status(200).JSON(fiber.Map{
 		"ok":      true,
 		"message": "success",
+	})
+}
+
+func SearchFriend(c *fiber.Ctx) error {
+	input := new(dto.SearchFriendInput)
+	if err := c.BodyParser(input); err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"ok":      false,
+			"message": "Unable to parse request body",
+		})
+	}
+	friend, err := config.DB.User.Query().Where(user.UsernameEQ(input.FriendName)).First(c.Context())
+	if err != nil {
+		return c.Status(200).JSON(fiber.Map{
+			"ok":      false,
+			"message": "친구를 찾을 수 없습니다.",
+		})
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"ok":      true,
+		"message": "success",
+		"data": fiber.Map{
+			"friend": friend.ActualName,
+		},
 	})
 }

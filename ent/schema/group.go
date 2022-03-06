@@ -18,7 +18,7 @@ type Group struct {
 func (Group) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(func() uuid.UUID { return uuid.New() }).Immutable().Unique().StorageKey("uid"),
-		field.String("groupname").Default("").MaxLen(10).Unique(),
+		field.String("groupname").MaxLen(10).Unique(),
 		field.String("bio").Default(""),
 		// field.Strings("pics").Default([]string{""}),
 		field.Time("created_at").Default(time.Now).Immutable(),

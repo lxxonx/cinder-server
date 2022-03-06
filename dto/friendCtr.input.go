@@ -1,5 +1,9 @@
 package dto
 
 type RequestFriendInput struct {
-	FID string `json:"fid"`
+	FriendName string `json:"friendName"`
+}
+
+type SearchFriendInput struct {
+	FriendName string `json:"friendName"`
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/lxxonx/cinder-server/config"
 	"github.com/lxxonx/cinder-server/dto"
+	"github.com/lxxonx/cinder-server/ent"
 	"github.com/lxxonx/cinder-server/ent/group"
 	"github.com/lxxonx/cinder-server/ent/user"
 )
@@ -38,7 +39,7 @@ func GetGroups(c *fiber.Ctx) error {
 		input.Cursor = ""
 	}
 
-	gid, err := config.DB.User.Query().Where(user.IDEQ(userId)).QueryGroup().OnlyID(c.Context())
+	gids, err := config.DB.User.Query().Where(user.IDEQ(userId)).QueryGroup().IDs(c.Context())
 
 	if err != nil {
 		groups := config.DB.Group.Query().Where(
@@ -57,9 +58,18 @@ func GetGroups(c *fiber.Ctx) error {
 		groups := config.DB.Group.Query().Where(
 			group.And(
 				group.ReadAtGTE(time.Now().AddDate(0, 0, -2)),
-				group.IDNEQ(gid),
 			),
 		).WithPics().WithMembers().AllX(c.Context())
+
+		for i, g := range groups {
+			for _, gid := range gids {
+				if g.ID == gid {
+					RemoveIndex(groups, i)
+					break
+				}
+			}
+		}
+
 		return c.JSON(fiber.Map{
 			"ok":      true,
 			"message": "Fetch Groups successfully",
@@ -187,4 +197,23 @@ func UploadGroupProfile(c *fiber.Ctx) error {
 		"message": "File uploaded successfully",
 	})
 
+}
+
+func GetMyGroups(c *fiber.Ctx) error {
+	userId := c.Locals("userId").(string)
+
+	groups := config.DB.Group.Query().Where(
+		group.HasMembersWith(user.IDEQ(userId)),
+	).WithPics().WithMembers().AllX(c.Context())
+	return c.JSON(fiber.Map{
+		"ok":      true,
+		"message": "Fetch Groups successfully",
+		"data": fiber.Map{
+			"groups": groups,
+		},
+	})
+}
+
+func RemoveIndex(s []*ent.Group, index int) []*ent.Group {
+	return append(s[:index], s[index+1:]...)
 }

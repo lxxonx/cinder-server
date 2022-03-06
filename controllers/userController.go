@@ -20,7 +20,6 @@ import (
 	"github.com/lxxonx/cinder-server/config"
 	"github.com/lxxonx/cinder-server/dto"
 	"github.com/lxxonx/cinder-server/ent/user"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func SignUpUser(c *fiber.Ctx) error {
@@ -31,38 +30,48 @@ func SignUpUser(c *fiber.Ctx) error {
 			"message": "Unable to parse request body",
 		})
 	}
-	password, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
-	if err != nil {
-		fmt.Println(err.Error())
-		return c.Status(500).JSON(fiber.Map{
-			"ok":      false,
-			"message": "unable to hash password",
-		})
-	}
 
-	_, err = config.DB.User. // UserClient.
+	_, err := config.DB.User. // UserClient.
 					Create().         // User create builder.
 					SetID(input.Uid). // Set uid.
 					SetUsername(input.Username).
 					SetActualName(input.ActualName).
 					SetBirthYear(input.BirthYear).
 					SetGender(input.Gender).
-					SetPassword(password).
 					SetBio("").
 					SetUni(input.Uni).
 					SetDep(input.Dep).
+					SetStatus("registered").
 					Save(c.Context()) // Create and return.
 	if err != nil {
 		fmt.Println(err.Error())
+		if strings.Contains(err.Error(), "unique constraint \"users_pkey\"") {
+			return c.Status(200).JSON(fiber.Map{
+				"ok":      false,
+				"message": "이미 등록된 사용자입니다",
+			})
+		}
+		if err.Error() == "ent: validator failed for field \"User.actual_name\": value is less than the required length" {
+			return c.Status(200).JSON(fiber.Map{
+				"ok":      false,
+				"message": "본명은 2글자 이상이어야 합니다",
+			})
+		}
+		if err.Error() == "ent: validator failed for field \"User.birth_year\": value out of range" {
+			return c.Status(200).JSON(fiber.Map{
+				"ok":      false,
+				"message": "유효한 출생년도를 입력해주세요",
+			})
+		}
 		return c.Status(500).JSON(fiber.Map{
 			"ok":      false,
-			"message": err.Error(),
+			"message": "알 수 없는 오류",
 		})
 	}
 
 	return c.Status(200).JSON(fiber.Map{
 		"ok":      true,
-		"message": "success",
+		"message": "성공",
 	})
 }
 
@@ -88,19 +97,31 @@ func LoginUser(c *fiber.Ctx) error {
 
 func GetCurrentUser(c *fiber.Ctx) error {
 	userId := c.Locals("userId")
-	if userId == nil {
-		return c.Status(401).JSON(fiber.Map{
+
+	me, err := config.DB.User.Query().Where(user.IDEQ(userId.(string))).Only(c.Context())
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
 			"ok":      false,
-			"message": "Not logged in",
+			"message": strings.Split(err.Error(), ":")[1],
 		})
 	}
 
-	me := config.DB.User.Query().Where(user.IDEQ(userId.(string))).OnlyX(c.Context())
-
+	fmt.Print(me)
 	return c.Status(200).JSON(fiber.Map{
 		"ok": true,
 		"data": fiber.Map{
-			"me": me,
+			"me": fiber.Map{
+				"actual_name": me.ActualName,
+				"birth_year":  me.BirthYear,
+				"is_verified": me.IsVerified,
+				"gender":      me.Gender,
+				"username":    me.Username,
+				"uni":         me.Uni,
+				"dep":         me.Dep,
+				"bio":         me.Bio,
+				"avatar":      me.Avatar,
+				"status":      me.Status,
+			},
 		},
 	})
 }
@@ -216,6 +237,68 @@ func UploadProfile(c *fiber.Ctx) error {
 		"data": fiber.Map{
 			"url": url,
 		},
+	})
+
+}
+
+func UploadStudentCard(c *fiber.Ctx) error {
+	userId := c.Locals("userId").(string)
+	firebaseApp := config.FBA
+
+	handler, err := c.FormFile("file")
+	if err != nil {
+		fmt.Println(err.Error())
+		return err
+	}
+	file, err := handler.Open()
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"ok":      false,
+			"message": "File is not an image",
+		})
+	}
+
+	client, err := firebaseApp.Storage(context.Background())
+	if err != nil {
+		panic(err)
+	}
+
+	bucket, err := client.DefaultBucket()
+	if err != nil {
+		panic(err)
+	}
+
+	fileName := "s/" + userId
+
+	writer := bucket.Object(fileName).NewWriter(context.Background())
+	// writer.ObjectAttrs.Metadata = map[string]string{"firebaseStorageDownloadTokens": id.String()}
+	defer writer.Close()
+
+	_, err = io.Copy(writer, file)
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"ok":      false,
+			"message": "Can't get file",
+		})
+	}
+	storage_address := os.Getenv("FIREBASE_BUCKET_ADDRESS")
+	url := fmt.Sprintf("https://storage.cloud.google.com/%s/%s", storage_address, "s/"+userId)
+
+	_, err = config.DB.Pic.Create().SetUserID(userId).SetURL(url).Save(c.Context())
+	config.DB.User.UpdateOneID(userId).SetStatus("pic_sent").SaveX(c.Context())
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"ok":      false,
+			"message": "can't save pic",
+		})
+	}
+	return c.JSON(fiber.Map{
+		"ok":      true,
+		"message": "File uploaded successfully",
 	})
 
 }

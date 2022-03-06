@@ -37,14 +37,6 @@ func (gu *GroupUpdate) SetGroupname(s string) *GroupUpdate {
 	return gu
 }
 
-// SetNillableGroupname sets the "groupname" field if the given value is not nil.
-func (gu *GroupUpdate) SetNillableGroupname(s *string) *GroupUpdate {
-	if s != nil {
-		gu.SetGroupname(*s)
-	}
-	return gu
-}
-
 // SetBio sets the "bio" field.
 func (gu *GroupUpdate) SetBio(s string) *GroupUpdate {
 	gu.mutation.SetBio(s)
@@ -308,12 +300,18 @@ func (gu *GroupUpdate) Save(ctx context.Context) (int, error) {
 	)
 	gu.defaults()
 	if len(gu.hooks) == 0 {
+		if err = gu.check(); err != nil {
+			return 0, err
+		}
 		affected, err = gu.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*GroupMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = gu.check(); err != nil {
+				return 0, err
 			}
 			gu.mutation = mutation
 			affected, err = gu.sqlSave(ctx)
@@ -361,6 +359,16 @@ func (gu *GroupUpdate) defaults() {
 		v := group.UpdateDefaultUpdatedAt()
 		gu.mutation.SetUpdatedAt(v)
 	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (gu *GroupUpdate) check() error {
+	if v, ok := gu.mutation.Groupname(); ok {
+		if err := group.GroupnameValidator(v); err != nil {
+			return &ValidationError{Name: "groupname", err: fmt.Errorf(`ent: validator failed for field "Group.groupname": %w`, err)}
+		}
+	}
+	return nil
 }
 
 func (gu *GroupUpdate) sqlSave(ctx context.Context) (n int, err error) {
@@ -758,14 +766,6 @@ func (guo *GroupUpdateOne) SetGroupname(s string) *GroupUpdateOne {
 	return guo
 }
 
-// SetNillableGroupname sets the "groupname" field if the given value is not nil.
-func (guo *GroupUpdateOne) SetNillableGroupname(s *string) *GroupUpdateOne {
-	if s != nil {
-		guo.SetGroupname(*s)
-	}
-	return guo
-}
-
 // SetBio sets the "bio" field.
 func (guo *GroupUpdateOne) SetBio(s string) *GroupUpdateOne {
 	guo.mutation.SetBio(s)
@@ -1036,12 +1036,18 @@ func (guo *GroupUpdateOne) Save(ctx context.Context) (*Group, error) {
 	)
 	guo.defaults()
 	if len(guo.hooks) == 0 {
+		if err = guo.check(); err != nil {
+			return nil, err
+		}
 		node, err = guo.sqlSave(ctx)
 	} else {
 		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 			mutation, ok := m.(*GroupMutation)
 			if !ok {
 				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = guo.check(); err != nil {
+				return nil, err
 			}
 			guo.mutation = mutation
 			node, err = guo.sqlSave(ctx)
@@ -1089,6 +1095,16 @@ func (guo *GroupUpdateOne) defaults() {
 		v := group.UpdateDefaultUpdatedAt()
 		guo.mutation.SetUpdatedAt(v)
 	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (guo *GroupUpdateOne) check() error {
+	if v, ok := guo.mutation.Groupname(); ok {
+		if err := group.GroupnameValidator(v); err != nil {
+			return &ValidationError{Name: "groupname", err: fmt.Errorf(`ent: validator failed for field "Group.groupname": %w`, err)}
+		}
+	}
+	return nil
 }
 
 func (guo *GroupUpdateOne) sqlSave(ctx context.Context) (_node *Group, err error) {

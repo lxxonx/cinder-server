@@ -19,13 +19,14 @@ type User struct {
 	// ActualName holds the value of the "actual_name" field.
 	// 본명
 	ActualName string `json:"actual_name,omitempty"`
+	// PhoneNumber holds the value of the "phone_number" field.
+	// 전화번호
+	PhoneNumber int `json:"phone_number,omitempty"`
 	// Username holds the value of the "username" field.
 	// 아이디
 	Username string `json:"username,omitempty"`
 	// Gender holds the value of the "gender" field.
 	Gender string `json:"gender,omitempty"`
-	// Password holds the value of the "password" field.
-	Password []byte `json:"-"`
 	// Uni holds the value of the "uni" field.
 	// 대학교
 	Uni string `json:"uni,omitempty"`
@@ -38,6 +39,8 @@ type User struct {
 	BirthYear int `json:"birth_year,omitempty"`
 	// IsVerified holds the value of the "is_verified" field.
 	IsVerified bool `json:"is_verified,omitempty"`
+	// Status holds the value of the "status" field.
+	Status string `json:"status,omitempty"`
 	// MaxGroup holds the value of the "max_group" field.
 	MaxGroup int `json:"max_group,omitempty"`
 	// Avatar holds the value of the "avatar" field.
@@ -164,13 +167,11 @@ func (*User) scanValues(columns []string) ([]interface{}, error) {
 	values := make([]interface{}, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldPassword:
-			values[i] = new([]byte)
 		case user.FieldIsVerified:
 			values[i] = new(sql.NullBool)
-		case user.FieldBirthYear, user.FieldMaxGroup:
+		case user.FieldPhoneNumber, user.FieldBirthYear, user.FieldMaxGroup:
 			values[i] = new(sql.NullInt64)
-		case user.FieldID, user.FieldActualName, user.FieldUsername, user.FieldGender, user.FieldUni, user.FieldDep, user.FieldBio, user.FieldAvatar:
+		case user.FieldID, user.FieldActualName, user.FieldUsername, user.FieldGender, user.FieldUni, user.FieldDep, user.FieldBio, user.FieldStatus, user.FieldAvatar:
 			values[i] = new(sql.NullString)
 		case user.FieldCreatedAt, user.FieldUpdatedAt, user.FieldReadAt:
 			values[i] = new(sql.NullTime)
@@ -201,6 +202,12 @@ func (u *User) assignValues(columns []string, values []interface{}) error {
 			} else if value.Valid {
 				u.ActualName = value.String
 			}
+		case user.FieldPhoneNumber:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field phone_number", values[i])
+			} else if value.Valid {
+				u.PhoneNumber = int(value.Int64)
+			}
 		case user.FieldUsername:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field username", values[i])
@@ -212,12 +219,6 @@ func (u *User) assignValues(columns []string, values []interface{}) error {
 				return fmt.Errorf("unexpected type %T for field gender", values[i])
 			} else if value.Valid {
 				u.Gender = value.String
-			}
-		case user.FieldPassword:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field password", values[i])
-			} else if value != nil {
-				u.Password = *value
 			}
 		case user.FieldUni:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -248,6 +249,12 @@ func (u *User) assignValues(columns []string, values []interface{}) error {
 				return fmt.Errorf("unexpected type %T for field is_verified", values[i])
 			} else if value.Valid {
 				u.IsVerified = value.Bool
+			}
+		case user.FieldStatus:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field status", values[i])
+			} else if value.Valid {
+				u.Status = value.String
 			}
 		case user.FieldMaxGroup:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -354,11 +361,12 @@ func (u *User) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v", u.ID))
 	builder.WriteString(", actual_name=")
 	builder.WriteString(u.ActualName)
+	builder.WriteString(", phone_number=")
+	builder.WriteString(fmt.Sprintf("%v", u.PhoneNumber))
 	builder.WriteString(", username=")
 	builder.WriteString(u.Username)
 	builder.WriteString(", gender=")
 	builder.WriteString(u.Gender)
-	builder.WriteString(", password=<sensitive>")
 	builder.WriteString(", uni=")
 	builder.WriteString(u.Uni)
 	builder.WriteString(", dep=")
@@ -369,6 +377,8 @@ func (u *User) String() string {
 	builder.WriteString(fmt.Sprintf("%v", u.BirthYear))
 	builder.WriteString(", is_verified=")
 	builder.WriteString(fmt.Sprintf("%v", u.IsVerified))
+	builder.WriteString(", status=")
+	builder.WriteString(u.Status)
 	builder.WriteString(", max_group=")
 	builder.WriteString(fmt.Sprintf("%v", u.MaxGroup))
 	builder.WriteString(", avatar=")

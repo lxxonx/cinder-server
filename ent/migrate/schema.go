@@ -54,7 +54,7 @@ var (
 	// GroupsColumns holds the columns for the "groups" table.
 	GroupsColumns = []*schema.Column{
 		{Name: "uid", Type: field.TypeUUID, Unique: true},
-		{Name: "groupname", Type: field.TypeString, Default: ""},
+		{Name: "groupname", Type: field.TypeString, Unique: true, Size: 10},
 		{Name: "bio", Type: field.TypeString, Default: ""},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
@@ -100,14 +100,15 @@ var (
 	UsersColumns = []*schema.Column{
 		{Name: "uid", Type: field.TypeString, Unique: true},
 		{Name: "actual_name", Type: field.TypeString},
+		{Name: "phone_number", Type: field.TypeInt, Unique: true, Nullable: true},
 		{Name: "username", Type: field.TypeString, Unique: true},
 		{Name: "gender", Type: field.TypeString},
-		{Name: "password", Type: field.TypeBytes},
 		{Name: "uni", Type: field.TypeString},
 		{Name: "dep", Type: field.TypeString},
 		{Name: "bio", Type: field.TypeString, Nullable: true},
 		{Name: "birth_year", Type: field.TypeInt},
 		{Name: "is_verified", Type: field.TypeBool, Default: false},
+		{Name: "status", Type: field.TypeString, Default: "phone_number_verified"},
 		{Name: "max_group", Type: field.TypeInt, Default: 3},
 		{Name: "avatar", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},

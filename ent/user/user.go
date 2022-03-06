@@ -13,12 +13,12 @@ const (
 	FieldID = "uid"
 	// FieldActualName holds the string denoting the actual_name field in the database.
 	FieldActualName = "actual_name"
+	// FieldPhoneNumber holds the string denoting the phone_number field in the database.
+	FieldPhoneNumber = "phone_number"
 	// FieldUsername holds the string denoting the username field in the database.
 	FieldUsername = "username"
 	// FieldGender holds the string denoting the gender field in the database.
 	FieldGender = "gender"
-	// FieldPassword holds the string denoting the password field in the database.
-	FieldPassword = "password"
 	// FieldUni holds the string denoting the uni field in the database.
 	FieldUni = "uni"
 	// FieldDep holds the string denoting the dep field in the database.
@@ -29,6 +29,8 @@ const (
 	FieldBirthYear = "birth_year"
 	// FieldIsVerified holds the string denoting the is_verified field in the database.
 	FieldIsVerified = "is_verified"
+	// FieldStatus holds the string denoting the status field in the database.
+	FieldStatus = "status"
 	// FieldMaxGroup holds the string denoting the max_group field in the database.
 	FieldMaxGroup = "max_group"
 	// FieldAvatar holds the string denoting the avatar field in the database.
@@ -105,14 +107,15 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldActualName,
+	FieldPhoneNumber,
 	FieldUsername,
 	FieldGender,
-	FieldPassword,
 	FieldUni,
 	FieldDep,
 	FieldBio,
 	FieldBirthYear,
 	FieldIsVerified,
+	FieldStatus,
 	FieldMaxGroup,
 	FieldAvatar,
 	FieldCreatedAt,
@@ -167,6 +170,8 @@ var (
 	BirthYearValidator func(int) error
 	// DefaultIsVerified holds the default value on creation for the "is_verified" field.
 	DefaultIsVerified bool
+	// DefaultStatus holds the default value on creation for the "status" field.
+	DefaultStatus string
 	// DefaultMaxGroup holds the default value on creation for the "max_group" field.
 	DefaultMaxGroup int
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.

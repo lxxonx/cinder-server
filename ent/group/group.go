@@ -104,8 +104,8 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// DefaultGroupname holds the default value on creation for the "groupname" field.
-	DefaultGroupname string
+	// GroupnameValidator is a validator for the "groupname" field. It is called by the builders before save.
+	GroupnameValidator func(string) error
 	// DefaultBio holds the default value on creation for the "bio" field.
 	DefaultBio string
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.

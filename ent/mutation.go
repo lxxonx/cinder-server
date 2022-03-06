@@ -3141,15 +3141,17 @@ type UserMutation struct {
 	typ                string
 	id                 *string
 	actual_name        *string
+	phone_number       *int
+	addphone_number    *int
 	username           *string
 	gender             *string
-	password           *[]byte
 	uni                *string
 	dep                *string
 	bio                *string
 	birth_year         *int
 	addbirth_year      *int
 	is_verified        *bool
+	status             *string
 	max_group          *int
 	addmax_group       *int
 	avatar             *string
@@ -3329,6 +3331,76 @@ func (m *UserMutation) ResetActualName() {
 	m.actual_name = nil
 }
 
+// SetPhoneNumber sets the "phone_number" field.
+func (m *UserMutation) SetPhoneNumber(i int) {
+	m.phone_number = &i
+	m.addphone_number = nil
+}
+
+// PhoneNumber returns the value of the "phone_number" field in the mutation.
+func (m *UserMutation) PhoneNumber() (r int, exists bool) {
+	v := m.phone_number
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPhoneNumber returns the old "phone_number" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldPhoneNumber(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPhoneNumber is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPhoneNumber requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPhoneNumber: %w", err)
+	}
+	return oldValue.PhoneNumber, nil
+}
+
+// AddPhoneNumber adds i to the "phone_number" field.
+func (m *UserMutation) AddPhoneNumber(i int) {
+	if m.addphone_number != nil {
+		*m.addphone_number += i
+	} else {
+		m.addphone_number = &i
+	}
+}
+
+// AddedPhoneNumber returns the value that was added to the "phone_number" field in this mutation.
+func (m *UserMutation) AddedPhoneNumber() (r int, exists bool) {
+	v := m.addphone_number
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearPhoneNumber clears the value of the "phone_number" field.
+func (m *UserMutation) ClearPhoneNumber() {
+	m.phone_number = nil
+	m.addphone_number = nil
+	m.clearedFields[user.FieldPhoneNumber] = struct{}{}
+}
+
+// PhoneNumberCleared returns if the "phone_number" field was cleared in this mutation.
+func (m *UserMutation) PhoneNumberCleared() bool {
+	_, ok := m.clearedFields[user.FieldPhoneNumber]
+	return ok
+}
+
+// ResetPhoneNumber resets all changes to the "phone_number" field.
+func (m *UserMutation) ResetPhoneNumber() {
+	m.phone_number = nil
+	m.addphone_number = nil
+	delete(m.clearedFields, user.FieldPhoneNumber)
+}
+
 // SetUsername sets the "username" field.
 func (m *UserMutation) SetUsername(s string) {
 	m.username = &s
@@ -3399,42 +3471,6 @@ func (m *UserMutation) OldGender(ctx context.Context) (v string, err error) {
 // ResetGender resets all changes to the "gender" field.
 func (m *UserMutation) ResetGender() {
 	m.gender = nil
-}
-
-// SetPassword sets the "password" field.
-func (m *UserMutation) SetPassword(b []byte) {
-	m.password = &b
-}
-
-// Password returns the value of the "password" field in the mutation.
-func (m *UserMutation) Password() (r []byte, exists bool) {
-	v := m.password
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldPassword returns the old "password" field's value of the User entity.
-// If the User object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldPassword(ctx context.Context) (v []byte, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldPassword is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldPassword requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldPassword: %w", err)
-	}
-	return oldValue.Password, nil
-}
-
-// ResetPassword resets all changes to the "password" field.
-func (m *UserMutation) ResetPassword() {
-	m.password = nil
 }
 
 // SetUni sets the "uni" field.
@@ -3648,6 +3684,42 @@ func (m *UserMutation) OldIsVerified(ctx context.Context) (v bool, err error) {
 // ResetIsVerified resets all changes to the "is_verified" field.
 func (m *UserMutation) ResetIsVerified() {
 	m.is_verified = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *UserMutation) SetStatus(s string) {
+	m.status = &s
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *UserMutation) Status() (r string, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldStatus(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *UserMutation) ResetStatus() {
+	m.status = nil
 }
 
 // SetMaxGroup sets the "max_group" field.
@@ -4368,18 +4440,18 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 14)
+	fields := make([]string, 0, 15)
 	if m.actual_name != nil {
 		fields = append(fields, user.FieldActualName)
+	}
+	if m.phone_number != nil {
+		fields = append(fields, user.FieldPhoneNumber)
 	}
 	if m.username != nil {
 		fields = append(fields, user.FieldUsername)
 	}
 	if m.gender != nil {
 		fields = append(fields, user.FieldGender)
-	}
-	if m.password != nil {
-		fields = append(fields, user.FieldPassword)
 	}
 	if m.uni != nil {
 		fields = append(fields, user.FieldUni)
@@ -4395,6 +4467,9 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.is_verified != nil {
 		fields = append(fields, user.FieldIsVerified)
+	}
+	if m.status != nil {
+		fields = append(fields, user.FieldStatus)
 	}
 	if m.max_group != nil {
 		fields = append(fields, user.FieldMaxGroup)
@@ -4421,12 +4496,12 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case user.FieldActualName:
 		return m.ActualName()
+	case user.FieldPhoneNumber:
+		return m.PhoneNumber()
 	case user.FieldUsername:
 		return m.Username()
 	case user.FieldGender:
 		return m.Gender()
-	case user.FieldPassword:
-		return m.Password()
 	case user.FieldUni:
 		return m.Uni()
 	case user.FieldDep:
@@ -4437,6 +4512,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.BirthYear()
 	case user.FieldIsVerified:
 		return m.IsVerified()
+	case user.FieldStatus:
+		return m.Status()
 	case user.FieldMaxGroup:
 		return m.MaxGroup()
 	case user.FieldAvatar:
@@ -4458,12 +4535,12 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 	switch name {
 	case user.FieldActualName:
 		return m.OldActualName(ctx)
+	case user.FieldPhoneNumber:
+		return m.OldPhoneNumber(ctx)
 	case user.FieldUsername:
 		return m.OldUsername(ctx)
 	case user.FieldGender:
 		return m.OldGender(ctx)
-	case user.FieldPassword:
-		return m.OldPassword(ctx)
 	case user.FieldUni:
 		return m.OldUni(ctx)
 	case user.FieldDep:
@@ -4474,6 +4551,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldBirthYear(ctx)
 	case user.FieldIsVerified:
 		return m.OldIsVerified(ctx)
+	case user.FieldStatus:
+		return m.OldStatus(ctx)
 	case user.FieldMaxGroup:
 		return m.OldMaxGroup(ctx)
 	case user.FieldAvatar:
@@ -4500,6 +4579,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetActualName(v)
 		return nil
+	case user.FieldPhoneNumber:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPhoneNumber(v)
+		return nil
 	case user.FieldUsername:
 		v, ok := value.(string)
 		if !ok {
@@ -4513,13 +4599,6 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGender(v)
-		return nil
-	case user.FieldPassword:
-		v, ok := value.([]byte)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetPassword(v)
 		return nil
 	case user.FieldUni:
 		v, ok := value.(string)
@@ -4555,6 +4634,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetIsVerified(v)
+		return nil
+	case user.FieldStatus:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
 		return nil
 	case user.FieldMaxGroup:
 		v, ok := value.(int)
@@ -4599,6 +4685,9 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *UserMutation) AddedFields() []string {
 	var fields []string
+	if m.addphone_number != nil {
+		fields = append(fields, user.FieldPhoneNumber)
+	}
 	if m.addbirth_year != nil {
 		fields = append(fields, user.FieldBirthYear)
 	}
@@ -4613,6 +4702,8 @@ func (m *UserMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case user.FieldPhoneNumber:
+		return m.AddedPhoneNumber()
 	case user.FieldBirthYear:
 		return m.AddedBirthYear()
 	case user.FieldMaxGroup:
@@ -4626,6 +4717,13 @@ func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *UserMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case user.FieldPhoneNumber:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPhoneNumber(v)
+		return nil
 	case user.FieldBirthYear:
 		v, ok := value.(int)
 		if !ok {
@@ -4648,6 +4746,9 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *UserMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(user.FieldPhoneNumber) {
+		fields = append(fields, user.FieldPhoneNumber)
+	}
 	if m.FieldCleared(user.FieldBio) {
 		fields = append(fields, user.FieldBio)
 	}
@@ -4668,6 +4769,9 @@ func (m *UserMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *UserMutation) ClearField(name string) error {
 	switch name {
+	case user.FieldPhoneNumber:
+		m.ClearPhoneNumber()
+		return nil
 	case user.FieldBio:
 		m.ClearBio()
 		return nil
@@ -4685,14 +4789,14 @@ func (m *UserMutation) ResetField(name string) error {
 	case user.FieldActualName:
 		m.ResetActualName()
 		return nil
+	case user.FieldPhoneNumber:
+		m.ResetPhoneNumber()
+		return nil
 	case user.FieldUsername:
 		m.ResetUsername()
 		return nil
 	case user.FieldGender:
 		m.ResetGender()
-		return nil
-	case user.FieldPassword:
-		m.ResetPassword()
 		return nil
 	case user.FieldUni:
 		m.ResetUni()
@@ -4708,6 +4812,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldIsVerified:
 		m.ResetIsVerified()
+		return nil
+	case user.FieldStatus:
+		m.ResetStatus()
 		return nil
 	case user.FieldMaxGroup:
 		m.ResetMaxGroup()

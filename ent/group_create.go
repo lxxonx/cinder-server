@@ -29,14 +29,6 @@ func (gc *GroupCreate) SetGroupname(s string) *GroupCreate {
 	return gc
 }
 
-// SetNillableGroupname sets the "groupname" field if the given value is not nil.
-func (gc *GroupCreate) SetNillableGroupname(s *string) *GroupCreate {
-	if s != nil {
-		gc.SetGroupname(*s)
-	}
-	return gc
-}
-
 // SetBio sets the "bio" field.
 func (gc *GroupCreate) SetBio(s string) *GroupCreate {
 	gc.mutation.SetBio(s)
@@ -268,10 +260,6 @@ func (gc *GroupCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (gc *GroupCreate) defaults() {
-	if _, ok := gc.mutation.Groupname(); !ok {
-		v := group.DefaultGroupname
-		gc.mutation.SetGroupname(v)
-	}
 	if _, ok := gc.mutation.Bio(); !ok {
 		v := group.DefaultBio
 		gc.mutation.SetBio(v)
@@ -298,6 +286,11 @@ func (gc *GroupCreate) defaults() {
 func (gc *GroupCreate) check() error {
 	if _, ok := gc.mutation.Groupname(); !ok {
 		return &ValidationError{Name: "groupname", err: errors.New(`ent: missing required field "Group.groupname"`)}
+	}
+	if v, ok := gc.mutation.Groupname(); ok {
+		if err := group.GroupnameValidator(v); err != nil {
+			return &ValidationError{Name: "groupname", err: fmt.Errorf(`ent: validator failed for field "Group.groupname": %w`, err)}
+		}
 	}
 	if _, ok := gc.mutation.Bio(); !ok {
 		return &ValidationError{Name: "bio", err: errors.New(`ent: missing required field "Group.bio"`)}

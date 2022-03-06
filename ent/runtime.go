@@ -66,8 +66,8 @@ func init() {
 	_ = groupFields
 	// groupDescGroupname is the schema descriptor for groupname field.
 	groupDescGroupname := groupFields[1].Descriptor()
-	// group.DefaultGroupname holds the default value on creation for the groupname field.
-	group.DefaultGroupname = groupDescGroupname.Default.(string)
+	// group.GroupnameValidator is a validator for the "groupname" field. It is called by the builders before save.
+	group.GroupnameValidator = groupDescGroupname.Validators[0].(func(string) error)
 	// groupDescBio is the schema descriptor for bio field.
 	groupDescBio := groupFields[2].Descriptor()
 	// group.DefaultBio holds the default value on creation for the bio field.
@@ -121,7 +121,7 @@ func init() {
 	// user.ActualNameValidator is a validator for the "actual_name" field. It is called by the builders before save.
 	user.ActualNameValidator = userDescActualName.Validators[0].(func(string) error)
 	// userDescUsername is the schema descriptor for username field.
-	userDescUsername := userFields[2].Descriptor()
+	userDescUsername := userFields[3].Descriptor()
 	// user.UsernameValidator is a validator for the "username" field. It is called by the builders before save.
 	user.UsernameValidator = userDescUsername.Validators[0].(func(string) error)
 	// userDescUni is the schema descriptor for uni field.
@@ -154,22 +154,26 @@ func init() {
 	userDescIsVerified := userFields[9].Descriptor()
 	// user.DefaultIsVerified holds the default value on creation for the is_verified field.
 	user.DefaultIsVerified = userDescIsVerified.Default.(bool)
+	// userDescStatus is the schema descriptor for status field.
+	userDescStatus := userFields[10].Descriptor()
+	// user.DefaultStatus holds the default value on creation for the status field.
+	user.DefaultStatus = userDescStatus.Default.(string)
 	// userDescMaxGroup is the schema descriptor for max_group field.
-	userDescMaxGroup := userFields[10].Descriptor()
+	userDescMaxGroup := userFields[11].Descriptor()
 	// user.DefaultMaxGroup holds the default value on creation for the max_group field.
 	user.DefaultMaxGroup = userDescMaxGroup.Default.(int)
 	// userDescCreatedAt is the schema descriptor for created_at field.
-	userDescCreatedAt := userFields[12].Descriptor()
+	userDescCreatedAt := userFields[13].Descriptor()
 	// user.DefaultCreatedAt holds the default value on creation for the created_at field.
 	user.DefaultCreatedAt = userDescCreatedAt.Default.(func() time.Time)
 	// userDescUpdatedAt is the schema descriptor for updated_at field.
-	userDescUpdatedAt := userFields[13].Descriptor()
+	userDescUpdatedAt := userFields[14].Descriptor()
 	// user.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	user.DefaultUpdatedAt = userDescUpdatedAt.Default.(func() time.Time)
 	// user.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	user.UpdateDefaultUpdatedAt = userDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// userDescReadAt is the schema descriptor for read_at field.
-	userDescReadAt := userFields[14].Descriptor()
+	userDescReadAt := userFields[15].Descriptor()
 	// user.DefaultReadAt holds the default value on creation for the read_at field.
 	user.DefaultReadAt = userDescReadAt.Default.(func() time.Time)
 }
