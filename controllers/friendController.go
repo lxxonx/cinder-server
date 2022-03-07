@@ -13,13 +13,29 @@ import (
 func GetFriendRequest(c *fiber.Ctx) error {
 	userId := c.Locals("userId").(string)
 
-	var reqs []models.User
-	config.DB.User.Query().
+	var reqs []models.Friend
+	err := config.DB.User.Query().
 		Where(user.IDEQ(userId)).
 		QueryFriendsReq().
-		Select(user.FieldID, user.FieldUsername, user.FieldBio, user.FieldUni, user.FieldDep).
-		ScanX(c.Context(), &reqs)
+		Select(
+			user.FieldActualName,
+			user.FieldUsername,
+			user.FieldBio,
+			user.FieldUni,
+			user.FieldDep,
+			user.FieldGender,
+			user.FieldAvatar,
+			user.FieldBirthYear).
+		Scan(c.Context(), &reqs)
+	if err != nil {
+		fmt.Println(err.Error())
+		return c.Status(500).JSON(fiber.Map{
+			"ok":      false,
+			"message": "unknown error",
+		})
+	}
 
+	fmt.Println(reqs)
 	return c.Status(200).JSON(fiber.Map{
 		"ok":      true,
 		"message": "success",
@@ -32,13 +48,27 @@ func GetFriendRequest(c *fiber.Ctx) error {
 func GetFriends(c *fiber.Ctx) error {
 	userId := c.Locals("userId").(string)
 
-	var reqs []models.User
-	config.DB.User.Query().
+	var reqs []models.Friend
+	err := config.DB.User.Query().
 		Where(user.IDEQ(userId)).
 		QueryFriends().
-		Select(user.FieldID, user.FieldUsername, user.FieldBio, user.FieldUni, user.FieldDep).
-		ScanX(c.Context(), &reqs)
-
+		Select(
+			user.FieldActualName,
+			user.FieldUsername,
+			user.FieldBio,
+			user.FieldUni,
+			user.FieldDep,
+			user.FieldGender,
+			user.FieldAvatar,
+			user.FieldBirthYear).
+		Scan(c.Context(), &reqs)
+	if err != nil {
+		fmt.Println(err.Error())
+		return c.Status(500).JSON(fiber.Map{
+			"ok":      false,
+			"message": "unknown error",
+		})
+	}
 	return c.Status(200).JSON(fiber.Map{
 		"ok":      true,
 		"message": "success",
@@ -69,7 +99,20 @@ func RequestFriend(c *fiber.Ctx) error {
 		})
 	}
 
-	me.Update().AddRequests(friend).ExecX(c.Context())
+	if friend.ID == userId {
+		return c.Status(200).JSON(fiber.Map{
+			"ok":      false,
+			"message": "친구를 찾을 수 없습니다.",
+		})
+	}
+
+	err = me.Update().AddRequests(friend).Exec(c.Context())
+	if err != nil {
+		return c.Status(200).JSON(fiber.Map{
+			"ok":      false,
+			"message": "이미 친구요청을 보냈어요",
+		})
+	}
 
 	return c.Status(201).JSON(fiber.Map{
 		"ok":      true,
@@ -142,6 +185,7 @@ func DeleteFriendRequest(c *fiber.Ctx) error {
 }
 
 func SearchFriend(c *fiber.Ctx) error {
+	userId := c.Locals("userId").(string)
 	input := new(dto.SearchFriendInput)
 	if err := c.BodyParser(input); err != nil {
 		return c.Status(500).JSON(fiber.Map{
@@ -149,8 +193,16 @@ func SearchFriend(c *fiber.Ctx) error {
 			"message": "Unable to parse request body",
 		})
 	}
+
 	friend, err := config.DB.User.Query().Where(user.UsernameEQ(input.FriendName)).First(c.Context())
 	if err != nil {
+		return c.Status(200).JSON(fiber.Map{
+			"ok":      false,
+			"message": "친구를 찾을 수 없습니다.",
+		})
+	}
+
+	if friend.ID == userId {
 		return c.Status(200).JSON(fiber.Map{
 			"ok":      false,
 			"message": "친구를 찾을 수 없습니다.",

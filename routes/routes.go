@@ -18,6 +18,7 @@ func SetupRoutes(app *fiber.App) {
 	users.Post("/sc", config.AuthMiddleware, controllers.UploadStudentCard)
 
 	friends := api.Group("/friends")
+	friends.Get("/", config.AuthMiddleware, controllers.GetFriends)
 	friends.Get("/req", config.AuthMiddleware, controllers.GetFriendRequest)
 	friends.Post("/req", config.AuthMiddleware, controllers.RequestFriend)
 	friends.Post("/act", config.AuthMiddleware, controllers.AcceptFriendRequest)

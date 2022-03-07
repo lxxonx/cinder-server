@@ -1,6 +1,6 @@
 package models
 
-type User struct {
+type Friend struct {
 	Username   string   `json:"username"`
 	ActualName string   `json:"actual_name"`
 	Uni        string   `json:"uni"`
@@ -8,7 +8,6 @@ type User struct {
 	Bio        string   `json:"bio"`
 	Gender     string   `json:"gender"`
 	BirthYear  int      `json:"birth_year"`
-	IsVerified bool     `json:"is_verified"`
-	Status     bool     `json:"status"`
+	Avatar     string   `json:"avatar"`
 	Pics       []string `json:"pics"`
 }
